@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <swis.h>
+#include "swis.h"
 #include "library.h"
 #include "d2s_lib.h"
 

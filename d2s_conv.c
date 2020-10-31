@@ -7,8 +7,8 @@
 #include <setjmp.h>
 #include <math.h>
 #include <ctype.h>
-#include <swis.h>
-#include <kernel.h>
+#include "swis.h"
+#include "kernel.h"
 #include "png.h"
 #include "d2s_lib.h"
 

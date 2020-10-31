@@ -2,10 +2,11 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <ctype.h>
-#include <swis.h>
-#include <kernel.h>
+#include "swis.h"
+#include "kernel.h"
 #include "png.h"
 
 /* This code is RISC OS specific. */

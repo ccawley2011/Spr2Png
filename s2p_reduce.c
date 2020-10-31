@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <swis.h>
+#include <string.h>
+#include "swis.h"
 #include "png.h"
 #include "s2p_lib.h"
 

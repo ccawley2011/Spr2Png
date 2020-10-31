@@ -2,9 +2,11 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
-#include <swis.h>
-#include "C:kernel.h"
+#include "swis.h"
+#include "kernel.h"
+#include "zlib.h"
 #include "png.h"
 
 /* This code is RISC OS specific. */
@@ -1635,7 +1637,7 @@ main (int argc, const char *const argv[])
   if (info_ptr == NULL)
     fail (fail_LIBPNG_FAIL, "libpng init failure");
 
-  if (setjmp (png_ptr->jmpbuf))
+  if (setjmp (png_jmpbuf(png_ptr)))
   {
     if (fp)
       fclose (fp);
@@ -2352,7 +2354,7 @@ main (int argc, const char *const argv[])
 /* Weird. This works, but the following commented-out code doesn't.
  * (Norcroft RISC OS cc 5.54)
  */
-    void (*func) (png_structp, png_infop, int) =
+    void (*func) (png_const_structp, png_infop, int) =
       srgb.force ? png_set_sRGB_gAMA_and_cHRM : png_set_sRGB;
     func (png_ptr, info_ptr, srgb.intent - 1);
 /*

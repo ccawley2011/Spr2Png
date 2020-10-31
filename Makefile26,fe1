@@ -3,7 +3,7 @@
 # Toolflags:
 link = link
 
-CCflags = -c -fah -depend !Depend -IC:,pnglib:,zlib: -throwback -DRISCOS -DPNG_DEBUG=0 $(DEBUG) -apcs 3/26
+CCflags = -c -fah -depend !Depend -IC:,pnglib:,C:zlib -throwback -DRISCOS -DPNG_DEBUG=0 $(DEBUG) -apcs 3/26
 CCopt	= -Otime -Ospace -zpq32
 Linkflags = -aif -c++ -nounused $(LDEBUG) -o $@
 ObjAsmflags = -throwback -depend !Depend -APCS 3/26
@@ -11,36 +11,36 @@ ObjAsmflags = -throwback -depend !Depend -APCS 3/26
 s2p_OBJS =	o.spr2png o.s2p_const o.s2p_frqsrt o.s2p_reduce o.s2p_trim \
 		o.s2p_ver
 s2p_LIBS =	o.heap o.library C:o.gststubs \
-		libpng:o.libpng-lib zlib:o.zlib
+		libpng:o.libpng-lib C:zlib.o.zlib
 p2s_OBJS =	o.png2spr o.p2s_ver
 p2s_LIBS =	$(s2p_LIBS)
 d2s_OBJS =	o.draw2spr o.d2s_conv o.d2s_render o.d2s_trim o.d2s_ver
 d2s_LIBS =	o.heap o.library C:o.gststubs
 
 # Final targets:
-All:	spr2png draw2spr png2spr !Version
+All:	!Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr !Version
 
-!Version: spr2png draw2spr png2spr
-	pipe "spr2png --version" "sed -e \"1! d\" -e \"1 s/^spr2png \([^)]*)\).*$/set spr2png$version \\1/\"" > !Version'
-	pipe "draw2spr --version" "sed -e \"1! d\" -e \"1 s/^draw2spr \([^)]*)\).*$/set draw2spr$version \\1/\"" >> !Version'
-	pipe "png2spr --version" "sed -e \"1! d\" -e \"1 s/^png2spr \([^)]*)\).*$/set png2spr$version \\1/\"" >> !Version'
+!Version: !Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr
+	pipe "!Spr2Png.spr2png --version" "sed -e \"1! d\" -e \"1 s/^spr2png \([^)]*)\).*$/set spr2png$version \\1/\"" > !Version'
+	pipe "!Spr2Png.draw2spr --version" "sed -e \"1! d\" -e \"1 s/^draw2spr \([^)]*)\).*$/set draw2spr$version \\1/\"" >> !Version'
+	pipe "!Spr2Png.png2spr --version" "sed -e \"1! d\" -e \"1 s/^png2spr \([^)]*)\).*$/set png2spr$version \\1/\"" >> !Version'
 	remove !Version
 	rename !Version' !Version
 	settype !Version Obey
 
-spr2png: $(s2p_OBJS) $(s2p_LIBS)
+!Spr2Png.spr2png: $(s2p_OBJS) $(s2p_LIBS)
         $(link) $(Linkflags) $(s2p_OBJS) $(s2p_LIBS)
 
-draw2spr: $(d2s_OBJS) $(d2s_LIBS)
+!Spr2Png.draw2spr: $(d2s_OBJS) $(d2s_LIBS)
         $(link) $(Linkflags) $(d2s_OBJS) $(d2s_LIBS)
 
-png2spr: $(p2s_OBJS) $(p2s_LIBS)
+!Spr2Png.png2spr: $(p2s_OBJS) $(p2s_LIBS)
 	$(link) $(Linkflags) $(p2s_OBJS) $(p2s_LIBS)
 
 clean:
-	remove spr2png
-	remove draw2spr
-	remove png2spr
+	remove !Spr2Png.spr2png
+	remove !Spr2Png.draw2spr
+	remove !Spr2Png.png2spr
 	ifthere o.* then wipe o.* ~CF~R~V
 
 # Rules:

@@ -2,7 +2,7 @@
 #define __spr2png_s2p_lib
 
 #include "library.h"
-#include "libpng:png.h"
+#include "png.h"
 
 extern int png_init;
 extern png_structp png_ptr;

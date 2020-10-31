@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <swis.h>
+#include "swis.h"
 #include "s2p_lib.h"
 
 #undef ALPHA

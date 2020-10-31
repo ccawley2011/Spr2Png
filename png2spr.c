@@ -2,9 +2,11 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
-#include <swis.h>
-#include <kernel.h>
+#include "swis.h"
+#include "kernel.h"
+#include "zlib.h"
 #include "png.h"
 #include "library.h"
 
@@ -278,7 +280,7 @@ read_png(FILE *fp)
     fail (fail_LIBPNG_FAIL, "libpng init failure");
   png_init = 2;
 
-  if (setjmp (png_ptr->jmpbuf))
+  if (setjmp (png_jmpbuf(png_ptr)))
     {
       if (fp)
 	{
@@ -321,7 +323,7 @@ read_png(FILE *fp)
   /* Expand greyscale images to the full 8 bits from 1, 2, or 4 bits/pixel */
   if (IS_GREY (colour_type) && bit_depth < 8)
     {
-      png_set_gray_1_2_4_to_8 (png_ptr);
+      png_set_expand_gray_1_2_4_to_8 (png_ptr);
       bit_depth = 8;
     }
 

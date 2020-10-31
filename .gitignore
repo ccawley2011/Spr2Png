@@ -1,0 +1,5 @@
+*.o
+*.o,ffd
+*,ff8
+libpng/
+

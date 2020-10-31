@@ -2,11 +2,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <math.h>
-#include <swis.h>
-#include "C:kernel.h"
+#include "swis.h"
+#include "kernel.h"
 #include "types.h"
 #include "s2p_lib.h"
 
