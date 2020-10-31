@@ -1,0 +1,16 @@
+RMEnsure UtilityModule  3.10 Error This application requires RISC OS 3.10 or later
+RMEnsure UtilityModule  3.70 RMEnsure CallASWI 0.02 RMLoad System:Modules.CallASWI
+RMEnsure UtilityModule  3.70 RMEnsure CallASWI 0.02 Error This application requires CallASWI 0.02 or later
+RMEnsure FPEmulator     4.03 RMLoad System:Modules.FPEmulator
+RMEnsure FPEmulator     4.03 Error This application requires FPEmulator 4.03 or later
+RMEnsure SharedCLibrary 5.17 RMLoad System:Modules.CLib
+RMEnsure SharedCLibrary 5.34 Error This application requires SharedCLibrary 5.34 or later
+
+RMEnsure ColourPicker   0.00 RMLoad System:Modules.Picker
+RMEnsure ColourPicker   0.31 Error This application requires ColourPicker 0.31 or later
+
+Set Spr2Png$Dir <Obey$Dir>
+Set Draw2Spr$Dir <Obey$Dir>
+Obey <Spr2Png$Dir>.!Boot
+WimpSlot 52K 52K
+/<Spr2Png$Dir>.!RunImage

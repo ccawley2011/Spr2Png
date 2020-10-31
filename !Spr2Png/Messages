@@ -1,0 +1,141 @@
+Info:Info
+Abort:Abort
+Quit:Quit
+
+Strategy:Strategy
+Strategy0:Default
+Strategy1:Filtered
+Strategy2:Huffman
+Strategy3:RLE
+
+Level0:None
+Level1:1 Fast
+Level9:9 Best
+
+sRGB:Render intent
+sRGB0/sRGBs0:Default
+sRGB1:Perceptual (pictures)
+sRGB2:Relative (logos)
+sRGB3:Saturation (graphs, charts)
+sRGB4:Absolute (proofing images)
+sRGBs0:Default
+sRGBs1:Perceptual
+sRGBs2:Relative
+sRGBs3:Saturation
+sRGBs4:Absolute
+
+ICC:ICC profile
+ICCsub:Set to...
+Reset:Reset
+White:White
+Red:Red
+Green:Green
+Blue:Blue
+
+SaveAs:Save %0 file as
+SaveSprAs:Save sprite as
+SelBgnd:Select background colour
+
+Ibar:\TSpr2Png application.|MDrag a sprite here to convert it to PNG.|MDrag a Draw or Artworks file here to convert it to sprite or PNG.
+Ibar.R:\TSpr2Png application.|MA conversion is currently in progress.
+
+WInfo:This \w shows information about Spr2Png.
+
+W*:Either drag the file icon to a directory \w, or fill in the name of a file and click on Save or press Return, to save the converted image.
+WSave.1:\Stoggle between sprite and PNG output.
+WSave.2:\Sclose the save box.
+WSave.5:\Sdisplay the input sprite file options.
+WSave.6:\Sdisplay the input Draw and Artworks file options.
+WSave.7:\Sdisplay the miscellaneous options.
+WSave.8:\Sdisplay the output options.
+WSave.9:\Sdisplay the PNG palette & mask reduction options.
+WSave.10:\Sdisplay the compression control options.
+
+WOpt0.0:Tick this option if, if the sprite is 32bpp, it has a built-in alpha channel.
+WOpt0.1:Tick this option if the alpha channel is to be interpreted as inverse.
+
+WOpt1.2:Enter the X scaling here, or leave blank to default to the Y scaling or 1:1.
+WOpt1.4:Enter the Y scaling here, or leave blank to default to the X scaling or 1:1.
+WOpt1.6:Enter the Artworks rendering level here (useful values are 0, 5, 10, 11), or leave blank for the default.
+WOpt1.7:Tick this option if the output sprite is to have a mask.
+WOpt1.8:Tick this option if the output sprite is to be anti-aliased and is to have an alpha mask or, if no mask, be background blended.
+
+WOpt2.0:\Stoggle whether spr2png/draw2spr is verbose.|M\Ato set the level of verbosity.
+WOpt2.1:Tick this option if the operation is to be performed in single-tasking mode.
+
+WOpt3.0:Tick this option if the output PNG is to be interlaced.
+WOpt3.2:Enter the background colour here (hex BBGGRR format).|MIf blank, then the background is transparent (or white).
+WOpt3.3:This icon displays the chosen background colour.|M\Sopen the colour picker.
+WOpt3.5:Tick this option if you want masked or blank edges to be trimmed from the output image.
+
+WOpt4.0:Tick this option if you want to try to create a 8bpp paletted PNG.
+WOpt4.1:Tick this option if you want to try to reduce the alpha channel (if present) to a simple mask or to discard it if it's unused.
+WOpt4.2:Tick this option if you want to sort the palette (of a paletted PNG), most used first.
+WOpt4.3:Tick this option if you want to try to pack the paletted or greyscale PNG into less than 8bpp.
+WOpt4.4:Tick this option if you want to try to convert the image to greyscale.
+
+WOpt5.1:Tick this option if you want to control the row filtering to try for greater compression.
+WOpt5.2/WOpt5.3/WOpt5.4/WOpt5.5/WOpt5.6:Tick this option if you want to allow this filter type.
+WOpt5.7/WOpt5.8:This controls the maximum compression token length.|MHigher values are normally better.
+WOpt5.9/WOpt5.10:Click on these arrows to alter the maximum compression token length.
+WOpt5.11/WOpt5.12:This shows the compression strategy.|MThe default strategy is usually best.
+WOpt5.14/WOpt5.15:This shows the compression level.|MFull (maximum) compression is usually best.
+WOpt5.16/WOpt5.17:Click on these arrows to alter the compression level.
+
+WOpt6.1:Enter the creation gamma setting here, or leave it blank to use any local defaults.|MFor the default RISC OS display, this is 0.5.
+WOpt6.3:This shows the rendering intent for the image: none, perceptual (pictures), relative (logos), saturation (graphs, charts), absolute (proofing).
+WOpt6.5:Tick this option to have the gamma and chromaticity chunks set appropriately for the rendering intent (unless the intent is default).
+WOpt6.6:Tick this option to set chromaticity values for white and the primary colours.
+WOpt6.7:Enter the chromaticity value pair for the image's white point here.
+WOpt6.8:Enter the chromaticity value pair for the image's red channel here.
+WOpt6.9:Enter the chromaticity value pair for the image's green channel here.
+WOpt6.10:Enter the chromaticity value pair for the image's blue channel here.
+WOpt6.11:\Sopen a menu which contains some chromaticity default chromaticity value pairs.
+
+WSaveSpr.2:上Save.2
+WSaveSpr.5:Tick this option if the PNG is to be rendered on a coloured background.
+WSaveSpr.6:Enter the background colour here (hex BBGGRR format).|MAny value present here will override the PNG's defined background colour (the default is white).
+WSaveSpr.7:上Opt3.3
+WSaveSpr.8:Tick this option if you want to take into accout the image's gamma value.
+WSaveSpr.9:Enter the image gamma value here (>0, <=10).|MAny value present here will override the PNG's defined gamma value (the default is 1/2.2).
+WSaveSpr.11:Enter the display gamma value here (>0, <=10).|MThe default is 2.2.
+WSaveSpr.12:Tick this option to cause any transparency information to be completely ignored.
+WSaveSpr.13:Tick this option to create a separate mask (except where the mask is simple).
+WSaveSpr.14:上Opt4.1
+WSaveSpr.15:上Opt2.1
+
+IM-1:\TSpr2Png main menu.
+IM0:\Rsee information about Spr2Png.
+IM1:\Sabort the current conversion.
+IM1g:\Gno conversion is currently under way.
+IM2:\Squit Spr2Png.
+
+SM-1:\TSpr2Png compression strategy menu.
+SM0:\Schoose the default compression strategy.|MThis is normally best.
+SM1:\Schoose the filtered (predictor) compression strategy.|MThis is sometimes better than the default.
+SM2:\Schoose the Huffman-only compression strategy.|MThis is usually the worst.
+
+CM-1:\TSpr2Png rendering intent menu.
+CM0:\Schoose perceptual intent.|MThis is good for pictures.
+CM1:\Schoose relative colorimetric intent.|MThis is good for logos.
+CM2:\Ssaturation intent.|MThis is good for graphs and charts.
+CM3:\Sabsolute colorimetric intent.|MThis is good for proofs (previews of images intended for a different output device).
+
+ICCM-1:\TSpr2Png chromaticity menu.
+ICCM0:\Sreset the chromaticity value pairs to their defaults.
+ICCM1:\Rset the white point to one of the preset value pairs.
+ICCM1.0/ICCM1.1/ICCM1.2/ICCM1.3:\Sset the white point to this preset value pair.
+ICCM2:\Rset the red channel to one of the preset value pairs.
+ICCM2.0/ICCM2.1/ICCM2.2/ICCM2.3:\Sset the red channel to this preset value pair.
+ICCM3:\Rset the green channel to one of the preset value pairs.
+ICCM3.0/ICCM3.1/ICCM3.2/ICCM3.3:\Sset the green channel to this preset value pair.
+ICCM4:\Rset the blue channel to one of the preset value pairs.
+ICCM4.0/ICCM4.1/ICCM4.2/ICCM4.3:\Sset the blue channel to this preset value pair.
+ICCM1.-1/ICCM2.-1/ICCM3.-1/ICCM4.-1:This menu contains some preset chromaticity value pairs.
+
+Edragic:To save, drag the icon to a directory viewer
+Egamma:The gamma correction value cannot be more than 10
+Escale:Bad vector scaling factors
+Enotmpl:Template '%0' not found
+Enomem:128K free memory is needed before %0 can be started. Quit any unwanted applications or see the RISC OS User Guide for ways to maximise memory.
+Enoxfer:Transfer failed

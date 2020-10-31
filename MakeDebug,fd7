@@ -1,0 +1,4 @@
+WimpSlot 1024K 1024K
+RMEnsure DDEUtils 0.00 RMLoad System:Modules.DDEUtils
+Dir <Obey$Dir>
+amu %*0 "DEBUG=-DDEBUG -g" LDEBUG=-debug

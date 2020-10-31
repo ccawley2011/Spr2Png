@@ -1,0 +1,74 @@
+# spr2png
+
+# Toolflags:
+link = link
+
+CCflags = -c -fah -depend !Depend -IC:,pnglib:,zlib: -throwback -DRISCOS -DPNG_DEBUG=0 $(DEBUG) -apcs 3/26
+CCopt	= -Otime -Ospace -zpq32
+Linkflags = -aif -c++ -nounused $(LDEBUG) -o $@
+ObjAsmflags = -throwback -depend !Depend -APCS 3/26
+
+s2p_OBJS =	o.spr2png o.s2p_const o.s2p_frqsrt o.s2p_reduce o.s2p_trim \
+		o.s2p_ver
+s2p_LIBS =	o.heap o.library C:o.gststubs \
+		libpng:o.libpng-lib zlib:o.zlib
+p2s_OBJS =	o.png2spr o.p2s_ver
+p2s_LIBS =	$(s2p_LIBS)
+d2s_OBJS =	o.draw2spr o.d2s_conv o.d2s_render o.d2s_trim o.d2s_ver
+d2s_LIBS =	o.heap o.library C:o.gststubs
+
+# Final targets:
+All:	spr2png draw2spr png2spr !Version
+
+!Version: spr2png draw2spr png2spr
+	pipe "spr2png --version" "sed -e \"1! d\" -e \"1 s/^spr2png \([^)]*)\).*$/set spr2png$version \\1/\"" > !Version'
+	pipe "draw2spr --version" "sed -e \"1! d\" -e \"1 s/^draw2spr \([^)]*)\).*$/set draw2spr$version \\1/\"" >> !Version'
+	pipe "png2spr --version" "sed -e \"1! d\" -e \"1 s/^png2spr \([^)]*)\).*$/set png2spr$version \\1/\"" >> !Version'
+	remove !Version
+	rename !Version' !Version
+	settype !Version Obey
+
+spr2png: $(s2p_OBJS) $(s2p_LIBS)
+        $(link) $(Linkflags) $(s2p_OBJS) $(s2p_LIBS)
+
+draw2spr: $(d2s_OBJS) $(d2s_LIBS)
+        $(link) $(Linkflags) $(d2s_OBJS) $(d2s_LIBS)
+
+png2spr: $(p2s_OBJS) $(p2s_LIBS)
+	$(link) $(Linkflags) $(p2s_OBJS) $(p2s_LIBS)
+
+clean:
+	remove spr2png
+	remove draw2spr
+	remove png2spr
+	ifthere o.* then wipe o.* ~CF~R~V
+
+# Rules:
+.SUFFIXES: .c .s .o
+
+.c.o:;	cc $(CCflags) $(CCopt) $<
+.s.o:;	objasm $(ObjAsmflags) $<
+#.s.o:;	IDEFS::Shearer.$.Programmer.Proto.as.as $(ObjAsmflags) $<
+
+# Static dependencies:
+o.spr2png:	c.spr2png
+o.s2p_const:	c.s2p_const
+o.s2p_frqsrt:	c.s2p_frqsrt
+o.s2p_reduce:	c.s2p_reduce c.s2p_redinc
+o.s2p_trim:	c.s2p_trim
+o.s2p_ver:	c.s2p_ver
+
+o.draw2spr:	c.draw2spr
+o.d2s_conv:	c.d2s_conv
+o.d2s_render:	s.d2s_render
+o.d2s_trim:	c.d2s_trim
+o.d2s_ver:	c.d2s_ver
+
+o.png2spr:	c.png2spr
+o.p2s_ver:	c.p2s_ver
+
+o.strdup:	s.strdup
+o.heap:		s.heap
+o.library:	c.library
+
+# Dynamic dependencies:

@@ -1,0 +1,7 @@
+If "<Spr2Png$Dir>"="" Then Set Spr2Png$Dir <Obey$Dir>
+If "<Draw2Spr$Dir>"="" Then Set Draw2Spr$Dir <Obey$Dir>
+Set Tmp 8
+RMEnsure UtilityModule 3.80 Set Tmp s
+IconSprites <Spr2Png$Dir>.!Sprite<Tmp>
+Unset Tmp
+/<Spr2Png$Dir>.!Version
