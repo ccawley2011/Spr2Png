@@ -3,7 +3,7 @@
 # Toolflags:
 link = link
 
-CCflags = -c -fah -depend !Depend -IC:,pnglib:,C:zlib -throwback -DRISCOS -DPNG_DEBUG=0 $(DEBUG) -apcs 3/26
+CCflags = -c -fah -depend !Depend -IC:,C:ImageLib.libpng:,C:zlib -throwback -DRISCOS -DPNG_DEBUG=0 $(DEBUG) -apcs 3/26
 CCopt	= -Otime -Ospace -zpq32
 Linkflags = -aif -c++ -nounused $(LDEBUG) -o $@
 ObjAsmflags = -throwback -depend !Depend -APCS 3/26
@@ -11,7 +11,7 @@ ObjAsmflags = -throwback -depend !Depend -APCS 3/26
 s2p_OBJS =	o.spr2png o.s2p_const o.s2p_frqsrt o.s2p_reduce o.s2p_trim \
 		o.s2p_ver
 s2p_LIBS =	o.heap o.library C:o.gststubs \
-		libpng:o.libpng-lib C:zlib.o.zlib
+		C:ImageLib.o.libpng-lib C:zlib.o.zlib
 p2s_OBJS =	o.png2spr o.p2s_ver
 p2s_LIBS =	$(s2p_LIBS)
 d2s_OBJS =	o.draw2spr o.d2s_conv o.d2s_render o.d2s_trim o.d2s_ver
@@ -30,12 +30,15 @@ All:	!Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr !Version
 
 !Spr2Png.spr2png: $(s2p_OBJS) $(s2p_LIBS)
         $(link) $(Linkflags) $(s2p_OBJS) $(s2p_LIBS)
+        squeeze $@
 
 !Spr2Png.draw2spr: $(d2s_OBJS) $(d2s_LIBS)
         $(link) $(Linkflags) $(d2s_OBJS) $(d2s_LIBS)
+        squeeze $@
 
 !Spr2Png.png2spr: $(p2s_OBJS) $(p2s_LIBS)
 	$(link) $(Linkflags) $(p2s_OBJS) $(p2s_LIBS)
+        squeeze $@
 
 clean:
 	remove !Spr2Png.spr2png
@@ -45,6 +48,8 @@ clean:
 
 # Rules:
 .SUFFIXES: .c .s .o
+
+.INIT:; @CDir o
 
 .c.o:;	cc $(CCflags) $(CCopt) $<
 .s.o:;	objasm $(ObjAsmflags) $<
