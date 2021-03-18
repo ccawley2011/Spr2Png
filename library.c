@@ -180,7 +180,7 @@ commandwindow (const char *title)
   return _swix (Wimp_CommandWindow, _IN (0), title);
 }
 #else
-__swi (Wimp_CommandWindow)
+__swi (XOS_Bit | Wimp_CommandWindow)
      _kernel_oserror *commandwindow (const char *title);
 #endif
 
