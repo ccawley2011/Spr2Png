@@ -198,15 +198,27 @@ modevar (unsigned int mode, int var)
 
 static void
 getsprinfo (const spritearea_t * sprites, sprite_t * spr,
-	    long *w, long *h, long *xres, long *yres, unsigned int *m)
+            long *w, long *h, long *xres, long *yres, unsigned int *m,
+            unsigned int *flags)
 	    /* writes to all regardless */
 {
   const unsigned int mode = *m = spr->mode;
   spr->mode &= ~(1 << 31);
   _swi (0x2E, _INR (0, 2) | _OUTR (3, 4), 0x228, sprites, spr, w, h);
   spr->mode = mode;
-  *xres = (*m < 256) ? (180 >> modevar (*m, 4)) : ((*m >> 1) & 8191);
-  *yres = (*m < 256) ? (180 >> modevar (*m, 5)) : ((*m >> 14) & 8191);
+  if (*m < 256) {
+    *xres = 180 >> modevar (*m, 4);
+    *yres = 180 >> modevar (*m, 5);
+    *flags = modevar(*m, 0);
+  } else if ((*m & 0x780F000F) == 0x78000001) {
+    *xres = 180 >> ((*m >> 4) & 3);
+    *yres = 180 >> ((*m >> 6) & 3);
+    *flags = *m & 0xFF00;
+  } else {
+    *xres = (*m >> 1) & 8191;
+    *yres = (*m >> 14) & 8191;
+    *flags = 0;
+  }
 }
 
 
@@ -221,7 +233,9 @@ remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 static int
 bpp (unsigned int mode)
 {
-  if (mode > 255)
+  if ((mode & 0x780F000F) == 0x78000001)
+    return ((mode >> 20) - 1) & 127;
+  else if (mode > 255)
     return ((mode >> 27) - 1) & 15;
   switch (modevar (mode, 3))
   {
@@ -339,9 +353,69 @@ cmyk_to_rgb (const void *image)
     i->r.r = (i->c.c + i->c.k) < 255 ? 255 - (i->c.c + i->c.k) : 0;
     i->r.g = (i->c.m + i->c.k) < 255 ? 255 - (i->c.m + i->c.k) : 0;
     i->r.b = (i->c.y + i->c.k) < 255 ? 255 - (i->c.y + i->c.k) : 0;
-    i->r.alpha = 0;
+    i->r.alpha = 0xFF;
     i++;
   }
+}
+
+
+static rgb_t *
+expand12to24 (const void *image)
+{
+  long y = height;
+  const short *im12 = image;
+  long *im24;
+  rgb_t *imret;
+
+  if (verbose > 1)
+    printf ("Expanding image from %ibit to %ibit\n", 12, 24);
+  imret = spr_malloc (width * height * sizeof (rgb_t), "24bpp image");
+  im24 = (long *) imret;	/* sizeof(long)==sizeof(rgb_t) */
+  do
+  {
+    long x = width;
+    do
+    {
+      *im24++ = ((*im12 & 15L) * 17L) |
+		(((long) (*im12 >> 4) & 15L) * 17L) << 8 |
+		(((long) (*im12 >> 8) & 15L) * 17L) << 16 |
+		(((long) (*im12 >> 12) & 15L) * 17L) << 24;
+      im12++;
+    } while (--x);
+    if (width & 1)
+      im12++;
+  } while (--y);
+  return imret;
+}
+
+
+static rgb_t *
+expand15to24 (const void *image)
+{
+  long y = height;
+  const short *im15 = image;
+  long *im24;
+  rgb_t *imret;
+
+  if (verbose > 1)
+    printf ("Expanding image from %ibit to %ibit\n", 15, 24);
+  imret = spr_malloc (width * height * sizeof (rgb_t), "24bpp image");
+  im24 = (long *) imret;	/* sizeof(long)==sizeof(rgb_t) */
+  do
+  {
+    long x = width;
+    do
+    {
+      *im24++ = ((*im15 & 31L) * 33L) >> 2 |
+		((((long) (*im15 >> 5) & 31L) * 33L) >> 2) << 8 |
+		((((long) (*im15 >> 10) & 31L) * 33L) >> 2) << 16 |
+		((*im15 & (1 << 15)) ? 0xFF000000 : 0);
+      im15++;
+    } while (--x);
+    if (width & 1)
+      im15++;
+  } while (--y);
+  return imret;
 }
 
 
@@ -363,8 +437,8 @@ expand16to24 (const void *image)
     do
     {
       *im24++ = ((*im16 & 31L) * 33L) >> 2 |
-		((((long) (*im16 >> 5) & 31L) * 33L) >> 2) << 8 |
-		((((long) (*im16 >> 10) & 31L) * 33L) >> 2) << 16;
+		((((long) (*im16 >> 5) & 63L) * 16L) >> 2) << 8 |
+		((((long) (*im16 >> 11) & 31L) * 33L) >> 2) << 16;
       im16++;
     } while (--x);
     if (width & 1)
@@ -1068,7 +1142,7 @@ main (int argc, const char *const argv[])
   long x, y, xres, yres;
   int lnbpp, masklnbpp;
   long maskcolour;		/* png_color & rgb_t fit in a word */
-  unsigned int m;
+  unsigned int m, modeflags;
   sprite_t *imagespr, *maskspr;
   void *image, *image8 = 0;
   char *mask = 0, *palmask = 0;
@@ -1675,7 +1749,7 @@ main (int argc, const char *const argv[])
   imagespr = (sprite_t *) (sprites->first + (char *) sprites);
   checkspr (imagespr);
   remove_wastage (sprites, imagespr);
-  getsprinfo (sprites, imagespr, &width, &height, &xres, &yres, &m);
+  getsprinfo (sprites, imagespr, &width, &height, &xres, &yres, &m, &modeflags);
   /* override the sprite's settings */
   if (dpix)
   {
@@ -1693,6 +1767,12 @@ main (int argc, const char *const argv[])
     alpha = 1;
   }
 
+  if (modeflags & (1 << 15))
+  {
+    /* RGBA sprite (RO 5) */
+    rgba = 1;
+  }
+
   if (lnbpp == 5 && rgba)
   {
     alpha = 1;
@@ -1705,6 +1785,7 @@ main (int argc, const char *const argv[])
       switch (lnbpp)
       {
       case 6:
+      case 9:
 	alpha = 0;
 	break;
       case 7:
@@ -1713,6 +1794,12 @@ main (int argc, const char *const argv[])
 	break;
       case 8:
 	fail (fail_UNSUPPORTED, "%s format is not supported", "JPEG");
+	break;
+      case 15:
+	break;
+      case 16:
+      case 17:
+	fail (fail_UNSUPPORTED, "%s format is not supported", "YCbCr");
 	break;
       default:
 	fail (fail_UNSUPPORTED, "sprite format %i is not recognised",
@@ -1735,7 +1822,8 @@ main (int argc, const char *const argv[])
     if (maskspr)
     {
       long xr, yr;
-      getsprinfo (sprites, maskspr, &x, &y, &xr, &yr, &m);
+      unsigned int mf;
+      getsprinfo (sprites, maskspr, &x, &y, &xr, &yr, &m, &mf);
       checkspr (maskspr);
       masklnbpp = bpp (m);
       if (masklnbpp > 3 || !checkgrey (maskspr, 0))
@@ -1788,11 +1876,19 @@ main (int argc, const char *const argv[])
   switch (lnbpp)
   {
   case 4:
-    image = expand16to24 (image);
+    image = expand15to24 (image);
     lnbpp = 5;
     break;
   case 6:
     cmyk_to_rgb (image);
+    lnbpp = 5;
+    break;
+  case 9:
+    image = expand16to24 (image);
+    lnbpp = 5;
+    break;           
+  case 15:
+    image = expand12to24 (image);
     lnbpp = 5;
     break;
   }
@@ -2328,6 +2424,11 @@ main (int argc, const char *const argv[])
 	png_set_tRNS (png_ptr, info_ptr, 0, 0, &maskrgb);
       }
     }
+  }
+
+  if (modeflags & (1 << 14))
+  {
+    png_set_bgr(png_ptr);
   }
 
   if (lnbpp > 3 && !alpha)
