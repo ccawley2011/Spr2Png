@@ -46,10 +46,10 @@
 
 #ifdef DEBUG
   print_fn_name ();
-  _swi (8, 0x37, 10, "<Wimp$ScrapDir>.Image", 0xFFD, image, ADD (image, height * rwidth));
+  _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Image", 0xFFD, image, ADD (image, height * rwidth));
 # ifndef ALPHA
   if (alpha)
-    _swi (8, 0x37, 10, "<Wimp$ScrapDir>.Mask", 0xFFD, alpha, alpha + height * width);
+    _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Mask", 0xFFD, alpha, alpha + height * width);
   printf ("image = %p, mask = %p\n", image, alpha);
 # endif
 #endif
@@ -87,7 +87,7 @@
   } while (++y < height);
   /* we'll only reach this point if the image is completely masked out */
 #ifdef DEBUG
-  _swi (8, 0x3F, 10, "<Wimp$Scrap>", 0xFFD, 0, img, ADD (img, width * height));
+  _swi (OS_File, _INR (0, 5), 10, "<Wimp$Scrap>", 0xFFD, 0, img, ADD (img, width * height));
 #endif
   return 1;
 

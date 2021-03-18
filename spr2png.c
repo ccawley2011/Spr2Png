@@ -45,7 +45,7 @@ shutdown (void)
   if (png_init)
     png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
   png_init = 0;
-  _swi (0x406C1, 0);		/* Hourglass_Off */
+  _swi (Hourglass_Off, 0);
   debug_puts ("Done.");
 }
 
@@ -56,7 +56,7 @@ modver (const char *mod)
 {
   char *hlp, *module;
   int i = 0;
-  if (_swix (0x1E /* OS_Module */ , 3 | 1 << 28, 18, mod, &module))
+  if (_swix (OS_Module, _INR (0, 1) | _OUT (3), 18, mod, &module))
     return "not loaded";
   module += ((int *) module)[5];
   do
@@ -192,7 +192,7 @@ checkspr (const sprite_t * spr)
 static int
 modevar (unsigned int mode, int var)
 {
-  return _swi (0x35, 3 | 2 << 16, mode, var);
+  return _swi (OS_ReadModeVariable, _INR (0, 1) | _RETURN (2), mode, var);
 }
 
 
@@ -204,7 +204,7 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
 {
   const unsigned int mode = *m = spr->mode;
   spr->mode &= ~(1 << 31);
-  _swi (0x2E, _INR (0, 2) | _OUTR (3, 4), 0x228, sprites, spr, w, h);
+  _swi (OS_SpriteOp, _INR (0, 2) | _OUTR (3, 4), 0x228, sprites, spr, w, h);
   spr->mode = mode;
   if (*m < 256) {
     *xres = 180 >> modevar (*m, 4);
@@ -226,7 +226,7 @@ static void
 remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 {
   if (~spr->mode & 1 << 31)
-    _swi (0x2E, 7, 0x236, sprites, spr);
+    _swi (OS_SpriteOp, _INR (0, 2), 0x236, sprites, spr);
 }
 
 
@@ -285,7 +285,7 @@ list_used (const char *im, const char *imask, int lnbpp)
     imask = (const char *) (3L + (long) imask & -4L);
   } while (--y);
 #ifdef DEBUG
-  _swi (8, 0x3F, 10, "<Wimp$ScrapDir>.used", 0xFFD, 0, used, used + 256);
+  _swi (OS_File, _INR (0, 5), 10, "<Wimp$ScrapDir>.used", 0xFFD, 0, used, used + 256);
 #endif
   return used;
 }
@@ -329,7 +329,7 @@ readpalette (const spritearea_t * area, sprite_t * spr, rgb_t * palette)
   unsigned int *p, q;
   unsigned long mode = spr->mode;
   spr->mode &= ~(1 << 31);
-  _swi (0x4075C, 0x1F, area, &spr->name, palette, 1024, 0);
+  _swi (ColourTrans_ReadPalette, _INR (0, 4), area, &spr->name, palette, 1024, 0);
   spr->mode = mode;
   p = (unsigned int *) palette;
   for (q = 256; q; --q)
@@ -1200,8 +1200,8 @@ main (int argc, const char *const argv[])
       {
 	int *regdump, *os_regdump;
 	const char *msg = 0;
-	_swix (0x40, 15 | 1 << 28, 7, 0, 0, 0, &regdump);
-	_swix (0x40, 15 | 1 << 30, 13, 0, 0, 0, &os_regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (3), 7, 0, 0, 0, &regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (1), 13, 0, 0, 0, &os_regdump);
 	if (regdump && os_regdump)
 	  memcpy (os_regdump, regdump, 64);
 	switch (sigerr.errnum & 0xFFFFFF)
@@ -1666,11 +1666,11 @@ main (int argc, const char *const argv[])
 	puts ("calling draw2spr");
       debug_printf ("Temp sprite = %s\nTemp text   = %s\nCommand line = %s\n",
 		    fromtemp, out, cmd);
-//      m = !_swix (0x400C0 /* XWimp_Initialise */, 15,
+//      m = !_swix (Wimp_Initialise, _INR (0, 3),
 //		  310, 0x4B534154, "spr2png", 0);
-      onerr (_swix (0x400DE /* XWimp_StartTask */ , 1, cmd));
+      onerr (_swix (Wimp_StartTask, _IN (0), cmd));
 //      if (m)
-//	_swix (0x400DD /* XWimp_CloseDown */, 3, 0, 0);
+//	_swix (Wimp_CloseDown, _INR (0, 1), 0, 0);
       free (cmd);
       ifp = fopen (out, "r");
       if (ifp)
@@ -1721,7 +1721,7 @@ main (int argc, const char *const argv[])
     fail (fail_LIBPNG_FAIL, 0);
   }
 
-  _swi (0x406C0, 1, 0);		/* Hourglass_On */
+  _swi (Hourglass_On, _IN (0), 0);
 
   ifp = fopen (fromtemp, "rb");
   if (ifp == NULL)
@@ -2329,8 +2329,8 @@ main (int argc, const char *const argv[])
   _kernel_last_oserror ();	/* discard */
 
   debug_puts ("Setting load/exec...");
-  onerr (_swix (8, 7, 2, to, 0xDEADDEAD));
-  onerr (_swix (8, 11, 3, to, 0xDEADDEAD));
+  onerr (_swix (OS_File, _INR (0, 2), 2, to, 0xDEADDEAD));
+  onerr (_swix (OS_File, _INR (0, 1) | _IN (3), 3, to, 0xDEADDEAD));
   debug_puts ("Initialising PNG I/O...");
   png_init_io (png_ptr, fp);
 
@@ -2493,7 +2493,7 @@ main (int argc, const char *const argv[])
   if (lnbpp < 4 && packbits)
     png_set_packing (png_ptr);
 
-  _swi (0x406C5, 3, 2, -1);	/* LED 2 on */
+  _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);	/* LED 2 on */
   num_passes = interlace ? png_set_interlace_handling (png_ptr) : 1;
   if (palmask)
     alpha = 0;
@@ -2505,7 +2505,7 @@ main (int argc, const char *const argv[])
     void *i = image;
     do
     {
-      _swi (0x406C4, 1, m++ * 100 / (int) x);	/*Hourglass_Percentage */
+      _swi (Hourglass_Percentage, _IN (0), m++ * 100 / (int) x);
       png_write_row (png_ptr, i);
       if (lnbpp == 3 && alpha)
 	i = (void *) ((char *) i + 2 * (width + 1 & ~1));	/* avoid grey_t alignment */
@@ -2515,14 +2515,14 @@ main (int argc, const char *const argv[])
 	i = (void *) ((long *) i + width);
     } while (--y);
   } while (--num_passes);
-  _swi (0x406C5, 3, 2, -1);	/* LED 2 off */
+  _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);	/* LED 2 off */
 
   png_write_end (png_ptr, info_ptr);
   if (fclose (fp))
     fail (fail_OS_ERROR, 0);
   shutdown ();
 
-  onerr (_swix (8, 7, 18, to, 0xB60));
+  onerr (_swix (OS_File, _INR(0, 2), 18, to, 0xB60));
 
   if (verbose)
     puts ("Finished.");

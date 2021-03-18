@@ -109,7 +109,7 @@ shutdown (void)
     case 2: png_destroy_read_struct (&png_ptr, &info_ptr, 0); break;
     }
   png_init = 0;
-  _swi (0x406C1, 0);		/* Hourglass_Off */
+  _swi (Hourglass_Off, 0);
   debug_puts ("Done.");
 }
 
@@ -147,7 +147,7 @@ static void
 add_grey_palette (spritearea_t *const area, sprite_t *const spr)
 {
   int y, *pal = (int *) spr + 11;
-  onerr (_swix (0x4075D /* WritePalette */, 0x1F,  area, spr, 0x8000, 0, 1));
+  onerr (_swix (ColourTrans_WritePalette, _INR (0, 4), area, spr, 0x8000, 0, 1));
   for (y = 255; y >= 0; --y)
     pal[y*2+1] = pal[y*2] = (y * 0x10101) << 8;
 }
@@ -523,9 +523,9 @@ read_png(FILE *fp)
     }
 
     mode = mode << 27 | 90 << 14 | 90 << 1 | 1;
-    onerr (_swix (OS_SpriteOp, 127,
+    onerr (_swix (OS_SpriteOp, _INR (0, 6),
 		  256+15, spr_area, pngid, 0, width, height, mode));
-    _swix (OS_SpriteOp, 7 | 1<<29,  256+24, spr_area, pngid,  &spr_ptr);
+    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2), 256+24, spr_area, pngid, &spr_ptr);
     debug_printf ("Image will have:\n  %i-bit colour\n", bit_depth);
 
     if (palsize) /* write palette */
@@ -534,7 +534,7 @@ read_png(FILE *fp)
 	if (IS_GREY (colour_type))
 	  {
 	    /* cheat: force full-size palette */
-	    onerr (_swix (0x4075D /* ColourTrans_WritePalette */, 0x1F,
+	    onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
 			  spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
 	    debug_puts ("  a greyscale palette");
 	    for (y = --palsize; y >= 0; --y)
@@ -544,7 +544,7 @@ read_png(FILE *fp)
 	  {
 	    int *palptr;
 	    /* cheat: force full-size palette */
-	    onerr (_swix (0x4075D /* ColourTrans_WritePalette */, 0x1F,
+	    onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
 			  spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
 	    memset (pal, 0, palsize*2*4);
 	    png_get_PLTE (png_ptr, info_ptr, (png_color **) &palptr,
@@ -612,7 +612,7 @@ read_png(FILE *fp)
 		  }
 		if (is == mask_SIMPLE && alpha.simplify)
 		  {
-		    _swix (OS_SpriteOp, 7,  256+29, spr_area, pngid);
+		    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
 		    memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
 			    (int) ((((width + 31) >> 3) & ~3) * height));
 		    if (alpha.tRNS)
@@ -623,9 +623,9 @@ read_png(FILE *fp)
 		  }
 		else
 		  {
-		    onerr (_swix (OS_SpriteOp, 127,  256+15,
+		    onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
 				  spr_area, maskid, 0, width, height, 28));
-		    _swix (OS_SpriteOp, 7 | 1<<29,
+		    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
 			   256+24, spr_area, maskid,  &mask_ptr);
 		    add_grey_palette (spr_area, mask_ptr);
 		    if (alpha.inverse)
@@ -637,7 +637,7 @@ read_png(FILE *fp)
 			    y--; p[y] = ~mask[y];
 			  }
 			while (y);
-			_swix (OS_SpriteOp, 15, 256+26, spr_area, maskid,
+			_swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
 			       "mask_i");
 		      }
 		    else
@@ -669,7 +669,7 @@ read_png(FILE *fp)
     else if (alpha.use && alpha.tRNS)
       {
 	debug_puts ("Processing simple mask...");
-	onerr (_swix (OS_SpriteOp, 7,  256+29, spr_area, pngid));
+	onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
 	make_trns (spr_ptr, bit_depth, colour_type);
       }
     else if (alpha.use && (colour_type & PNG_COLOR_MASK_ALPHA))
@@ -684,9 +684,9 @@ read_png(FILE *fp)
 	    /**/rgba_separate:
 	    if (alpha.separate)
 	      {
-		onerr (_swix (OS_SpriteOp, 127,  256+15,
+		onerr (_swix (OS_SpriteOp, _INR (0, 6),  256+15,
 			      spr_area, maskid, 0, width, height, 28));
-		_swix (OS_SpriteOp, 7 | 1<<29,
+		_swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
 		       256+24, spr_area, maskid,  &mask_ptr);
 		add_grey_palette (spr_area, mask_ptr);
 		mask_base = (png_bytep) mask_ptr + mask_ptr->image;
@@ -723,11 +723,11 @@ read_png(FILE *fp)
 			y--; spr_base[y*4] = ~spr_base[y*4];
 		      }
 		    while (y);
-		    _swix (OS_SpriteOp, 15, 256+26, spr_area, pngid,
+		    _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, pngid,
 			   "png_rgba_i");
 		  }
 		else
-		  _swix (OS_SpriteOp, 15, 256+26, spr_area, pngid,
+		  _swix (OS_SpriteOp, _INR(0, 3), 256+26, spr_area, pngid,
 			 "png_rgba");
 	      }
 	    break;
@@ -735,7 +735,7 @@ read_png(FILE *fp)
 	    debug_puts ("-> simple");
 	    if (!alpha.simplify)
 	      goto rgba_separate;
-	    _swix (OS_SpriteOp, 7,  256+29, spr_area, pngid);
+	    _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
 	    make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4);
 	    break;
 	  case mask_OPAQUE:
@@ -799,8 +799,8 @@ main (int argc, char *argv[])
       {
 	int *regdump, *os_regdump;
 	const char *msg = 0;
-	_swix (0x40, 15 | 1 << 28, 7, 0, 0, 0, &regdump);
-	_swix (0x40, 15 | 1 << 30, 13, 0, 0, 0, &os_regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (3), 7, 0, 0, 0, &regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (1), 13, 0, 0, 0, &os_regdump);
 	if (regdump && os_regdump)
 	  memcpy (os_regdump, regdump, 64);
 	switch (sigerr.errnum & 0xFFFFFF)
@@ -968,14 +968,14 @@ main (int argc, char *argv[])
   if (bgnd != -2)
     alpha.simplify = alpha.separate = 0;
 
-  _swi (0x406C0, 1, 0);		/* Hourglass_On */
+  _swi (Hourglass_On, _IN (0), 0);
 
   fp = fopen (from, "rb");
   if (!fp)
     fail (fail_LOAD_ERROR, "file '%s' not found or not readable", argv[1]);
   spr = read_png (fp);
   fclose (fp);
-  onerr (_swix (0x2E, 7,  256+12, spr, to));
+  onerr (_swix (OS_SpriteOp, _INR (0, 2), 256+12, spr, to));
 
   return 0;
 }

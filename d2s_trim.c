@@ -41,7 +41,7 @@ void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
 do_lower_trim:
   if (y) {
     height -= y;
-    _swi (0x2E /*OS_SpriteOp*/, 0x1F,  512+57, area, sprite, 0, -y);
+    _swi (OS_SpriteOp, _INR (0, 4), 512+57, area, sprite, 0, -y);
   }
   if (verbose > 2)
     printf ("%i %s(s) removed from %s\n", y, "row", "bottom");
@@ -69,7 +69,7 @@ do_lower_trim:
 do_upper_trim:
   if (y) {
     height -= y;
-    _swi (0x2E, 0x1F,  512+57, area, sprite, height, -y);
+    _swi (OS_SpriteOp, _INR (0, 4), 512+57, area, sprite, height, -y);
   }
   if (verbose > 2)
     printf ("%i row(s) removed from top\n", y);
@@ -98,7 +98,7 @@ do_upper_trim:
 
   if (x) {
     width -= x;
-    _swi (0x2E, 0x1F,  512+58, area, sprite, 0, -x);
+    _swi (OS_SpriteOp, _INR (0, 4), 512+58, area, sprite, 0, -x);
   }
   if (verbose > 2)
     printf ("%i column(s) removed from left\n", x);
@@ -128,7 +128,7 @@ do_upper_trim:
 
   if (x) {
     width -= x;
-    _swi (0x2E, 0x1F,  512+58, area, sprite, width, -x);
+    _swi (OS_SpriteOp, _INR (0, 4), 512+58, area, sprite, width, -x);
   }
   if (verbose > 2)
     printf ("%i column(s) removed from right\n", x);

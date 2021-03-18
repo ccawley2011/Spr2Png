@@ -12,6 +12,15 @@
 #include "png.h"
 #include "d2s_lib.h"
 
+#ifndef DrawFile_BBox
+#define DrawFile_BBox 0x45541
+#endif
+#ifndef AWRender_DocBounds
+#define AWRender_DocBounds 0x46082
+#endif
+#ifndef AWRender_ClaimVectors
+#define AWRender_ClaimVectors 0x46084
+#endif
 
 static jmp_buf jump, main_jump;
 static int fontmax[6];
@@ -20,7 +29,7 @@ static int fontmax[6];
 static void
 cache_fontmax (void)
 {
-  _swix (0x4009C /* Font_ReadFontMax */, _OUTR (0, 5),
+  _swix (Font_ReadFontMax, _OUTR (0, 5),
 	 &fontmax[0], &fontmax[1], &fontmax[2], &fontmax[3], &fontmax[4],
 	 &fontmax[5]);
 }
@@ -29,7 +38,7 @@ cache_fontmax (void)
 static void
 set_fontmax (int restore)
 {
-  _swix (0x4009B/* Font_SetFontMax */, _INR (0, 5),
+  _swix (Font_SetFontMax, _INR (0, 5),
 	 fontmax[0], fontmax[1], restore ? fontmax[2] : 0,
 	 restore ? fontmax[3] : 0, restore ? fontmax[4] : 0,
 	 restore ? fontmax[5] : 0);
@@ -49,8 +58,8 @@ sighandler (int signal)
 static _kernel_oserror *
 rmensure (const char *module, const char *file)
 {
-  return _swix (0x1E /* XOS_Module */ , 3, 18, module)
-       ? _swix (0x1E, 3, 1, file) : 0;
+  return _swix (OS_Module, _INR (0, 1), 18, module)
+       ? _swix (OS_Module, _INR (0, 1), 1, file) : 0;
 }
 
 
@@ -59,7 +68,7 @@ rmversion (const char *module)
 {
   const int *mod;
   const char *ver;
-  if (_swix (0x1E /* XOS_Module */ , 3 | 1 << 28, 18, module, &mod))
+  if (_swix (OS_Module, _INR (0, 1) | _OUT (3), 18, module, &mod))
     return 0;
   ver = (char *) mod + mod[5];	/* module help text & version */
   while (*ver && !isdigit (*ver))
@@ -87,7 +96,7 @@ check_font (const char *font)
     static char buffer[256];
     int fn = 1 << 16;
     do {
-      if (!_swix (0x40091 /* Font_ListFonts */, 0x3E | 1<<29,
+      if (!_swix (Font_ListFonts, _INR (1, 5) | _OUT (2),
 		  buffer, fn, 256, 0, 0,  &fn)) {
 	fontname_t *name = spr_malloc (5 + strlen (buffer),
 				       "Font name list");
@@ -249,7 +258,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   debug_puts ("Creating output sprite...");
 
   /* OS_SpriteOp create sprite; 24bit, 90dpi */
-  _swi (0x2E, 0x7F,  256+15, pixels, sprname, 0, width, height, 0x301680B5);
+  _swi (OS_SpriteOp, _INR (0, 6), 256+15, pixels, sprname, 0, width, height, 0x301680B5);
 
   pSprite = (sprite_t *) ((char *) pixels + 16);
   oSprite = (rgb_t *) ((char *) pSprite + pSprite->image);
@@ -288,10 +297,10 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     debug_printf ("Sprite slice: %li*%li, %li bytes\nCreating slice sprite...\n",
 		  spritex, sectiony, areasize);
 
-    _swi (0x2E, 0x7F, /* OS_SpriteOp create sprite; 24bit, 90dpi */
+    _swi (OS_SpriteOp, _INR (0, 6), /* OS_SpriteOp create sprite; 24bit, 90dpi */
 	  256+15, area, sprname, 0, spritex, sectiony, 0x301680B5);
   }
-  _swi (0x2E, 7,  256+29, area, sprname); /* OS_SpriteOp add mask */
+  _swi (OS_SpriteOp, _INR (0, 2), 256+29, area, sprname); /* OS_SpriteOp add mask */
 
   pSprite = (sprite_t *) ((char *) area + 16);
 
@@ -302,7 +311,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     infoblock[3] = 0;
     infoblock[4] = spritex * 256 * 8 / scale_x / mul;
     infoblock[5] = spritey * 256 * 8 / scale_y / mul;
-    _swix (0x400E5 /* XWimp_ReadPalette */ , 2, vduvars + 3);
+    _swix (Wimp_ReadPalette, 2, vduvars + 3);
   }
   tm.matrix[0] = scale_x * 65536 * mul;
   tm.matrix[3] = scale_y * 65536 * mul;
@@ -377,7 +386,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
 #ifdef DEBUG
     if (pass == 0)
-      _swi (0x2E, 7,  256+12, area, "<Wimp$ScrapDir>.d2s-work");
+      _swi (OS_SpriteOp, _INR (0, 2), 256+12, area, "<Wimp$ScrapDir>.d2s-work");
 #endif
 
     if ((simplemask & 1) == 0)
@@ -414,14 +423,14 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 	    oSprite[--i].alpha = 0;
 	  } while (i);
 	}
-	_swi (0x2E, 7,  256+30, area, sprname); /* OS_SpriteOp remove mask */
+	_swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
 	break;
       default: /*3*/
 	trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-	_swi (0x2E, 7,  256+30, area, sprname); /* OS_SpriteOp remove mask */
+	_swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
     }
   else if (simplemask & 2)
-    _swi (0x2E, 7,  256+30, area, sprname); /* OS_SpriteOp remove mask */
+    _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
 
   if (simplemask & 1)
     debug_printf ("Image is at %p\n", pixels);
@@ -455,7 +464,7 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
       && rmensure ("DrawFile", "System:Modules.Toolbox.Drawfile"))
     fail (fail_OS_ERROR, "failed to load the DrawFile module");
 
-  onerr (_swix (0x45541 /* DrawFile_BBox */, 0x1F,
+  onerr (_swix (DrawFile_BBox, _INR (0, 4),
 		0, data, nSize, &tm, &box));
 
   tm.x = -box.min.x * scale_x;
@@ -526,7 +535,7 @@ convertartworks (const void *data, size_t nSize, int simplemask,
       fail (fail_NO_AWRENDER,
 	    "failed to load the Artworks renderer modules");
   } else {
-    _kernel_oserror *err = _swix (5, 1, "LoadArtWorksModules");
+    _kernel_oserror *err = _swix (OS_CLI, _IN (0), "LoadArtWorksModules");
     if (err)
       fail (fail_NO_AWRENDER, err->errmess);
   }
@@ -541,7 +550,7 @@ convertartworks (const void *data, size_t nSize, int simplemask,
   if (err)
     fail (fail_BAD_IMAGE, err->errmess);
   // "the file version is too old for this ArtworksRenderer module");
-  err = _swix (0x46082 /* XAWRender_DocBounds */ , 1 | 15 << 26,
+  err = _swix (AWRender_DocBounds, _IN (0) | _OUTR (2, 5),
 	       data, &box.min.x, &box.min.y, &box.max.x, &box.max.y);
   if (err)
     fail (fail_BAD_IMAGE, err->errmess);
@@ -558,7 +567,7 @@ convertartworks (const void *data, size_t nSize, int simplemask,
   if (!simplemask && renderlevel > 100)
     renderlevel = 100;
 
-  _swix (0x46084 /* AWRender_ClaimVectors */, 0);
+  _swix (AWRender_ClaimVectors, 0);
   return do_render (data, nSize, simplemask, invert, scale_x, scale_y,
 		    renderlevel + 1, background, trim,
 		    std_sighandler, main_j);

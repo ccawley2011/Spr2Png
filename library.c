@@ -113,7 +113,7 @@ int
 readtype (const char *file)	/* -2 if not found, -1 if untyped */
 {
   int found, type;
-  onerr (_swix (8, 3U | 1U << 31 | 1U << 25, 23, file, &found, &type));
+  onerr (_swix (OS_File, _INR (0, 1) | _OUT (0) | _OUT (6), 23, file, &found, &type));
   return found ? type : -2;
 }
 
@@ -177,10 +177,10 @@ readfloat (const char **p)
 static _kernel_oserror *
 commandwindow (const char *title)
 {
-  return _swix (0x400EF, 1, title);
+  return _swix (Wimp_CommandWindow, _IN (0), title);
 }
 #else
-__swi (0x600EF)
+__swi (Wimp_CommandWindow)
      _kernel_oserror *commandwindow (const char *title);
 #endif
 
@@ -195,7 +195,7 @@ kill_commandwindow (void)
 int
 init_task (const char *task, const char *title)
 {
-  int istask = !_swix (0x400C0, 15, 310, 0x4B534154, task, 0);
+  int istask = !_swix (Wimp_Initialise, _INR (0, 3), 310, 0x4B534154, task, 0);
   if (istask && !commandwindow (title))
     atexit (kill_commandwindow);
   return istask;

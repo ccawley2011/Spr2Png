@@ -38,7 +38,7 @@ shutdown (void)
     return;
   recur = 1;
   render_shutdown ();
-  _swi (0x406C1, 0);		/* Hourglass_Off */
+  _swi (Hourglass_Off, 0);
 }
 
 
@@ -131,8 +131,8 @@ main (int argc, const char *const argv[])
       {
 	int *regdump, *os_regdump;
 	const char *msg = 0;
-	_swix (0x40, 15 | 1 << 28, 7, 0, 0, 0, &regdump);
-	_swix (0x40, 15 | 1 << 30, 13, 0, 0, 0, &os_regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (3), 7, 0, 0, 0, &regdump);
+	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (1), 13, 0, 0, 0, &os_regdump);
 	if (regdump && os_regdump)
 	  memcpy (os_regdump, regdump, 64);
 	switch (sigerr.errnum & 0xFFFFFF)
@@ -163,7 +163,7 @@ main (int argc, const char *const argv[])
 
   setsignal (sighandler);
 
-  wimpstate = _swi (0x43380 /* TaskWindow_TaskInfo */ , 1, 0);
+  wimpstate = _swi (TaskWindow_TaskInfo, _IN (0) | _RETURN (0), 0);
   if (!wimpstate)		/* not in a taskwindow */
     init_task ("Draw2Spr backend", argv[0]);
   /* no complaint yet - we want to allow --help and --version */
@@ -363,7 +363,7 @@ main (int argc, const char *const argv[])
 
   heap_init ("Draw2Spr workspace");
 
-  _swi (0x406C0, 1, 0);		/* Hourglass_On */
+  _swi (Hourglass_On, _IN (0), 0);
 
   ifp = fopen (from, "rb");
   if (ifp == NULL)
@@ -401,7 +401,7 @@ main (int argc, const char *const argv[])
     puts ("Writing file...");
 
   {
-    _kernel_oserror *err = _swix (0x2E, 7, 256 + 12, image, to);
+    _kernel_oserror *err = _swix (OS_SpriteOp, _INR (0, 2), 256 + 12, image, to);
     if (err)
       fail (fail_OS_ERROR, err->errmess);
   }
