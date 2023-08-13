@@ -16,17 +16,17 @@
 {
 #ifdef DEBUG
   static const int print_fn_name_code[] = {
-    0xE92D4001, /*	STMFD	r13!,{r0,r14}		*/
-    0xE59BE000, /*	LDR	r14,[r11,#0]		*/
-    0xE3CEE3FF, /*	BIC	r14,r14,#&FC000003	*/
-    0xE53E0004, /* loop	LDR	r0,[r14,#-4]!		*/
-    0xE35004FF, /*	CMP	r0,#&FF000000		*/
-    0x3AFFFFFC, /*	BCC	loop			*/
-    0xE3C004FF, /*	BIC	r0,r0,#&FF000000	*/
-    0xE04E0000, /*	SUB	r0,r14,r0		*/
-    0xEF000002, /*	SWI	OS_Write0		*/
-    0xEF000003, /*	SWI	OS_NewLine		*/
-    0xE8FD8001  /*	LDMFD	r13!,{r0,pc}^		*/
+    0xE92D4001, /*      STMFD   r13!,{r0,r14}           */
+    0xE59BE000, /*      LDR     r14,[r11,#0]            */
+    0xE3CEE3FF, /*      BIC     r14,r14,#&FC000003      */
+    0xE53E0004, /* loop LDR     r0,[r14,#-4]!           */
+    0xE35004FF, /*      CMP     r0,#&FF000000           */
+    0x3AFFFFFC, /*      BCC     loop                    */
+    0xE3C004FF, /*      BIC     r0,r0,#&FF000000        */
+    0xE04E0000, /*      SUB     r0,r14,r0               */
+    0xEF000002, /*      SWI     OS_Write0               */
+    0xEF000003, /*      SWI     OS_NewLine              */
+    0xE8FD8001  /*      LDMFD   r13!,{r0,pc}^           */
   };
   static void (*const print_fn_name)(void) = (void (*)()) print_fn_name_code;
 #endif
@@ -72,16 +72,16 @@
 #ifdef ALPHA
     while (x)
       if (INDEX (ptr, --x).alpha != 0)
-	goto do_lower_trim;
+        goto do_lower_trim;
 #else
     if (alpha) {
       while (x)
-	if (mptr[--x])
-	  goto do_lower_trim;
+        if (mptr[--x])
+          goto do_lower_trim;
     } else {
       while (x)
-	if (!MATCH (INDEX (ptr, --x)))
-	  goto do_lower_trim;
+        if (!MATCH (INDEX (ptr, --x)))
+          goto do_lower_trim;
     }
 #endif /* ALPHA */
   } while (++y < height);
@@ -108,16 +108,16 @@ do_lower_trim:
 #ifdef ALPHA
     while (x)
       if (INDEX (ptr, --x).alpha != 0)
-	goto do_upper_trim;
+        goto do_upper_trim;
 #else
     if (alpha) {
       while (x)
-	if (mptr[--x])
-	  goto do_upper_trim;
+        if (mptr[--x])
+          goto do_upper_trim;
     } else {
       while (x)
-	if (!MATCH (INDEX (ptr, --x)))
-	  goto do_upper_trim;
+        if (!MATCH (INDEX (ptr, --x)))
+          goto do_upper_trim;
     }
 #endif /* ALPHA */
     ptr = ADD (ptr, rwidth);
@@ -153,15 +153,15 @@ do_upper_trim:
 #else
     if (alpha)
       while (xx < trimleft && mptr[xx] == 0)
-	xx++;
+        xx++;
     else
       while (xx < trimleft && MATCH (INDEX (ptr, xx)))
-	xx++;
+        xx++;
 #endif /* ALPHA */
     if (xx < trimleft) {
       trimleft = xx;
       if (!trimleft)
-	break;
+        break;
     }
     ptr = ADD (ptr, rwidth);
 #ifndef ALPHA
@@ -186,16 +186,16 @@ do_upper_trim:
 #else
     if (alpha)
       while (--xx >= 0 && mptr[xx] == 0)
-	;
+        ;
     else
       while (--xx >= 0 && MATCH (INDEX (ptr, xx)))
-	;
+        ;
 #endif /* ALPHA */
     xx = width - 1 - xx;
     if (xx < x) {
       x = xx;
       if (!x)
-	break;
+        break;
     }
     ptr = ADD (ptr, rwidth);
 #ifndef ALPHA
@@ -226,9 +226,9 @@ do_upper_trim:
       mdest = alpha;
       mptr = mask + trimleft;
       for (y = height; y; --y) {
-	memmove (mdest, mptr, width);
-	mdest += nmwidth;
-	mptr += mwidth;
+        memmove (mdest, mptr, width);
+        mdest += nmwidth;
+        mptr += mwidth;
       }
     }
 #endif

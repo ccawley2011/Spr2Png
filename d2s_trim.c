@@ -4,7 +4,7 @@
 #include "d2s_lib.h"
 
 void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
-		   int inverse)
+                   int inverse)
 {
   int x, y;
   rgb_t *ptr;
@@ -27,12 +27,12 @@ void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
     x = width;
     if (simple) {
       while (x)
-	if (--x, (mask[x/8] & 1<<(x & 7)) == 0)
-	  goto do_lower_trim;
+        if (--x, (mask[x/8] & 1<<(x & 7)) == 0)
+          goto do_lower_trim;
     } else {
       while (x)
-	if (ptr[--x].alpha != clear)
-	  goto do_lower_trim;
+        if (ptr[--x].alpha != clear)
+          goto do_lower_trim;
     }
   } while (++y < height);
   /* we'll only reach this point if the image is completely masked out */
@@ -54,12 +54,12 @@ do_lower_trim:
     x = width;
     if (simple) {
       while (x)
-	if (--x, (mask[x/8] & 1<<(x & 7)) == 0)
-	  goto do_upper_trim;
+        if (--x, (mask[x/8] & 1<<(x & 7)) == 0)
+          goto do_upper_trim;
     } else {
       while (x)
-	if (ptr[--x].alpha != clear)
-	  goto do_upper_trim;
+        if (ptr[--x].alpha != clear)
+          goto do_upper_trim;
     }
     ptr += width;
     mask += mwidth;
@@ -83,14 +83,14 @@ do_upper_trim:
     int xx = 0;
     if (simple)
       while (xx < x && (mask[xx/8] & 1<<(xx & 7)))
-	xx++;
+        xx++;
     else
       while (xx < x && ptr[xx].alpha == clear)
-	xx++;
+        xx++;
     if (xx < x) {
       x = xx;
       if (!x)
-	break;
+        break;
     }
     ptr += width;
     mask += mwidth;
@@ -112,15 +112,15 @@ do_upper_trim:
     int xx = width;
     if (simple)
       while (--xx >= 0 && (mask[xx/8] & 1<<(xx & 7)))
-	;
+        ;
     else
       while (--xx >= 0 && ptr[xx].alpha == clear)
-	;
+        ;
     xx = width - xx - 1;
     if (xx < x) {
       x = xx;
       if (!x)
-	break;
+        break;
     }
     ptr += width;
     mask += mwidth;

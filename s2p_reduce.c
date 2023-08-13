@@ -32,9 +32,9 @@ reducetogrey (long *image, char *mask, int rgba)
     for (y = height * width - 1; y >= 0; --y)
       if (!(im[y].alpha && im[y].r == im[y].g && im[y].r == im[y].b))
       {
-	if (verbose)
-	  puts ("Image cannot be reduced to greyscale");
-	return 0;
+        if (verbose)
+          puts ("Image cannot be reduced to greyscale");
+        return 0;
       }
   }
   else if (mask)
@@ -46,13 +46,13 @@ reducetogrey (long *image, char *mask, int rgba)
     {
       for (x = width; x; --x)
       {
-	if (*m++ && !(i->r == i->g && i->r == i->b))
-	{
-	  if (verbose)
-	    puts ("Image cannot be reduced to greyscale");
-	  return 0;
-	}
-	i++;
+        if (*m++ && !(i->r == i->g && i->r == i->b))
+        {
+          if (verbose)
+            puts ("Image cannot be reduced to greyscale");
+          return 0;
+        }
+        i++;
       }
       m = (char *) (((int) m + 3) & ~3);
     }
@@ -63,9 +63,9 @@ reducetogrey (long *image, char *mask, int rgba)
     for (y = height * width - 1; y >= 0; --y)
       if (!(im[y].r == im[y].g && im[y].r == im[y].b))
       {
-	if (verbose)
-	  puts ("Image cannot be reduced to greyscale");
-	return 0;
+        if (verbose)
+          puts ("Image cannot be reduced to greyscale");
+        return 0;
       }
   }
 
@@ -75,10 +75,10 @@ reducetogrey (long *image, char *mask, int rgba)
     {
       for (x = width; x; --x)
       {
-	imret[1] = im->alpha;
-	imret[0] = im->r;
-	imret += 2;
-	im += 1;
+        imret[1] = im->alpha;
+        imret[0] = im->r;
+        imret += 2;
+        im += 1;
       }
       if ((int) imret & 2)
         imret += 2;
@@ -88,13 +88,13 @@ reducetogrey (long *image, char *mask, int rgba)
     {
       for (x = width; x; --x)
       {
-	imret[1] = *mask++;
-	imret[0] = im->r;
-	imret += 2;
-	im += 1;
+        imret[1] = *mask++;
+        imret[0] = im->r;
+        imret += 2;
+        im += 1;
       }
       if ((int) imret & 2)
-	imret += 2;
+        imret += 2;
       mask = (char *) (((int) mask + 3) & ~3);
     }
   else
@@ -102,11 +102,11 @@ reducetogrey (long *image, char *mask, int rgba)
     {
       for (x = width; x; --x)
       {
-	*imret++ = im->r;
-	im += 1;
+        *imret++ = im->r;
+        im += 1;
       }
       if ((int) imret & 3)
-	imret = (char *)((int) imret + 3 & ~3);
+        imret = (char *)((int) imret + 3 & ~3);
     }
   if (verbose)
     puts ("Image successfully reduced to greyscale");
@@ -162,6 +162,6 @@ png_color_8 significantbits (long *image)
 
   if (verbose)
     printf ("Significant bits: r %i, g %i, b %i\n", ret.red, ret.green,
-	    ret.blue);
+            ret.blue);
   return ret;
 }

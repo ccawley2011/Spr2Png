@@ -6,10 +6,10 @@
 
 const char imagetype[2 /*alpha */ ][2 /*grey */ ][6 /*bpp */ ] =
 {
-  { {3, 3, 3, 3, 2, 2},		/* no alpha, no grey */
-    {0, 0, 0, 0, 2, 2} },	/* no alpha, grey */
-  { {3, 3, 3, 3, 6, 6},		/* alpha, no grey */
-    {4, 4, 4, 4, 6, 6} }	/* alpha, grey */
+  { {3, 3, 3, 3, 2, 2},         /* no alpha, no grey */
+    {0, 0, 0, 0, 2, 2} },       /* no alpha, grey */
+  { {3, 3, 3, 3, 6, 6},         /* alpha, no grey */
+    {4, 4, 4, 4, 6, 6} }        /* alpha, grey */
 };
 
 

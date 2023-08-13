@@ -49,32 +49,32 @@ static int getcolours(
 #endif
       if (colour) {
         /* binary search */
-	int p=colour, m=0, b=0;
-	while (p) {
-	  m = b + p/2;
-	  if (j == palette[m].i)
-	    goto result;
-	  if (j > palette[m].i) {
-	    b = m + 1;
-	    p -= (p>>1) + 1;
-	  } else {
-	    p >>= 1;
-	  }
-	}
-	/* make sure we're pointing at a larger value */
-	if (j > palette[m].i)
-	  m++;
-	if (colour == 256)
-	  goto failed;
-	/* shuffle the 'higher' colour values up */
-	p = colour;
-	while (p > m) {
-	  palette[p].i = palette[p-1].i;
-	  p--;
-	}
-	palette[m].i = j;
+        int p=colour, m=0, b=0;
+        while (p) {
+          m = b + p/2;
+          if (j == palette[m].i)
+            goto result;
+          if (j > palette[m].i) {
+            b = m + 1;
+            p -= (p>>1) + 1;
+          } else {
+            p >>= 1;
+          }
+        }
+        /* make sure we're pointing at a larger value */
+        if (j > palette[m].i)
+          m++;
+        if (colour == 256)
+          goto failed;
+        /* shuffle the 'higher' colour values up */
+        p = colour;
+        while (p > m) {
+          palette[p].i = palette[p-1].i;
+          p--;
+        }
+        palette[m].i = j;
       } else {
-	palette[0].i = j;
+        palette[0].i = j;
       }
       colour++;
 result:;
@@ -91,7 +91,7 @@ result:;
   for (y = 0; y < colour; ++y)
 # ifdef WITH_ALPHA
     if (bgndindex == -1
-	&& ((palette[y].i & 0xFFFFFF) == bgnd || palette[y].i == 0)) {
+        && ((palette[y].i & 0xFFFFFF) == bgnd || palette[y].i == 0)) {
       bgndindex = y; break;
     }
 # else

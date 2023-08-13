@@ -30,8 +30,8 @@ static void
 cache_fontmax (void)
 {
   _swix (Font_ReadFontMax, _OUTR (0, 5),
-	 &fontmax[0], &fontmax[1], &fontmax[2], &fontmax[3], &fontmax[4],
-	 &fontmax[5]);
+         &fontmax[0], &fontmax[1], &fontmax[2], &fontmax[3], &fontmax[4],
+         &fontmax[5]);
 }
 
 
@@ -39,9 +39,9 @@ static void
 set_fontmax (int restore)
 {
   _swix (Font_SetFontMax, _INR (0, 5),
-	 fontmax[0], fontmax[1], restore ? fontmax[2] : 0,
-	 restore ? fontmax[3] : 0, restore ? fontmax[4] : 0,
-	 restore ? fontmax[5] : 0);
+         fontmax[0], fontmax[1], restore ? fontmax[2] : 0,
+         restore ? fontmax[3] : 0, restore ? fontmax[4] : 0,
+         restore ? fontmax[5] : 0);
 }
 
 
@@ -70,7 +70,7 @@ rmversion (const char *module)
   const char *ver;
   if (_swix (OS_Module, _INR (0, 1) | _OUT (3), 18, module, &mod))
     return 0;
-  ver = (char *) mod + mod[5];	/* module help text & version */
+  ver = (char *) mod + mod[5];  /* module help text & version */
   while (*ver && !isdigit (*ver))
     ver++;
   return readfloat (&ver) * 100;
@@ -79,7 +79,7 @@ rmversion (const char *module)
 
 typedef struct FONTNAME_T {
   struct FONTNAME_T *next;
-  char name[1];			/* placeholder */
+  char name[1];                 /* placeholder */
 } fontname_t;
 
 
@@ -97,12 +97,12 @@ check_font (const char *font)
     int fn = 1 << 16;
     do {
       if (!_swix (Font_ListFonts, _INR (1, 5) | _OUT (2),
-		  buffer, fn, 256, 0, 0,  &fn)) {
-	fontname_t *name = spr_malloc (5 + strlen (buffer),
-				       "Font name list");
-	name->next = namelist;
-	namelist = name;
-	strcpy (name->name, buffer);
+                  buffer, fn, 256, 0, 0,  &fn)) {
+        fontname_t *name = spr_malloc (5 + strlen (buffer),
+                                       "Font name list");
+        name->next = namelist;
+        namelist = name;
+        strcpy (name->name, buffer);
       }
     } while (fn != -1);
   }
@@ -127,7 +127,7 @@ check_font (const char *font)
 
 static void
 antialias (const rgb_t * srcBits, const png_byte * maskBits,
-	   rgb_t * destBits, long background, long w, long h, int nomask)
+           rgb_t * destBits, long background, long w, long h, int nomask)
 {
   long x, y, i, j;
   long mw = (4 * w + 31 & ~31) / 8;
@@ -138,81 +138,81 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
     { 4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 2, 1, 2, 1, 1, 0 };
 
   debug_printf ("Antialiasing...\nSrc =%p\nMask=%p\nDest=%p\nw   =%li\nh   =%li\n",
-		srcBits, maskBits, destBits, w, h);
+                srcBits, maskBits, destBits, w, h);
 
   for (y = h; y; --y) {
     for (x = 0; x < w; ++x) {
       const rgb_t *img = srcBits + x * 4;
       const png_byte *mask = maskBits + x / 2;
       if (x & 1) {
-	m[0] = mask[0]	 >>4; m[1] = mask[mw]>>4;
-	m[2] = mask[2*mw]>>4; m[3] = mask[3*mw]>>4;
+        m[0] = mask[0]   >>4; m[1] = mask[mw]>>4;
+        m[2] = mask[2*mw]>>4; m[3] = mask[3*mw]>>4;
       } else {
-	m[0] = mask[0]	 &15; m[1] = mask[mw]&15;
-	m[2] = mask[2*mw]&15; m[3] = mask[3*mw]&15;
+        m[0] = mask[0]   &15; m[1] = mask[mw]&15;
+        m[2] = mask[2*mw]&15; m[3] = mask[3*mw]&15;
       }
       t = mconv[m[0]]+mconv[m[1]]+mconv[m[2]]+mconv[m[3]];
       if (t && nomask) {
-	t = 16;
-	m[3] = m[2] = m[1] = m[0] = 0;
+        t = 16;
+        m[3] = m[2] = m[1] = m[0] = 0;
       }
       destBits->alpha = t == 16 ? 255 : t << 4;
       if (t) {
-	int r = 0, g = 0, b = 0;
-	img += 16 * w;
-	for (j = 3; j >= 0; --j) {
-	  img -= 4 * w;
-	  for (i = 3; i >= 0; --i) {
-	    if (!(m[j] & 1 << i)) {
-	      r += img[i].r;
-	      g += img[i].g;
-	      b += img[i].b;
-	    }
-	  }
-	}
-	switch (t) {		/* for speed */
-	case 1:
-	  destBits->r = r / 1;
-	  destBits->g = g / 1;
-	  destBits->b = b / 1;
-	  break;
-	case 2:
-	  destBits->r = r / 2;
-	  destBits->g = g / 2;
-	  destBits->b = b / 2;
-	  break;
-	case 4:
-	  destBits->r = r / 4;
-	  destBits->g = g / 4;
-	  destBits->b = b / 4;
-	  break;
-	case 8:
-	  destBits->r = r / 8;
-	  destBits->g = g / 8;
-	  destBits->b = b / 8;
-	  break;
-	case 16:
-	  destBits->r = r / 16;
-	  destBits->g = g / 16;
-	  destBits->b = b / 16;
-	  break;
-	case 10:
-	  destBits->r = r / 10;
-	  destBits->g = g / 10;
-	  destBits->b = b / 10;
-	  break;
-	default:
-	  destBits->r = r / t;
-	  destBits->g = g / t;
-	  destBits->b = b / t;
-	  break;
-	}
+        int r = 0, g = 0, b = 0;
+        img += 16 * w;
+        for (j = 3; j >= 0; --j) {
+          img -= 4 * w;
+          for (i = 3; i >= 0; --i) {
+            if (!(m[j] & 1 << i)) {
+              r += img[i].r;
+              g += img[i].g;
+              b += img[i].b;
+            }
+          }
+        }
+        switch (t) {            /* for speed */
+        case 1:
+          destBits->r = r / 1;
+          destBits->g = g / 1;
+          destBits->b = b / 1;
+          break;
+        case 2:
+          destBits->r = r / 2;
+          destBits->g = g / 2;
+          destBits->b = b / 2;
+          break;
+        case 4:
+          destBits->r = r / 4;
+          destBits->g = g / 4;
+          destBits->b = b / 4;
+          break;
+        case 8:
+          destBits->r = r / 8;
+          destBits->g = g / 8;
+          destBits->b = b / 8;
+          break;
+        case 16:
+          destBits->r = r / 16;
+          destBits->g = g / 16;
+          destBits->b = b / 16;
+          break;
+        case 10:
+          destBits->r = r / 10;
+          destBits->g = g / 10;
+          destBits->b = b / 10;
+          break;
+        default:
+          destBits->r = r / t;
+          destBits->g = g / t;
+          destBits->b = b / t;
+          break;
+        }
       } else {
-	*(long *) destBits = background;
+        *(long *) destBits = background;
       }
       destBits++;
     }
-    srcBits += w * 4 * 4;	/* four rows */
+    srcBits += w * 4 * 4;       /* four rows */
     if (maskBits)
       maskBits += mw * 4;
   }
@@ -221,8 +221,8 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
 
 static void *
 do_render (const void *data, size_t nSize, int simplemask, int invert,
-	   double scale_x, double scale_y, int type, long background,
-	   int trim, void (*std_sighandler) (int), jmp_buf main_j)
+           double scale_x, double scale_y, int type, long background,
+           int trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
   long spritex, spritey;
   long areasize;
@@ -237,7 +237,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
 /* simplemask:
  *  0 : antialias + mask
- *  1 :		    mask
+ *  1 :             mask
  *  2 : antialias
  *  3 : .
  */
@@ -245,9 +245,9 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   debug_printf ("Image size = %li,%li\nBbox = %li,%li,%li,%li\nClaiming memory for output image...\n", width, height, box.min.x, box.min.y, box.max.x, box.max.y);
 
   areasize = sizeof (sprite_t) + sizeof (spritearea_t) + height *
-	     ((simplemask & 1)
-	      ? (width * 4 + (width + 31 & ~31) / 2)
-	      : (width * 16 + (width + 31 & ~31) / 2));
+             ((simplemask & 1)
+              ? (width * 4 + (width + 31 & ~31) / 2)
+              : (width * 16 + (width + 31 & ~31) / 2));
   pixels = spr_malloc ((int) areasize, "Output image");
   if (!pixels)
     fail (fail_NO_MEM, "not enough memory to convert %s file", filetype);
@@ -279,12 +279,12 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     for (passes = 1; passes < 65; passes *= 2) {
       sectiony = ((height + passes - 1) / passes) * 4;
       areasize = sectiony * (spritex * 4 + (spritex + 31 & ~31) / 8)
-		 + sizeof (sprite_t) + sizeof (spritearea_t);
+                 + sizeof (sprite_t) + sizeof (spritearea_t);
       if (!sectiony)
-	break;
+        break;
       area = heap_malloc ((int) areasize);
       if (area || type /* kludge to get around Artworks problem */)
-	break;
+        break;
     }
 
     if (!area)
@@ -295,16 +295,16 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     area->first = area->free = 16;
 
     debug_printf ("Sprite slice: %li*%li, %li bytes\nCreating slice sprite...\n",
-		  spritex, sectiony, areasize);
+                  spritex, sectiony, areasize);
 
     _swi (OS_SpriteOp, _INR (0, 6), /* OS_SpriteOp create sprite; 24bit, 90dpi */
-	  256+15, area, sprname, 0, spritex, sectiony, 0x301680B5);
+          256+15, area, sprname, 0, spritex, sectiony, 0x301680B5);
   }
   _swi (OS_SpriteOp, _INR (0, 2), 256+29, area, sprname); /* OS_SpriteOp add mask */
 
   pSprite = (sprite_t *) ((char *) area + 16);
 
-  if (type) {			/* Artworks */
+  if (type) {                   /* Artworks */
     infoblock[0] = 0;
     infoblock[1] = 0;
     infoblock[2] = 0;
@@ -346,7 +346,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
       int i = (pSprite->size - pSprite->image) / sizeof (long);
       long *ptr = (long *) ((char *) pSprite + pSprite->image);
       do {
-	ptr[--i] = background | 0xFF000000;
+        ptr[--i] = background | 0xFF000000;
       } while (i);
     }
     if (type && spritex > 1024)
@@ -362,20 +362,20 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 #define AW_WIDTH_STEP (1024 * 256 * 8 / scale_x / mul)
       for (xoff = 0; xoff < spritex; xoff += 1024)
       {
-	infoblock[4] = xl + ++i * AW_WIDTH_STEP - 1;
-	if (infoblock[4] > xr)
-	  infoblock[4] = xr;
-	clip[2] = (char) (xoff >> 7);
-	clip[6] = clip[2] + 7;
-	if (clip[5] + clip[6] * 256 >= spritex * 2)
-	{
-	  clip[5] = (char) (spritex * 2 - 1);
-	  clip[6] = (char) ((spritex * 2 - 1) >> 8);
-	}
-	err = render (area, data, nSize, &tm, type, simplemask & 1,
-		      clip, sizeof (clip));
-	if (err)
-	  break;
+        infoblock[4] = xl + ++i * AW_WIDTH_STEP - 1;
+        if (infoblock[4] > xr)
+          infoblock[4] = xr;
+        clip[2] = (char) (xoff >> 7);
+        clip[6] = clip[2] + 7;
+        if (clip[5] + clip[6] * 256 >= spritex * 2)
+        {
+          clip[5] = (char) (spritex * 2 - 1);
+          clip[6] = (char) ((spritex * 2 - 1) >> 8);
+        }
+        err = render (area, data, nSize, &tm, type, simplemask & 1,
+                      clip, sizeof (clip));
+        if (err)
+          break;
       }
     }
     else
@@ -391,43 +391,43 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
     if ((simplemask & 1) == 0)
       antialias ((rgb_t *) ((char *) pSprite + pSprite->image),
-		 (png_byte *) pSprite + pSprite->mask,
-		 oSprite + offset * width, background, width, thisy,
-		 simplemask & 2);
+                 (png_byte *) pSprite + pSprite->mask,
+                 oSprite + offset * width, background, width, thisy,
+                 simplemask & 2);
   }
 
   if (trim)
     switch (simplemask) {
       case 0:
-	trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-	if (invert) {
-	  int i = width * height;
-	  do {
-	    oSprite[--i].alpha ^= 255;
-	  } while (i);
-	} break;
+        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
+        if (invert) {
+          int i = width * height;
+          do {
+            oSprite[--i].alpha ^= 255;
+          } while (i);
+        } break;
       case 1:
-	trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-	{
-	  int i = (width + 31 & ~31) / 32 * height;
-	  long *mask = (long *) ((char *) pSprite + pSprite->mask);
-	  do {
-	    mask[--i] ^= -1;
-	  } while (i);
-	} break;
+        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
+        {
+          int i = (width + 31 & ~31) / 32 * height;
+          long *mask = (long *) ((char *) pSprite + pSprite->mask);
+          do {
+            mask[--i] ^= -1;
+          } while (i);
+        } break;
       case 2:
-	trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-	{ /* kill the alpha channel */
-	  int i = width * height;
-	  do {
-	    oSprite[--i].alpha = 0;
-	  } while (i);
-	}
-	_swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
-	break;
+        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
+        { /* kill the alpha channel */
+          int i = width * height;
+          do {
+            oSprite[--i].alpha = 0;
+          } while (i);
+        }
+        _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
+        break;
       default: /*3*/
-	trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-	_swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
+        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
+        _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
     }
   else if (simplemask & 2)
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
@@ -450,8 +450,8 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
 void *
 convertdraw (const void *data, size_t nSize, int simplemask, int invert,
-	     double scale_x, double scale_y, long background, int trim,
-	     void (*std_sighandler) (int), jmp_buf main_j)
+             double scale_x, double scale_y, long background, int trim,
+             void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
   memcpy (main_jump, main_j, sizeof (jmp_buf));
 
@@ -465,7 +465,7 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
     fail (fail_OS_ERROR, "failed to load the DrawFile module");
 
   onerr (_swix (DrawFile_BBox, _INR (0, 4),
-		0, data, nSize, &tm, &box));
+                0, data, nSize, &tm, &box));
 
   tm.x = -box.min.x * scale_x;
   tm.y = -box.min.y * scale_y;
@@ -482,7 +482,7 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
     fail (fail_BAD_IMAGE, "cannot render an empty %s file!", "Draw");
 
   {
-    int end, i = 10;		/* point past header */
+    int end, i = 10;            /* point past header */
     const int *wdata = data;
     const char *cdata;
     while (i < nSize / 4 && wdata[i])
@@ -491,28 +491,28 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
       debug_printf ("[start of font object = %i]\n", i * 4);
       end = i * 4 + wdata[i + 1];
       if (end > nSize)
-	end = nSize;
+        end = nSize;
       i = i * 4 + 8;
       cdata = (const char *) wdata;
       debug_printf ("[end of font object = %i]\n", end);
       while (i < end && cdata[i]) {
-	debug_printf ("[file offset = %i]\n", i);
-	check_font (cdata + ++i);
-	while (cdata[i++]);
+        debug_printf ("[file offset = %i]\n", i);
+        check_font (cdata + ++i);
+        while (cdata[i++]);
       }
     }
   }
 
   return do_render (data, nSize, simplemask, invert, scale_x, scale_y,
-		    0, background, trim, std_sighandler, main_j);
+                    0, background, trim, std_sighandler, main_j);
 }
 
 
 void *
 convertartworks (const void *data, size_t nSize, int simplemask,
-		 int invert, double scale_x, double scale_y,
-		 int renderlevel, long background, int trim,
-		 void (*std_sighandler) (int), jmp_buf main_j)
+                 int invert, double scale_x, double scale_y,
+                 int renderlevel, long background, int trim,
+                 void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
   _kernel_oserror *err;
   const char *awload;
@@ -521,19 +521,19 @@ convertartworks (const void *data, size_t nSize, int simplemask,
 
   if (heap_malloc == malloc)
     fail (fail_OS_ERROR,
-	  "sorry, Artworks file rendering requires a dynamic area");
+          "sorry, Artworks file rendering requires a dynamic area");
 
   debug_puts ("RMEnsuring the Artworks modules...");
 
   awload = getenv ("Alias$LoadArtWorksModules");
   if (!awload || !awload[0]) {
     if (rmensure ("ImageExtend", "<CCShared$Dir>.RMStore.ImageExtnd")
-	|| rmensure ("DitherExtend", "<CCShared$Dir>.RMStore.DitherExt")
-	|| rmensure ("ArtworksRenderer", "<CCShared$Dir>.RMStore.AWRender")
-	|| rmensure ("GDraw", "<CCShared$Dir>.RMStore.GDraw")
-	|| rmensure ("FontDraw", "<CCShared$Dir>.RMStore.FontDraw"))
+        || rmensure ("DitherExtend", "<CCShared$Dir>.RMStore.DitherExt")
+        || rmensure ("ArtworksRenderer", "<CCShared$Dir>.RMStore.AWRender")
+        || rmensure ("GDraw", "<CCShared$Dir>.RMStore.GDraw")
+        || rmensure ("FontDraw", "<CCShared$Dir>.RMStore.FontDraw"))
       fail (fail_NO_AWRENDER,
-	    "failed to load the Artworks renderer modules");
+            "failed to load the Artworks renderer modules");
   } else {
     _kernel_oserror *err = _swix (OS_CLI, _IN (0), "LoadArtWorksModules");
     if (err)
@@ -542,7 +542,7 @@ convertartworks (const void *data, size_t nSize, int simplemask,
   if (rmversion ("DitherExtend") < 48 || rmversion ("GDraw") < 293
       || rmversion ("ArtworksRenderer") < 121)
     fail (fail_NO_AWRENDER,
-	  "sorry, your Artworks renderer modules can't cope with dynamic areas");
+          "sorry, your Artworks renderer modules can't cope with dynamic areas");
 
   /* check that it's an Artworks file */
 
@@ -551,7 +551,7 @@ convertartworks (const void *data, size_t nSize, int simplemask,
     fail (fail_BAD_IMAGE, err->errmess);
   // "the file version is too old for this ArtworksRenderer module");
   err = _swix (AWRender_DocBounds, _IN (0) | _OUTR (2, 5),
-	       data, &box.min.x, &box.min.y, &box.max.x, &box.max.y);
+               data, &box.min.x, &box.min.y, &box.max.x, &box.max.y);
   if (err)
     fail (fail_BAD_IMAGE, err->errmess);
 
@@ -569,6 +569,6 @@ convertartworks (const void *data, size_t nSize, int simplemask,
 
   _swix (AWRender_ClaimVectors, 0);
   return do_render (data, nSize, simplemask, invert, scale_x, scale_y,
-		    renderlevel + 1, background, trim,
-		    std_sighandler, main_j);
+                    renderlevel + 1, background, trim,
+                    std_sighandler, main_j);
 }

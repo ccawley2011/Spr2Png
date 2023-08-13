@@ -41,19 +41,19 @@ void frequency_sort(char *const image, rgb_t *const palette,
   for (x = simplemask; x < 255; x++)
     if (alpha) {
       for (y = x + 1; y < 256; y++)
-	if (alpha[y] < alpha[x]
-	    || (alpha[y] == alpha[x] && count[y]>count[x])) {
-	  SWAP (palette[y] ,palette[x], rgb_t);
-	  SWAP (count[y] ,count[x], int);
-	  SWAP (sort[y] ,sort[x], char);
-	  SWAP (alpha[y] ,alpha[x], char);
-	}
+        if (alpha[y] < alpha[x]
+            || (alpha[y] == alpha[x] && count[y]>count[x])) {
+          SWAP (palette[y] ,palette[x], rgb_t);
+          SWAP (count[y] ,count[x], int);
+          SWAP (sort[y] ,sort[x], char);
+          SWAP (alpha[y] ,alpha[x], char);
+        }
     } else {
       for (y = x + 1; y < 256; y++)
-	if (count[y] > count[x]) {
-	  SWAP(palette[y], palette[x], rgb_t);
-	  SWAP(count[y], count[x], int);
-	  SWAP(sort[y], sort[x], char);
+        if (count[y] > count[x]) {
+          SWAP(palette[y], palette[x], rgb_t);
+          SWAP(count[y], count[x], int);
+          SWAP(sort[y], sort[x], char);
       }
     }
   /* Now we build the forward mapping table */

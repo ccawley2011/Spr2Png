@@ -13,7 +13,7 @@
 
 long width, height;
 
-spritearea_t *sprites;		/* == unsigned char */
+spritearea_t *sprites;          /* == unsigned char */
 
 wksp_t wksp;
 
@@ -41,8 +41,8 @@ err_report (void)
 {
   wksp.unused[0] = 0; /* set error number */
   _swix (Wimp_ReportError, _INR (0,5),
-	 wksp._msg, caller_sprite ? 0x109 : 1, caller_name,
-	 caller_sprite, 1, 0);
+         wksp._msg, caller_sprite ? 0x109 : 1, caller_name,
+         caller_sprite, 1, 0);
 }
 
 
@@ -57,51 +57,51 @@ fail (int ret, const char *msg, ...)
     {
       int task;
       if (_swix (Wimp_ReadSysInfo, _IN (0) | _OUT (0), 5, &task))
-	task = 0;
+        task = 0;
       if (!task)
-	caller_name = 0;
+        caller_name = 0;
     }
  */
   if (msg)
     {
       if (caller_name)
-	{
-	  va_start (args, msg);
-	  vsprintf (wksp._msg + 4, msg, args);
-	  va_end (args);
-	  if (islower (msg[0]))
-	    wksp._msg[4] = toupper (msg[0]);
-	  err_report ();
-	}
+        {
+          va_start (args, msg);
+          vsprintf (wksp._msg + 4, msg, args);
+          va_end (args);
+          if (islower (msg[0]))
+            wksp._msg[4] = toupper (msg[0]);
+          err_report ();
+        }
       else
-	{
-	  fprintf (stderr, "%s: ", program_name);
-	  va_start (args, msg);
-	  vfprintf (stderr, msg, args);
-	  va_end (args);
-	  fprintf (stderr, "\n");
-	}
+        {
+          fprintf (stderr, "%s: ", program_name);
+          va_start (args, msg);
+          vfprintf (stderr, msg, args);
+          va_end (args);
+          fprintf (stderr, "\n");
+        }
     }
   else
     {
       _kernel_oserror *x = _kernel_last_oserror ();
       if (x)
-	{
-	  strcpy (wksp._msg, x->errmess);
-	  if (caller_name)
-	    err_report ();
-	  else
-	    fprintf (stderr, "%s: %s\n", program_name, wksp._msg);
-	}
+        {
+          strcpy (wksp._msg, x->errmess);
+          if (caller_name)
+            err_report ();
+          else
+            fprintf (stderr, "%s: %s\n", program_name, wksp._msg);
+        }
       else if (errno == 0)
-	abort ();
+        abort ();
       else if (caller_name)
-	{
-	  strcpy (wksp._msg + 4, strerror (errno));
-	  err_report ();
-	}
+        {
+          strcpy (wksp._msg + 4, strerror (errno));
+          err_report ();
+        }
       else
-	perror (0);
+        perror (0);
     }
   if (ret == fail_BAD_ARGUMENT && !caller_name)
     fprintf (stderr, "Try '%s --help' for more information.\n", program_name);
@@ -110,7 +110,7 @@ fail (int ret, const char *msg, ...)
 
 
 int
-readtype (const char *file)	/* -2 if not found, -1 if untyped */
+readtype (const char *file)     /* -2 if not found, -1 if untyped */
 {
   int found, type;
   onerr (_swix (OS_File, _INR (0, 1) | _OUT (0) | _OUT (6), 23, file, &found, &type));
@@ -146,7 +146,7 @@ argdup (const char *arg)
 
 double
 readfloat (const char **p)
-{				/* returns 0 on error */
+{                               /* returns 0 on error */
   const char *pp = *p;
   int value = 0;
   int dot = -1;
@@ -154,19 +154,19 @@ readfloat (const char **p)
     {
       char c = *pp++;
       if (isdigit (c))
-	{
-	  value = value * 10 + c - '0';
-	  if (dot != -1)
-	    dot++;
-	}
+        {
+          value = value * 10 + c - '0';
+          if (dot != -1)
+            dot++;
+        }
       else if (c == '.')
-	{
-	  if (dot != -1)
-	    return 0;
-	  dot = 0;
-	}
+        {
+          if (dot != -1)
+            return 0;
+          dot = 0;
+        }
       else
-	break;
+        break;
     }
   *p = pp - 1;
   return (dot < 0) ? value : (value / pow (10, dot));
@@ -217,20 +217,20 @@ argmatch (const optslist *args, const char *arg, const char **param)
       const char *c = opt->name;
       a = arg;
       while (*a == *c && *c)
-	{
-	  a++;
-	  c++;
-	}
+        {
+          a++;
+          c++;
+        }
       if (*a && *a != '=')
-	continue;
+        continue;
       i = a - arg;
       if (i && i == bestlen)
-	fail (fail_BAD_ARGUMENT, "ambiguous option --%s", argdup (arg));
+        fail (fail_BAD_ARGUMENT, "ambiguous option --%s", argdup (arg));
       if (i > bestlen)
-	{
-	  best = opt;
-	  bestlen = i;
-	}
+        {
+          best = opt;
+          bestlen = i;
+        }
     }
   if (!best)
     fail (fail_BAD_ARGUMENT, "unknown option --%s", argdup (arg));
@@ -241,13 +241,13 @@ argmatch (const optslist *args, const char *arg, const char **param)
     {
     case REQUIRED_PARAM:
       if (*a++ != '=')
-	fail (fail_BAD_ARGUMENT, "missing parameter for --%s", arg);
+        fail (fail_BAD_ARGUMENT, "missing parameter for --%s", arg);
       if (param)
-	*param = a;
+        *param = a;
       break;
     case OPTIONAL_PARAM:
       if (param)
-	*param = (*a == '=') ? (a + 1) : 0;
+        *param = (*a == '=') ? (a + 1) : 0;
     }
   return best->id;
 }

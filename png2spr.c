@@ -55,9 +55,9 @@ static void
 version (void)
 {
   printf ("%s %s © Darren Salt\n"
-	  "Uses libpng %s and zlib %s.\n"
-	  "For copyright information, see the png2spr help file.\n",
-	  program_name, program_version, png_libpng_ver, zlibVersion ());
+          "Uses libpng %s and zlib %s.\n"
+          "For copyright information, see the png2spr help file.\n",
+          program_name, program_version, png_libpng_ver, zlibVersion ());
   exit (0);
 }
 
@@ -81,7 +81,7 @@ help (void)
 "\n"
 "      --help                 display this help text then exit\n"
 "      --version              display the version number then exit\n",
-	  program_name);
+          program_name);
   exit (0);
 }
 
@@ -132,11 +132,11 @@ find_mask_type (png_bytep mask, int indent, int step)
   for (y = height; y; --y)
     {
       for (x = width; x; --x)
-	{
-	  int p = *mask; mask += step;
-	  if (p == 0) all255 = mask_SIMPLE;
-	  else if (p < 255) return mask_COMPLEX;
-	}
+        {
+          int p = *mask; mask += step;
+          if (p == 0) all255 = mask_SIMPLE;
+          else if (p < 255) return mask_COMPLEX;
+        }
       mask = (png_bytep) (((int) mask - indent + 3) & ~3) + indent;
     }
   return all255;
@@ -164,17 +164,17 @@ make1bpp (png_bytep mask, png_bytep spr, int step)
     {
       int b = 1, w = 0;
       for (x = width; x; --x)
-	{
-	  if (*(spr += step))
-	    w |= b;
-	  if ((b = b << 1) == 256)
-	    {
-	      *mask++ = w;
-	      b = 1; w = 0;
-	    }
-	}
+        {
+          if (*(spr += step))
+            w |= b;
+          if ((b = b << 1) == 256)
+            {
+              *mask++ = w;
+              b = 1; w = 0;
+            }
+        }
       if (b != 1)
-	*mask++ = w;
+        *mask++ = w;
       mask = (png_bytep) (((int) mask + 3) & ~3);
       spr = (png_bytep) (((int) spr + 4 - step) & ~3) + step - 1;
     }
@@ -194,60 +194,60 @@ make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type)
       png_uint_32p spr4 = (png_uint_32p) ((char *) spr_ptr + spr_ptr->image);
       debug_printf ("Simple mask, 24bit (&%06X)\n", trns.colour);
       for (y = height; y; --y)
-	{
-	  int b = 1, w = 0;
-	  for (x = width; x; --x)
-	    {
-	      if (*spr4++ != trns.colour)
-		w |= b;
-	      if ((b = b << 1) == 256)
-		{
-		  *mask++ = w;
-		  b = 1; w = 0;
-		}
-	    }
-	  if (b != 1)
-	    *mask++ = w;
-	  mask = (png_bytep) (((int) mask + 3) & ~3);
-	}
+        {
+          int b = 1, w = 0;
+          for (x = width; x; --x)
+            {
+              if (*spr4++ != trns.colour)
+                w |= b;
+              if ((b = b << 1) == 256)
+                {
+                  *mask++ = w;
+                  b = 1; w = 0;
+                }
+            }
+          if (b != 1)
+            *mask++ = w;
+          mask = (png_bytep) (((int) mask + 3) & ~3);
+        }
     }
   else
     {
       png_bytep spr = (png_bytep) spr_ptr + spr_ptr->image;
       int pb = (1 << bit_depth) - 1;
       debug_printf
-	("Simple mask, %ibit (&%02X, mask = &%02X, colour type = %i)\n",
-	 bit_depth, trns.colour, pb, colour_type);
+        ("Simple mask, %ibit (&%02X, mask = &%02X, colour type = %i)\n",
+         bit_depth, trns.colour, pb, colour_type);
       for (y = height; y; --y)
-	{
-	  int b = 1, w = 0, ps = 0, c = *spr++;
-	  for (x = width; x; --x)
-	    {
-	      int cc = (c >> ps) & pb;
-	      ps += bit_depth;
-	      if (ps == 8)
-		{
-		  ps = 0;
-		  c = *spr++;
-		}
-	      switch (trns.len)
-		{
-		case 0:  if (cc != trns.colour) w |= b; break;
-		default: if (cc >= trns.len || trns.list[cc]) w |= b;
-		}
-	      if ((b = b << 1) == 256)
-		{
-		  *mask++ = w;
-		  b = 1; w = 0;
-		}
-	    }
-	  if (b != 1)
-	    *mask++ = w;
-	  if (!ps)
-	    spr--;
-	  mask = (png_bytep) (((int) mask + 3) & ~3);
-	  spr = (png_bytep) (((int) spr + 3) & ~3);
-	}
+        {
+          int b = 1, w = 0, ps = 0, c = *spr++;
+          for (x = width; x; --x)
+            {
+              int cc = (c >> ps) & pb;
+              ps += bit_depth;
+              if (ps == 8)
+                {
+                  ps = 0;
+                  c = *spr++;
+                }
+              switch (trns.len)
+                {
+                case 0:  if (cc != trns.colour) w |= b; break;
+                default: if (cc >= trns.len || trns.list[cc]) w |= b;
+                }
+              if ((b = b << 1) == 256)
+                {
+                  *mask++ = w;
+                  b = 1; w = 0;
+                }
+            }
+          if (b != 1)
+            *mask++ = w;
+          if (!ps)
+            spr--;
+          mask = (png_bytep) (((int) mask + 3) & ~3);
+          spr = (png_bytep) (((int) spr + 3) & ~3);
+        }
     }
 }
 
@@ -283,10 +283,10 @@ read_png(FILE *fp)
   if (setjmp (png_jmpbuf(png_ptr)))
     {
       if (fp)
-	{
-	  fclose (fp);
-	  fp = 0;
-	}
+        {
+          fclose (fp);
+          fp = 0;
+        }
       fail (fail_LIBPNG_FAIL, 0);
     }
 
@@ -298,8 +298,8 @@ read_png(FILE *fp)
   debug_puts ("Initialising image reading...");
 
   png_get_IHDR (png_ptr, info_ptr, (png_uint_32 *) &width,
-		(png_uint_32 *) &height, &obit_depth, &colour_type,
-		&interlace_type, NULL, NULL);
+                (png_uint_32 *) &height, &obit_depth, &colour_type,
+                &interlace_type, NULL, NULL);
   bit_depth = obit_depth;
   if (bit_depth == 16)
     {
@@ -333,54 +333,54 @@ read_png(FILE *fp)
       alpha.tRNS = 1;
       png_get_tRNS (png_ptr, info_ptr, &trns.list, &trns.len, &colour);
       if (!trns.list)
-	trns.len = 0;
+        trns.len = 0;
       debug_printf ("tRNS chunk:\n  list has %i entries\n  colour index %i\n    RGB %04X%04X%04X\n    grey %04X\n", trns.len, colour->index, colour->red, colour->green, colour->blue, colour->gray);
       switch (colour_type & ~PNG_COLOR_MASK_ALPHA)
-	{
-	case PNG_COLOR_TYPE_PALETTE:
-	  trns.colour = colour->index;
-	  debug_printf ("  -> colour = &%02X\n", trns.colour);
-	  break;
-	case PNG_COLOR_TYPE_GRAY:
-	  if (obit_depth == 16)
-	    trns.colour = colour->gray >> 8;
-	  else
-	    trns.colour = colour->gray;
-	  debug_printf ("  -> grey = &%02X\n", trns.colour);
-	  break;
-	case PNG_COLOR_TYPE_RGB:
-	  if (obit_depth == 16)
-	    trns.colour = colour->red >> 8 | (colour->green >> 8) << 8 |
-			  (colour->blue >> 8) << 16;
-	  else
-	    trns.colour = colour->red | colour->green << 8 |
-			  colour->blue << 16;
-	  debug_printf ("  -> colour = &%06X\n", trns.colour);
-	}
+        {
+        case PNG_COLOR_TYPE_PALETTE:
+          trns.colour = colour->index;
+          debug_printf ("  -> colour = &%02X\n", trns.colour);
+          break;
+        case PNG_COLOR_TYPE_GRAY:
+          if (obit_depth == 16)
+            trns.colour = colour->gray >> 8;
+          else
+            trns.colour = colour->gray;
+          debug_printf ("  -> grey = &%02X\n", trns.colour);
+          break;
+        case PNG_COLOR_TYPE_RGB:
+          if (obit_depth == 16)
+            trns.colour = colour->red >> 8 | (colour->green >> 8) << 8 |
+                          (colour->blue >> 8) << 16;
+          else
+            trns.colour = colour->red | colour->green << 8 |
+                          colour->blue << 16;
+          debug_printf ("  -> colour = &%06X\n", trns.colour);
+        }
       if (trns.list)
-	{
-	  int i;
-	  for (i = trns.len - 1; i >= 0; --i)
-	    if (trns.list[i] && trns.list[i] < 255)
-	      {
-		alpha.tRNS = 0;
-		png_set_tRNS_to_alpha (png_ptr);
-		if (colour_type == PNG_COLOR_TYPE_PALETTE)
-		  bit_depth = 24;
-		colour_type |= PNG_COLOR_MASK_ALPHA;
-		break;
-	      }
-	}
+        {
+          int i;
+          for (i = trns.len - 1; i >= 0; --i)
+            if (trns.list[i] && trns.list[i] < 255)
+              {
+                alpha.tRNS = 0;
+                png_set_tRNS_to_alpha (png_ptr);
+                if (colour_type == PNG_COLOR_TYPE_PALETTE)
+                  bit_depth = 24;
+                colour_type |= PNG_COLOR_MASK_ALPHA;
+                break;
+              }
+        }
       else
-	{
-	  png_set_tRNS_to_alpha (png_ptr);
-	  if (colour_type == PNG_COLOR_TYPE_PALETTE)
-	    bit_depth = 24;
-	  colour_type |= PNG_COLOR_MASK_ALPHA;
-	}
+        {
+          png_set_tRNS_to_alpha (png_ptr);
+          if (colour_type == PNG_COLOR_TYPE_PALETTE)
+            bit_depth = 24;
+          colour_type |= PNG_COLOR_MASK_ALPHA;
+        }
       if (trns.list)
-	debug_printf ("  -> list will be %s\n",
-		      alpha.tRNS ? "used" : "converted");
+        debug_printf ("  -> list will be %s\n",
+                      alpha.tRNS ? "used" : "converted");
     }
 
   if (bgnd != -2)
@@ -388,29 +388,29 @@ read_png(FILE *fp)
       png_color_16 *ibgnd;
       debug_puts ("Setting background colour...");
       if (bgnd == -1 && png_get_bKGD (png_ptr, info_ptr, &ibgnd))
-	png_set_background (png_ptr, ibgnd, PNG_BACKGROUND_GAMMA_FILE, 1,
-			    1.0);
+        png_set_background (png_ptr, ibgnd, PNG_BACKGROUND_GAMMA_FILE, 1,
+                            1.0);
       else
-	{
-	  /* Usefully, if bgnd == -1, this will select white */
-	  mbgnd.index = 0;
-	  mbgnd.red   = (png_uint_16) (bgnd & 0xFF);
-	  mbgnd.green = (png_uint_16) ((bgnd >>  8) & 0xFF);
-	  mbgnd.blue  = (png_uint_16) ((bgnd >> 16) & 0xFF);
-	  mbgnd.gray = (png_uint_16)
-		       (mbgnd.red * .299 + mbgnd.green * .587 +
-			mbgnd.blue * .114);
-	  if ((colour_type & ~PNG_COLOR_MASK_ALPHA) == PNG_COLOR_TYPE_GRAY
-	      && (mbgnd.red != mbgnd.green || mbgnd.red != mbgnd.blue ||
-		  mbgnd.green != mbgnd.blue))
-	    {
-	      colour_type |= PNG_COLOR_MASK_COLOR;
-	      bit_depth = 24;
-	      png_set_gray_to_rgb (png_ptr);
-	    }
-	  png_set_background (png_ptr, &mbgnd, PNG_BACKGROUND_GAMMA_SCREEN,
-			      0, 1.0);
-	}
+        {
+          /* Usefully, if bgnd == -1, this will select white */
+          mbgnd.index = 0;
+          mbgnd.red   = (png_uint_16) (bgnd & 0xFF);
+          mbgnd.green = (png_uint_16) ((bgnd >>  8) & 0xFF);
+          mbgnd.blue  = (png_uint_16) ((bgnd >> 16) & 0xFF);
+          mbgnd.gray = (png_uint_16)
+                       (mbgnd.red * .299 + mbgnd.green * .587 +
+                        mbgnd.blue * .114);
+          if ((colour_type & ~PNG_COLOR_MASK_ALPHA) == PNG_COLOR_TYPE_GRAY
+              && (mbgnd.red != mbgnd.green || mbgnd.red != mbgnd.blue ||
+                  mbgnd.green != mbgnd.blue))
+            {
+              colour_type |= PNG_COLOR_MASK_COLOR;
+              bit_depth = 24;
+              png_set_gray_to_rgb (png_ptr);
+            }
+          png_set_background (png_ptr, &mbgnd, PNG_BACKGROUND_GAMMA_SCREEN,
+                              0, 1.0);
+        }
       pngid = alpha.use ? "png_blend" : "png_unblend";
       alpha.use = 0;
     }
@@ -429,14 +429,14 @@ read_png(FILE *fp)
       int intent;
       debug_puts ("Setting sRGB or gamma...");
       if (png_get_sRGB (png_ptr, info_ptr, &intent))
-	png_set_sRGB (png_ptr, info_ptr, intent);
+        png_set_sRGB (png_ptr, info_ptr, intent);
       else
-	{
-	  if (image_gamma < 0 &&
-	      !png_get_gAMA(png_ptr, info_ptr, &image_gamma))
-	    image_gamma = 1/2.2;
-	  png_set_gamma(png_ptr, display_gamma, image_gamma);
-	}
+        {
+          if (image_gamma < 0 &&
+              !png_get_gAMA(png_ptr, info_ptr, &image_gamma))
+            image_gamma = 1/2.2;
+          png_set_gamma(png_ptr, display_gamma, image_gamma);
+        }
     }
   if ((colour_type & ~PNG_COLOR_MASK_ALPHA) == PNG_COLOR_TYPE_RGB)
     bit_depth = 24;
@@ -460,33 +460,33 @@ read_png(FILE *fp)
     size_t size = 16 + 2 * (44 + 256 * 4 * 2); /* 2 sprites, 2 palettes */
     if (IS_GREY (colour_type))
       {
-	if (alpha.use || alpha.tRNS)
-	  {
-	    debug_puts ("(is grey, masked)");
-	    int w = (2 * width + 7) & ~7;
-	    w = (w < row_width) ? row_width : w;
-	    size += w * height; /* sprite and mask */
-	  }
-	else
-	  {
-	    debug_puts ("(is grey)");
-	    size += ((width + 3) & ~3) * height; /* sprite */
-	  }
+        if (alpha.use || alpha.tRNS)
+          {
+            debug_puts ("(is grey, masked)");
+            int w = (2 * width + 7) & ~7;
+            w = (w < row_width) ? row_width : w;
+            size += w * height; /* sprite and mask */
+          }
+        else
+          {
+            debug_puts ("(is grey)");
+            size += ((width + 3) & ~3) * height; /* sprite */
+          }
       }
     else
       {
-	debug_puts ("(is rgb)");
-	size += row_width * height; /* sprite image */
-	if ((colour_type & PNG_COLOR_MASK_ALPHA) && alpha.use)
-	  {
-	    debug_puts ("(has alpha)");
-	    size += ((width + 3) & ~3) * height; /* mask sprite */
-	  }
-	else if (alpha.tRNS)
-	  {
-	    debug_puts ("(has simple mask)");
-	    size += ((width + 31) >> 3 & ~3) * height; /* sprite mask */
-	  }
+        debug_puts ("(is rgb)");
+        size += row_width * height; /* sprite image */
+        if ((colour_type & PNG_COLOR_MASK_ALPHA) && alpha.use)
+          {
+            debug_puts ("(has alpha)");
+            size += ((width + 3) & ~3) * height; /* mask sprite */
+          }
+        else if (alpha.tRNS)
+          {
+            debug_puts ("(has simple mask)");
+            size += ((width + 31) >> 3 & ~3) * height; /* sprite mask */
+          }
       }
     debug_printf ("Creating sprite (area size = %X)...\n", size);
     spr_area = malloc (size);
@@ -512,52 +512,52 @@ read_png(FILE *fp)
       png_uint_32 ppiy = png_get_y_pixels_per_meter (png_ptr, info_ptr);
       debug_printf ("Stored DPM = %i x %i\n", ppix, ppiy);
       if (ppix != 0 && ppiy != 0)
-	{
+        {
           static const float mpi = 0.0254f;
           ppix = ppix * mpi + .5;
           ppiy = ppiy * mpi + .5;
           dpix = free_dpi ? ppix : clamp_dpi (ppix);
           dpiy = free_dpi ? ppiy : clamp_dpi (ppiy);
-	  debug_printf ("DPI = %i x %i\n", dpix, dpiy);
-	}
+          debug_printf ("DPI = %i x %i\n", dpix, dpiy);
+        }
     }
 
     mode = mode << 27 | 90 << 14 | 90 << 1 | 1;
     onerr (_swix (OS_SpriteOp, _INR (0, 6),
-		  256+15, spr_area, pngid, 0, width, height, mode));
+                  256+15, spr_area, pngid, 0, width, height, mode));
     _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2), 256+24, spr_area, pngid, &spr_ptr);
     debug_printf ("Image will have:\n  %i-bit colour\n", bit_depth);
 
     if (palsize) /* write palette */
       {
-	int *const pal = (int *) spr_ptr + 11;
-	if (IS_GREY (colour_type))
-	  {
-	    /* cheat: force full-size palette */
-	    onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
-			  spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
-	    debug_puts ("  a greyscale palette");
-	    for (y = --palsize; y >= 0; --y)
-	      pal[y*2+1] = pal[y*2] = ((y * 255 / palsize) * 0x10101) << 8;
-	  }
-	else if (palsize && png_get_valid (png_ptr, info_ptr, PNG_INFO_PLTE))
-	  {
-	    int *palptr;
-	    /* cheat: force full-size palette */
-	    onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
-			  spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
-	    memset (pal, 0, palsize*2*4);
-	    png_get_PLTE (png_ptr, info_ptr, (png_color **) &palptr,
-			  (int *) &y);
-	    debug_printf ("  a colour palette with %li entries\n", y);
+        int *const pal = (int *) spr_ptr + 11;
+        if (IS_GREY (colour_type))
+          {
+            /* cheat: force full-size palette */
+            onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
+                          spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
+            debug_puts ("  a greyscale palette");
+            for (y = --palsize; y >= 0; --y)
+              pal[y*2+1] = pal[y*2] = ((y * 255 / palsize) * 0x10101) << 8;
+          }
+        else if (palsize && png_get_valid (png_ptr, info_ptr, PNG_INFO_PLTE))
+          {
+            int *palptr;
+            /* cheat: force full-size palette */
+            onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
+                          spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
+            memset (pal, 0, palsize*2*4);
+            png_get_PLTE (png_ptr, info_ptr, (png_color **) &palptr,
+                          (int *) &y);
+            debug_printf ("  a colour palette with %li entries\n", y);
 #ifdef USING_PNG_MODULE
-	    for (--y; y >= 0; --y)
-	      pal[y*2+1] = pal[y*2] = palptr[y];
+            for (--y; y >= 0; --y)
+              pal[y*2+1] = pal[y*2] = palptr[y];
 #else
-	    for (--y; y >= 0; --y)
-	      pal[y*2+1] = pal[y*2] = palptr[y] << 8;
+            for (--y; y >= 0; --y)
+              pal[y*2+1] = pal[y*2] = palptr[y] << 8;
 #endif
-	  }
+          }
       }
 
 #ifdef DEBUG
@@ -576,176 +576,176 @@ read_png(FILE *fp)
 
     if (alpha.use && IS_GREY (colour_type))
       {
-	int x;
-	png_bytep mask_base, merged = spr_base;
-	debug_puts ("Processing grey+alpha...");
-	if (alpha.use)
-	  {
-	    sprite_t *mask_ptr;
-	    png_bytep mask;
-	    mask_type is = mask_COMPLEX;
-	    if (alpha.tRNS)
-	      alpha.simplify = 1;
-	    if (alpha.simplify)
-	      is = find_mask_type (spr_base, 1, 2);
-	    switch (is)
-	      {
-	      case mask_COMPLEX:
-	      case mask_SIMPLE:
-		debug_puts ((is == mask_SIMPLE) ? "-> simple" : "-> complex");
-		mask = malloc ((int) (((width + 3) & ~3) * height));
-		if (!mask)
-		  fail (fail_NO_MEM, "out of memory");
-		mask_base = mask;
-		memset (mask, 0,
-			(int) ((((width + 31) >> 3) & ~3) * height));
-		for (y = (int) height; y; --y)
-		  {
-		    for (x = (int) width; x; --x)
-		      {
-			*spr_base++ = *merged++;
-			*mask_base++ = *merged++;
-		      }
-		    spr_base  = (png_bytep) (((int) spr_base  + 3) & ~3);
-		    mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
-		    merged    = (png_bytep) (((int) merged    + 3) & ~3);
-		  }
-		if (is == mask_SIMPLE && alpha.simplify)
-		  {
-		    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
-		    memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
-			    (int) ((((width + 31) >> 3) & ~3) * height));
-		    if (alpha.tRNS)
-		      make_trns (spr_ptr, 8, PNG_COLOR_TYPE_GRAY);
-		    else
-		      make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, mask,
-				1);
-		  }
-		else
-		  {
-		    onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
-				  spr_area, maskid, 0, width, height, 28));
-		    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
-			   256+24, spr_area, maskid,  &mask_ptr);
-		    add_grey_palette (spr_area, mask_ptr);
-		    if (alpha.inverse)
-		      {
-			png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-			y = (int) (((width + 3) & ~3) * height);
-			do
-			  {
-			    y--; p[y] = ~mask[y];
-			  }
-			while (y);
-			_swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
-			       "mask_i");
-		      }
-		    else
-		      memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
-			      (int) (((width + 3) & ~3) * height));
-		  }
-		free (mask);
-		break;
-	      case mask_OPAQUE:
-		debug_puts ("-> unnecessary");
-		goto lose_mask_grey;
-	      }
-	  }
-	else
-	  {
-	    /**/lose_mask_grey:
-	    for (y = (int) height; y; --y)
-	      {
-		for (x = (int) width; x; --x)
-		  {
-		    *spr_base++ = *merged;
-		    merged += 2;
-		  }
-		spr_base = (png_bytep) (((int) spr_base + 3) & ~3);
-		merged	 = (png_bytep) (((int) merged	+ 3) & ~3);
-	      }
-	  }
+        int x;
+        png_bytep mask_base, merged = spr_base;
+        debug_puts ("Processing grey+alpha...");
+        if (alpha.use)
+          {
+            sprite_t *mask_ptr;
+            png_bytep mask;
+            mask_type is = mask_COMPLEX;
+            if (alpha.tRNS)
+              alpha.simplify = 1;
+            if (alpha.simplify)
+              is = find_mask_type (spr_base, 1, 2);
+            switch (is)
+              {
+              case mask_COMPLEX:
+              case mask_SIMPLE:
+                debug_puts ((is == mask_SIMPLE) ? "-> simple" : "-> complex");
+                mask = malloc ((int) (((width + 3) & ~3) * height));
+                if (!mask)
+                  fail (fail_NO_MEM, "out of memory");
+                mask_base = mask;
+                memset (mask, 0,
+                        (int) ((((width + 31) >> 3) & ~3) * height));
+                for (y = (int) height; y; --y)
+                  {
+                    for (x = (int) width; x; --x)
+                      {
+                        *spr_base++ = *merged++;
+                        *mask_base++ = *merged++;
+                      }
+                    spr_base  = (png_bytep) (((int) spr_base  + 3) & ~3);
+                    mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                    merged    = (png_bytep) (((int) merged    + 3) & ~3);
+                  }
+                if (is == mask_SIMPLE && alpha.simplify)
+                  {
+                    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                    memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
+                            (int) ((((width + 31) >> 3) & ~3) * height));
+                    if (alpha.tRNS)
+                      make_trns (spr_ptr, 8, PNG_COLOR_TYPE_GRAY);
+                    else
+                      make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, mask,
+                                1);
+                  }
+                else
+                  {
+                    onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
+                                  spr_area, maskid, 0, width, height, 28));
+                    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
+                           256+24, spr_area, maskid,  &mask_ptr);
+                    add_grey_palette (spr_area, mask_ptr);
+                    if (alpha.inverse)
+                      {
+                        png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
+                        y = (int) (((width + 3) & ~3) * height);
+                        do
+                          {
+                            y--; p[y] = ~mask[y];
+                          }
+                        while (y);
+                        _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
+                               "mask_i");
+                      }
+                    else
+                      memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
+                              (int) (((width + 3) & ~3) * height));
+                  }
+                free (mask);
+                break;
+              case mask_OPAQUE:
+                debug_puts ("-> unnecessary");
+                goto lose_mask_grey;
+              }
+          }
+        else
+          {
+            /**/lose_mask_grey:
+            for (y = (int) height; y; --y)
+              {
+                for (x = (int) width; x; --x)
+                  {
+                    *spr_base++ = *merged;
+                    merged += 2;
+                  }
+                spr_base = (png_bytep) (((int) spr_base + 3) & ~3);
+                merged   = (png_bytep) (((int) merged   + 3) & ~3);
+              }
+          }
       }
     else if (alpha.use && alpha.tRNS)
       {
-	debug_puts ("Processing simple mask...");
-	onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
-	make_trns (spr_ptr, bit_depth, colour_type);
+        debug_puts ("Processing simple mask...");
+        onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
+        make_trns (spr_ptr, bit_depth, colour_type);
       }
     else if (alpha.use && (colour_type & PNG_COLOR_MASK_ALPHA))
       {
-	sprite_t *mask_ptr;
-	png_bytep mask_base;
-	debug_puts ("Processing RGBA...");
-	switch (find_mask_type (spr_base, 3, 4))
-	  {
-	  case mask_COMPLEX:
-	    debug_puts ("-> complex");
-	    /**/rgba_separate:
-	    if (alpha.separate)
-	      {
-		onerr (_swix (OS_SpriteOp, _INR (0, 6),  256+15,
-			      spr_area, maskid, 0, width, height, 28));
-		_swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
-		       256+24, spr_area, maskid,  &mask_ptr);
-		add_grey_palette (spr_area, mask_ptr);
-		mask_base = (png_bytep) mask_ptr + mask_ptr->image;
-		spr_base -= 1;
-		if (alpha.inverse)
-		  for (y = (int) height; y; --y)
-		    {
-		      for (x = (int) width; x; --x)
-			{
-			  *mask_base++ = ~*(spr_base += 4);
-			  *spr_base = 0;
-			}
-		      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
-		    }
-		else
-		  for (y = (int) height; y; --y)
-		    {
-		      for (x = (int) width; x; --x)
-			{
-			  *mask_base++ = *(spr_base += 4);
-			  *spr_base = 0;
-			}
-		      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
-		    }
-	      }
-	    else
-	      {
-		if (alpha.inverse)
-		  {
-		    spr_base += 3;
-		    y = (int) (((width + 3) & ~3) * height);
-		    do
-		      {
-			y--; spr_base[y*4] = ~spr_base[y*4];
-		      }
-		    while (y);
-		    _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, pngid,
-			   "png_rgba_i");
-		  }
-		else
-		  _swix (OS_SpriteOp, _INR(0, 3), 256+26, spr_area, pngid,
-			 "png_rgba");
-	      }
-	    break;
-	  case mask_SIMPLE:
-	    debug_puts ("-> simple");
-	    if (!alpha.simplify)
-	      goto rgba_separate;
-	    _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
-	    make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4);
-	    break;
-	  case mask_OPAQUE:
-	    debug_puts ("-> unnecessary");
-	    spr_base -= 1;
-	    for (y = (int) height; y; --y)
-	      for (x = (int) width; x; --x)
-		*(spr_base += 4) = 0;
-	    break;
-	  }
+        sprite_t *mask_ptr;
+        png_bytep mask_base;
+        debug_puts ("Processing RGBA...");
+        switch (find_mask_type (spr_base, 3, 4))
+          {
+          case mask_COMPLEX:
+            debug_puts ("-> complex");
+            /**/rgba_separate:
+            if (alpha.separate)
+              {
+                onerr (_swix (OS_SpriteOp, _INR (0, 6),  256+15,
+                              spr_area, maskid, 0, width, height, 28));
+                _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
+                       256+24, spr_area, maskid,  &mask_ptr);
+                add_grey_palette (spr_area, mask_ptr);
+                mask_base = (png_bytep) mask_ptr + mask_ptr->image;
+                spr_base -= 1;
+                if (alpha.inverse)
+                  for (y = (int) height; y; --y)
+                    {
+                      for (x = (int) width; x; --x)
+                        {
+                          *mask_base++ = ~*(spr_base += 4);
+                          *spr_base = 0;
+                        }
+                      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                    }
+                else
+                  for (y = (int) height; y; --y)
+                    {
+                      for (x = (int) width; x; --x)
+                        {
+                          *mask_base++ = *(spr_base += 4);
+                          *spr_base = 0;
+                        }
+                      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                    }
+              }
+            else
+              {
+                if (alpha.inverse)
+                  {
+                    spr_base += 3;
+                    y = (int) (((width + 3) & ~3) * height);
+                    do
+                      {
+                        y--; spr_base[y*4] = ~spr_base[y*4];
+                      }
+                    while (y);
+                    _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, pngid,
+                           "png_rgba_i");
+                  }
+                else
+                  _swix (OS_SpriteOp, _INR(0, 3), 256+26, spr_area, pngid,
+                         "png_rgba");
+              }
+            break;
+          case mask_SIMPLE:
+            debug_puts ("-> simple");
+            if (!alpha.simplify)
+              goto rgba_separate;
+            _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
+            make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4);
+            break;
+          case mask_OPAQUE:
+            debug_puts ("-> unnecessary");
+            spr_base -= 1;
+            for (y = (int) height; y; --y)
+              for (x = (int) width; x; --x)
+                *(spr_base += 4) = 0;
+            break;
+          }
       }
     spr_ptr->mode = (spr_ptr->mode & 0xF8000001) | dpiy << 14 | dpix << 1;
     return spr_area;
@@ -797,35 +797,35 @@ main (int argc, char *argv[])
       fail (fail_OS_ERROR, "Escape");
     default:
       {
-	int *regdump, *os_regdump;
-	const char *msg = 0;
-	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (3), 7, 0, 0, 0, &regdump);
-	_swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (1), 13, 0, 0, 0, &os_regdump);
-	if (regdump && os_regdump)
-	  memcpy (os_regdump, regdump, 64);
-	switch (sigerr.errnum & 0xFFFFFF)
-	  {
-	  case 0:
-	    msg = "Illegal instruction";
-	    break;
-	  case 1:
-	    msg = "Prefetch abort";
-	    break;
-	  case 2:
-	    msg = "Data abort";
-	    break;
-	  case 3:
-	    msg = "Address exception";
-	    break;
-	  case 5:
-	    msg = "Branch through zero";
-	    break;
-	  }
-	if (msg)
-	  fail (fail_OS_ERROR, "Internal error: %s at &%08X", msg,
-		regdump[15]);
-	else
-	  fail (fail_OS_ERROR, "%s", sigerr.errmess);
+        int *regdump, *os_regdump;
+        const char *msg = 0;
+        _swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (3), 7, 0, 0, 0, &regdump);
+        _swix (OS_ChangeEnvironment, _INR (0, 3) | _OUT (1), 13, 0, 0, 0, &os_regdump);
+        if (regdump && os_regdump)
+          memcpy (os_regdump, regdump, 64);
+        switch (sigerr.errnum & 0xFFFFFF)
+          {
+          case 0:
+            msg = "Illegal instruction";
+            break;
+          case 1:
+            msg = "Prefetch abort";
+            break;
+          case 2:
+            msg = "Data abort";
+            break;
+          case 3:
+            msg = "Address exception";
+            break;
+          case 5:
+            msg = "Branch through zero";
+            break;
+          }
+        if (msg)
+          fail (fail_OS_ERROR, "Internal error: %s at &%08X", msg,
+                regdump[15]);
+        else
+          fail (fail_OS_ERROR, "%s", sigerr.errmess);
       }
     }
 
@@ -839,131 +839,131 @@ main (int argc, char *argv[])
       const char *p = argv[y];
 
       if (p[0] == '-' && p[1] == '-')
-	{
-	  const char *arg;
-	  p += 2;
-	  switch (argmatch (args, p, &arg))
-	    {
-	    case 1:
-	      help ();
-	    case 2:
-	      version ();
-	    case 3:
-	      caller_name = arg;
-	      break;
-	    case 4:
-	      caller_sprite = arg;
-	      break;
-	    case 'M':
-	      alpha.use = 0;
-	      break;
-	    case 'c':
-	      alpha.simplify = 1;
-	      break;
-	    case 's':
-	      alpha.separate = 1;
-	      break;
-	    case 'b':
-	      if ((p = arg) != 0)
-		goto get_background;
-	      bgnd = -1;
-	      break;
-	    case 'd':
-	      p = arg;
-	      goto get_dgamma;
-	    case 'f':
-	      free_dpi = 1;
-	      break;
-	    case 'g':
-	      if ((p = arg) != 0)
-		goto get_igamma;
-	      image_gamma = -1;
-	      break;
-	    case 'n':
-	      alpha.inverse = 1;
-	    }
-	}
+        {
+          const char *arg;
+          p += 2;
+          switch (argmatch (args, p, &arg))
+            {
+            case 1:
+              help ();
+            case 2:
+              version ();
+            case 3:
+              caller_name = arg;
+              break;
+            case 4:
+              caller_sprite = arg;
+              break;
+            case 'M':
+              alpha.use = 0;
+              break;
+            case 'c':
+              alpha.simplify = 1;
+              break;
+            case 's':
+              alpha.separate = 1;
+              break;
+            case 'b':
+              if ((p = arg) != 0)
+                goto get_background;
+              bgnd = -1;
+              break;
+            case 'd':
+              p = arg;
+              goto get_dgamma;
+            case 'f':
+              free_dpi = 1;
+              break;
+            case 'g':
+              if ((p = arg) != 0)
+                goto get_igamma;
+              image_gamma = -1;
+              break;
+            case 'n':
+              alpha.inverse = 1;
+            }
+        }
       else if (p[0] == '-')
-	{
-	  if (*++p == '\0')
-	    fail (fail_BAD_ARGUMENT, "cannot use stdin");
-	  do
-	    {
-	      switch (*p)
-		{
-		case 'M':
-		  alpha.use = 0;
-		  break;
-		case 'c':
-		  alpha.simplify = 1;
-		  break;
-		case 's':
-		  alpha.separate = 1;
-		  break;
-		case 'b':
-		  if (!p[1])
-		    {
-		      bgnd = -1;
-		      break;
-		    }
-		  p++;
-		  /**/get_background:
-		  {
-		    errno = 0;
-		    bgnd = strtol (p, (char **) &p, 16) & 0xFFFFFF;
-		    if (errno || *p--)
-		      fail (fail_BAD_ARGUMENT, "bad background colour value");
-		  }
-		  break;
-		case 'd':
-		  if (!p[1])
-		    fail (fail_BAD_ARGUMENT, "missing display gamma value");
-		  p++;
-		  /**/get_dgamma:
-		  display_gamma = readfloat (&p);
-		  if (*p--
-		      || display_gamma <= 0
-		      || display_gamma > 10 /* arbitrary upper limit */ )
-		    fail (fail_BAD_ARGUMENT, "bad gamma value %g",
-			  display_gamma);
-		  break;
-		case 'f':
-		  free_dpi = 0;
-		  break;
-		case 'g':
-		  if (!p[1])
-		    {
-		      image_gamma = 1/2.2;
-		      break;
-		    }
-		  p++;
-		  /**/get_igamma:
-		  image_gamma = readfloat (&p);
-		  if (*p--
-		      || image_gamma <= 0
-		      || image_gamma > 10 /* arbitrary upper limit */ )
-		    fail (fail_BAD_ARGUMENT, "bad gamma value %g",
-			  image_gamma);
-		  break;
-		case 'n':
-		  alpha.inverse = 1;
-		  break;
-		default:
-		  fail (fail_BAD_ARGUMENT, "unknown option -%c\n", *p);
-		}
-	    }
-	  while (*++p);
-	}
+        {
+          if (*++p == '\0')
+            fail (fail_BAD_ARGUMENT, "cannot use stdin");
+          do
+            {
+              switch (*p)
+                {
+                case 'M':
+                  alpha.use = 0;
+                  break;
+                case 'c':
+                  alpha.simplify = 1;
+                  break;
+                case 's':
+                  alpha.separate = 1;
+                  break;
+                case 'b':
+                  if (!p[1])
+                    {
+                      bgnd = -1;
+                      break;
+                    }
+                  p++;
+                  /**/get_background:
+                  {
+                    errno = 0;
+                    bgnd = strtol (p, (char **) &p, 16) & 0xFFFFFF;
+                    if (errno || *p--)
+                      fail (fail_BAD_ARGUMENT, "bad background colour value");
+                  }
+                  break;
+                case 'd':
+                  if (!p[1])
+                    fail (fail_BAD_ARGUMENT, "missing display gamma value");
+                  p++;
+                  /**/get_dgamma:
+                  display_gamma = readfloat (&p);
+                  if (*p--
+                      || display_gamma <= 0
+                      || display_gamma > 10 /* arbitrary upper limit */ )
+                    fail (fail_BAD_ARGUMENT, "bad gamma value %g",
+                          display_gamma);
+                  break;
+                case 'f':
+                  free_dpi = 0;
+                  break;
+                case 'g':
+                  if (!p[1])
+                    {
+                      image_gamma = 1/2.2;
+                      break;
+                    }
+                  p++;
+                  /**/get_igamma:
+                  image_gamma = readfloat (&p);
+                  if (*p--
+                      || image_gamma <= 0
+                      || image_gamma > 10 /* arbitrary upper limit */ )
+                    fail (fail_BAD_ARGUMENT, "bad gamma value %g",
+                          image_gamma);
+                  break;
+                case 'n':
+                  alpha.inverse = 1;
+                  break;
+                default:
+                  fail (fail_BAD_ARGUMENT, "unknown option -%c\n", *p);
+                }
+            }
+          while (*++p);
+        }
       else if (from == 0)
-	from = argv[y];
+        from = argv[y];
       else if (to == 0)
-	to = argv[y];
+        to = argv[y];
       else
-	fail (fail_BAD_ARGUMENT, "too many filenames");
+        fail (fail_BAD_ARGUMENT, "too many filenames");
     }
   if (!to)
     fail (fail_BAD_ARGUMENT,
-	  "too few filenames (need both input and output)");
+          "too few filenames (need both input and output)");
 
   if (bgnd != -2)
     alpha.simplify = alpha.separate = 0;

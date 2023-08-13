@@ -1,8 +1,8 @@
- ___	      ___  ____		    Front end 0.26  (04 May 2006)
+ ___          ___  ____             Front end 0.26  (04 May 2006)
 / __)_ __ _ _(__ \|  _ \_ __  __ _  spr2png   0.25  (04 May 2006)
 \__ \ '_ \ '_|/Ø_/|  __/ '_ \/ _' | draw2spr  0.11  (04 May 2006)
 (___/ .__/_| (___)|_|  |_| |_\__  | png2spr   0.08  (04 May 2006)
-    |_|			     (___/  © Darren Salt, 1998-2006
+    |_|                      (___/  © Darren Salt, 1998-2006
 
 
 This program allows conversion of sprites to PNG files and Draw and Artworks
@@ -49,167 +49,167 @@ Conversion to PNG
       The sprite source options.
 
     è Image is RGBA
-	If the sprite is 32-bit RGB colour, assume that it contains an alpha
-	channel in the unused bits.
+        If the sprite is 32-bit RGB colour, assume that it contains an alpha
+        channel in the unused bits.
 
     è Alpha channel is inverse
-	Normally, the alpha channel scale ranges from 0 (transparent) to 255
-	(opaque). This option tells Spr2Png that the reverse is true, ie.
-	that 0 is opaque.
+        Normally, the alpha channel scale ranges from 0 (transparent) to 255
+        (opaque). This option tells Spr2Png that the reverse is true, ie.
+        that 0 is opaque.
 
   è Draw/AW
       The Draw and Artworks source options.
 
     è Scale by
-	This lets you arbitrarily scale the image by up to 10x along each
-	axis. You may specify one scale factor in either field, or two
-	independent scale factors; leave both fields blank for 1:1.
-	Acceptable formats are simple, percentage and ratio; eg. to reduce to
-	half size, you can use 0.5, 50% or 1:2.
+        This lets you arbitrarily scale the image by up to 10x along each
+        axis. You may specify one scale factor in either field, or two
+        independent scale factors; leave both fields blank for 1:1.
+        Acceptable formats are simple, percentage and ratio; eg. to reduce to
+        half size, you can use 0.5, 50% or 1:2.
 
     è Artworks render level
-	Controls how Artworks files are rendered. Useful values are:
-	  0  - outlines only
-	  5  - simple
-	  10 - normal
-	  11 - anti-aliased
-	Note, however, that the image will be anti-aliased independently of
-	the Artworks modules if an alpha channel is generated.
+        Controls how Artworks files are rendered. Useful values are:
+          0  - outlines only
+          5  - simple
+          10 - normal
+          11 - anti-aliased
+        Note, however, that the image will be anti-aliased independently of
+        the Artworks modules if an alpha channel is generated.
 
     è Mask
     è Alpha/blend
-	These two options work together as follows:
-	  Mask  Alpha	Effect
-	   N	 N	No mask, no anti-aliasing (but see AW render level).
-	   Y	 N	Simple mask, no anti-aliasing (ditto).
-	   N	 Y	Background blended, always anti-aliased.
-	   Y	 Y	Full alpha channel, always anti-aliased.
+        These two options work together as follows:
+          Mask  Alpha   Effect
+           N     N      No mask, no anti-aliasing (but see AW render level).
+           Y     N      Simple mask, no anti-aliasing (ditto).
+           N     Y      Background blended, always anti-aliased.
+           Y     Y      Full alpha channel, always anti-aliased.
 
   è Misc
       Options which don't fit elsewhere.
 
     è Verbose
-	The more ticks, the more info will be displayed as Spr2Png is
-	processing an image.
+        The more ticks, the more info will be displayed as Spr2Png is
+        processing an image.
 
     è Single task
-	Normally, the back end is run in a taskwindow. With this ticked, it's
-	run in a command box instead (but without the full screen redraw).
-	(Only available if the output is to a PNG.)
+        Normally, the back end is run in a taskwindow. With this ticked, it's
+        run in a command box instead (but without the full screen redraw).
+        (Only available if the output is to a PNG.)
 
   è Output
       Various output options.
 
     è Interlaced
-	An interlaced PNG will be created, using ADAM7 (the standard 2D
-	interlacing for PNG files).
-	(Only available if the output is to a PNG.)
+        An interlaced PNG will be created, using ADAM7 (the standard 2D
+        interlacing for PNG files).
+        (Only available if the output is to a PNG.)
 
     è Trim masked edges
-	Remove transparent rows and columns from around the edges of the
-	output image. If there's no mask, then the background colour (if one
-	is specified) is treated as transparent.
+        Remove transparent rows and columns from around the edges of the
+        output image. If there's no mask, then the background colour (if one
+        is specified) is treated as transparent.
 
-	For Draw and Artworks files, when no mask is to be output, this
-	removes the same edge rows and columns since they would otherwise
-	have been masked out.
+        For Draw and Artworks files, when no mask is to be output, this
+        removes the same edge rows and columns since they would otherwise
+        have been masked out.
 
     è Background
-	If you want to set a default background colour, then enter it in the
-	writeable field next to this label. The format is 24-bit hex BBGGRR
-	(ie. black=0, desktop blue=994400, bright green=FF00, white=FFFFFF).
-	If you click on the button to the right, a colour picker dbox will be
-	opened.
+        If you want to set a default background colour, then enter it in the
+        writeable field next to this label. The format is 24-bit hex BBGGRR
+        (ie. black=0, desktop blue=994400, bright green=FF00, white=FFFFFF).
+        If you click on the button to the right, a colour picker dbox will be
+        opened.
 
     è Pixels per metre
     è Pixel size
-	For scaling purposes; useful if you started out with a
-	rectangular-pixel sprite. Note that browsers tend to ignore these...
+        For scaling purposes; useful if you started out with a
+        rectangular-pixel sprite. Note that browsers tend to ignore these...
 
   è Display
       Display information for applications which display PNG images.
 
     è Gamma
-	If you want the image to be displayed with gamma correction (provided
-	that the program which is displaying it supports this), then enter a
-	value here. The standard gamma value is 0.4545455 (more accurately,
-	5/11 or 1/2.2).
+        If you want the image to be displayed with gamma correction (provided
+        that the program which is displaying it supports this), then enter a
+        value here. The standard gamma value is 0.4545455 (more accurately,
+        5/11 or 1/2.2).
 
     The remaining options in the Display section are probably best left
     alone. I know of no software which makes use of the information which
     these options provide.
 
     è Render intent
-	This sets the sRGB colourspace information. "Default" means that no
-	sRGB information will be present in the output image; other values
-	will override the gamma and chromaticity options.
+        This sets the sRGB colourspace information. "Default" means that no
+        sRGB information will be present in the output image; other values
+        will override the gamma and chromaticity options.
 
       è Set gamma & chromaticity
-	  You can choose whether or not to embed corresponding gamma and
-	  chromaticity information in the output image for use by
-	  applications which don't understand sRGB and/or chromaticity
-	  information.
+          You can choose whether or not to embed corresponding gamma and
+          chromaticity information in the output image for use by
+          applications which don't understand sRGB and/or chromaticity
+          information.
 
     è Chromaticity values
-	Specifies chromaticity information for the image. There are four
-	value pairs, for the image's white point and its red, green and blue
-	channels: each value pair is a CIE x,y pair, with each element's
-	value being between 0 and 1. (Appropriate defaults are set.)
+        Specifies chromaticity information for the image. There are four
+        value pairs, for the image's white point and its red, green and blue
+        channels: each value pair is a CIE x,y pair, with each element's
+        value being between 0 and 1. (Appropriate defaults are set.)
 
   è Reduce
       Image packing options, mostly affecting the actual image content.
 
     è Try to make 8bit
-	If possible, reduce the image to 8-bit colour.
+        If possible, reduce the image to 8-bit colour.
 
       è or less
-	  ... or less, if the number of colours permits. This is best used
-	  for images with long horizontal runs of the same colour; it can
-	  also be used for greyscale images, unless an alpha channel is
-	  present.
+          ... or less, if the number of colours permits. This is best used
+          for images with long horizontal runs of the same colour; it can
+          also be used for greyscale images, unless an alpha channel is
+          present.
 
     è sBIT chunk if true colour
-	Counts the number of significant bits for the red, green and blue
-	channels (for images which are or become 24 bit colour). This is
-	recommended for 16bpp sprites.
+        Counts the number of significant bits for the red, green and blue
+        channels (for images which are or become 24 bit colour). This is
+        recommended for 16bpp sprites.
 
     è Extra greyscale checks
-	Check whether only greys are used in an image. If so, then convert it
-	to greyscale.
+        Check whether only greys are used in an image. If so, then convert it
+        to greyscale.
 
     è Attempt to reduce mask
-	If the mask is such that the image is fully opaque, ignore it.
-	If the mask is simple and the resulting image would be 8-bit, use a
-	spare palette entry for the mask.
-	If the mask is such that the image is fully transparent... :-)
+        If the mask is such that the image is fully opaque, ignore it.
+        If the mask is simple and the resulting image would be 8-bit, use a
+        spare palette entry for the mask.
+        If the mask is such that the image is fully transparent... :-)
 
     è Sort palette by usage
-	Attempt to reduce the size of the PNG file by sorting the palette,
-	most used colour first. The image is modified appropriately.
+        Attempt to reduce the size of the PNG file by sorting the palette,
+        most used colour first. The image is modified appropriately.
 
   è Pack
       Compression options. These leave the image content intact.
 
     è Filtering
-	This lets you set the filtering options. Spr2Png will select from
-	those chosen in order to best compress the image; see the libpng
-	documentation for more details.
+        This lets you set the filtering options. Spr2Png will select from
+        those chosen in order to best compress the image; see the libpng
+        documentation for more details.
 
     è Compression window
-	This controls the maximum token size used by zlib (the compression
-	code used by libpng). Higher values are almost always better (which
-	is why the default is at the highest setting).
+        This controls the maximum token size used by zlib (the compression
+        code used by libpng). Higher values are almost always better (which
+        is why the default is at the highest setting).
 
     è Strategy
-	The compression strategy. The default setting is normally the best,
-	but 'filtered' (predictor) sometimes works better; if you want speed
-	at the expense of size, then select Huffman or RLE (which may
-	actually work better for certain images).
+        The compression strategy. The default setting is normally the best,
+        but 'filtered' (predictor) sometimes works better; if you want speed
+        at the expense of size, then select Huffman or RLE (which may
+        actually work better for certain images).
 
     è Compression level
-	How hard spr2png will try to compress the image. It is usually best
-	to leave this set to 9 (as much as possible, at the expense of
-	speed).
+        How hard spr2png will try to compress the image. It is usually best
+        to leave this set to 9 (as much as possible, at the expense of
+        speed).
 
   It's recommended that you set a background colour; see the section on
   browser display for more details.
@@ -319,150 +319,150 @@ The back ends
 
   <Spr2Png$Dir>.spr2png [options] SRC DEST
 
-    SRC			 The source file (sprite or Draw).
+    SRC                  The source file (sprite or Draw).
 
-    DEST		 The destination file (PNG).
+    DEST                 The destination file (PNG).
 
   General options:
 
-    -i,			 The image will be interlaced using the ADAM7 method
-    --interlace		 if this switch is present.
+    -i,                  The image will be interlaced using the ADAM7 method
+    --interlace          if this switch is present.
 
-    -b,			 Specifies a suggested background colour of the form
+    -b,                  Specifies a suggested background colour of the form
     --background=COLOUR  &BBGGRR (as described above for the front end's save
-			 box). If this is not present, no background colour
-			 is defined.
+                         box). If this is not present, no background colour
+                         is defined.
 
-    -x,			 Stores the number of pixels per metre (yes, metre,
-    --dpi		 not inch, despite the name), calculated from the
-			 mode information in the source sprite.
-			 This information is used by png2spr.
+    -x,                  Stores the number of pixels per metre (yes, metre,
+    --dpi                not inch, despite the name), calculated from the
+                         mode information in the source sprite.
+                         This information is used by png2spr.
 
-    -X,			 Stores the height and width of one pixel, in metres,
-    --pixel-size	 calculated from the mode information in the source
-			 sprite.
-			 This information is *NOT* used by png2spr. Both
-			 --pixel-size and --dpi may be specified.
+    -X,                  Stores the height and width of one pixel, in metres,
+    --pixel-size         calculated from the mode information in the source
+                         sprite.
+                         This information is *NOT* used by png2spr. Both
+                         --pixel-size and --dpi may be specified.
 
-    -d,			 Set the number of dots per inch to the given
-    --set-dpi=X[,Y]	 value(s). Implies --dpi.
+    -d,                  Set the number of dots per inch to the given
+    --set-dpi=X[,Y]      value(s). Implies --dpi.
 
   Sprite options:
 
-    -a,			 If the sprite is 32-bit RGB, assume that it contains
-    --alpha		 an alpha channel in the unused bits.
+    -a,                  If the sprite is 32-bit RGB, assume that it contains
+    --alpha              an alpha channel in the unused bits.
                          (Overridden by the presence of a mask or a mask
                          sprite.)
 
-    -n,			 If an alpha channel is supplied, then it is assumed
-    --inverse-alpha	 to be inverse, ie. 0 represents opaque rather than
-			 transparent.
-			 (Overridden by the presence of a Select alpha mask.)
+    -n,                  If an alpha channel is supplied, then it is assumed
+    --inverse-alpha      to be inverse, ie. 0 represents opaque rather than
+                         transparent.
+                         (Overridden by the presence of a Select alpha mask.)
 
   Draw and Artworks options (passed on to draw2spr):
 
-    -S,			 Set the scale at which the drawing is rendered.
-    --scale=X[,Y]	 (See below.)
+    -S,                  Set the scale at which the drawing is rendered.
+    --scale=X[,Y]        (See below.)
 
-    -m,	      -M,	 These two options work together to determine the
+    -m,       -M,        These two options work together to determine the
     --no-mask --no-blend masking and blending. (See below.)
 
-    -R,			 Artworks rendering control. (See below.)
+    -R,                  Artworks rendering control. (See below.)
     --render=LEVEL
 
     Other options which are passed on: --background --trim --verbose
 
   Packing options:
 
-    -c,			 If the mask or alpha channel is unused (fully opaque
-    --check-mask	 image), ignore it. If it is 'simple' (only fully
-			 transparent and opaque are used) and the image is
-			 paletted, try to use a simple mask.
-			 If the image is fully transparent...
+    -c,                  If the mask or alpha channel is unused (fully opaque
+    --check-mask         image), ignore it. If it is 'simple' (only fully
+                         transparent and opaque are used) and the image is
+                         paletted, try to use a simple mask.
+                         If the image is fully transparent...
 
-    -t,			 Remove any transparent rows and columns from around
-    --trim		 the edges of the sprite. If there's no mask, then
-			 the background colour is treated as transparent.
+    -t,                  Remove any transparent rows and columns from around
+    --trim               the edges of the sprite. If there's no mask, then
+                         the background colour is treated as transparent.
 
-    -r,			 Attempt to ensure that the resulting PNG is
-    --reduce		 paletted. If the image has an alpha channel, it will
-			 be used, resulting in paletted RGBA.
+    -r,                  Attempt to ensure that the resulting PNG is
+    --reduce             paletted. If the image has an alpha channel, it will
+                         be used, resulting in paletted RGBA.
 
-    -G,			 Perform extra greyscale tests - check whether only
-    --check-grey	 greys are used in an image and convert it to
-			 greyscale if so.
+    -G,                  Perform extra greyscale tests - check whether only
+    --check-grey         greys are used in an image and convert it to
+                         greyscale if so.
 
-    -p,			 If the PNG can be represented as 1, 2 or 4bpp (ie.
-    --pack-pixels	 is paletted and has sufficiently few palette
-			 entries), then do so. This will usually /increase/
-			 the size of the file. (Implies -r.)
+    -p,                  If the PNG can be represented as 1, 2 or 4bpp (ie.
+    --pack-pixels        is paletted and has sufficiently few palette
+                         entries), then do so. This will usually /increase/
+                         the size of the file. (Implies -r.)
 
-    -s,			 Sort the palette such that the most often used
-    --frequency-sort	 entries occur first. This can reduce the size of the
-			 resulting PNG file slightly.
-			 (This does not happen for greyscale PNGs.)
+    -s,                  Sort the palette such that the most often used
+    --frequency-sort     entries occur first. This can reduce the size of the
+                         resulting PNG file slightly.
+                         (This does not happen for greyscale PNGs.)
 
-    -B,			 This option creates an sBIT chunk. This is
+    -B,                  This option creates an sBIT chunk. This is
     --significant-bits=N recommended for 16bpp (15-bit colour) sprites, for
-			 which you'll want to say "-B 5".
+                         which you'll want to say "-B 5".
 
   Compression options:
 
-    -f,			 Specifies, using a comma-separated list FLTR, a list
-    --filter=FLTR	 of filter types to be tried when compressing the
-			 image. These are 'none', 'sub', 'up', 'avg' and
-			 'paeth'; 'all' may be used to select all five.
-			 (Alternatively, you may use just the first letters,
-			 omitting the commas.)
-			 These may improve compression for some image types;
-			 see the libpng documentation for more details.
+    -f,                  Specifies, using a comma-separated list FLTR, a list
+    --filter=FLTR        of filter types to be tried when compressing the
+                         image. These are 'none', 'sub', 'up', 'avg' and
+                         'paeth'; 'all' may be used to select all five.
+                         (Alternatively, you may use just the first letters,
+                         omitting the commas.)
+                         These may improve compression for some image types;
+                         see the libpng documentation for more details.
 
-    -w,			 This controls the compression algorithm's maximum
-    --window-bits=NUM	 token length. It ranges between 9 and 15 bits;
-			 higher values normally give better compression at a
-			 speed cost. The default is 15.
+    -w,                  This controls the compression algorithm's maximum
+    --window-bits=NUM    token length. It ranges between 9 and 15 bits;
+                         higher values normally give better compression at a
+                         speed cost. The default is 15.
 
-    -z,			 This controls the compression strategy. Valid types
-    --strategy=TYPE	 are "default" (0), "filtered" (1), "huffman" (2) and
-			 "rle" (3); they can be referred to by number or
-			 name. Default is normally best; Huffman and RLE are
-			 fast but normally poorer.
+    -z,                  This controls the compression strategy. Valid types
+    --strategy=TYPE      are "default" (0), "filtered" (1), "huffman" (2) and
+                         "rle" (3); they can be referred to by number or
+                         name. Default is normally best; Huffman and RLE are
+                         fast but normally poorer.
 
-    -0			 No compression.
-    -1	  --fast	 Minimal compression; fast.
-    -9	  --best	 Maximum compression; slow. This is the default.
-			 Other values between 1 and 9 may be used.
+    -0                   No compression.
+    -1    --fast         Minimal compression; fast.
+    -9    --best         Maximum compression; slow. This is the default.
+                         Other values between 1 and 9 may be used.
 
   Renderer hints:
 
-    -I,			 Specifies the rendering intent of the image. If TYPE
-    --intent[=[+]TYPE]	 is 0 or 'default', no rendering intent is specified;
-			 else sRGB colourspace is assumed, gamma and
-			 chromaticity values are ignored, and the options are
-			 1 to 4, or 'perceptual' (for pictures), 'relative'
-			 (logos), 'saturation' (charts, graphs), and
-			 'absolute' (proofing images). If TYPE is prefixed
-			 with '+', default gamma and chromaticity values will
-			 be written to the image for use by applications
-			 which don't know about sRGB. See also [1].
+    -I,                  Specifies the rendering intent of the image. If TYPE
+    --intent[=[+]TYPE]   is 0 or 'default', no rendering intent is specified;
+                         else sRGB colourspace is assumed, gamma and
+                         chromaticity values are ignored, and the options are
+                         1 to 4, or 'perceptual' (for pictures), 'relative'
+                         (logos), 'saturation' (charts, graphs), and
+                         'absolute' (proofing images). If TYPE is prefixed
+                         with '+', default gamma and chromaticity values will
+                         be written to the image for use by applications
+                         which don't know about sRGB. See also [1].
 
-    -g,			 Specifies the image's gamma correction value, ie.
-    --gamma[=GAMMA]	 that required to properly display it. Acceptable
-			 values are 0 to 10; if 0 or no argument is given,
-			 then the default of 0.5 (ie. no correction with a
-			 device gamma of 0.5) is used.
+    -g,                  Specifies the image's gamma correction value, ie.
+    --gamma[=GAMMA]      that required to properly display it. Acceptable
+                         values are 0 to 10; if 0 or no argument is given,
+                         then the default of 0.5 (ie. no correction with a
+                         device gamma of 0.5) is used.
 
     -C,                  Specifies chromaticity information for the image.
-    --chromaticity=LIST	 The parameter is eight comma-separated values,
-			 handled as four pairs for the white point and the
-			 red, green and blue channels. Value ranges are 0 to
-			 1, and you may use "w", "r", "g" or "b" in place of
-			 a value pair for a default setting.
-			 (This is CIE x,y information. See also [2].)
+    --chromaticity=LIST  The parameter is eight comma-separated values,
+                         handled as four pairs for the white point and the
+                         red, green and blue channels. Value ranges are 0 to
+                         1, and you may use "w", "r", "g" or "b" in place of
+                         a value pair for a default setting.
+                         (This is CIE x,y information. See also [2].)
 
   General options:
 
-    -v,			 Be (more) verbose.
+    -v,                  Be (more) verbose.
     --verbose
 
 
@@ -471,39 +471,39 @@ The back ends
 
   <Spr2Png$Dir>.draw2spr [options] SRC DEST
 
-    SRC			 The source file (sprite or Draw).
+    SRC                  The source file (sprite or Draw).
 
-    DEST		 The destination file (PNG).
+    DEST                 The destination file (PNG).
 
-    -s,			 Set the scale at which the drawing is rendered.
-    --scale=X[,Y]	 This may be up to 10x along each axis; you may
-			 specify one or two scaling factors.
-			 Acceptable formats are simple, percentage and ratio.
+    -s,                  Set the scale at which the drawing is rendered.
+    --scale=X[,Y]        This may be up to 10x along each axis; you may
+                         specify one or two scaling factors.
+                         Acceptable formats are simple, percentage and ratio.
 
-    -t,			 Remove any transparent rows and columns from around
-    --trim		 the edges of the sprite. If no mask is to be output,
-			 then remove those same rows and columns since they
-			 would otherwise have been masked out.
+    -t,                  Remove any transparent rows and columns from around
+    --trim               the edges of the sprite. If no mask is to be output,
+                         then remove those same rows and columns since they
+                         would otherwise have been masked out.
 
-    -b,			 Specifies a background colour of the form &BBGGRR
+    -b,                  Specifies a background colour of the form &BBGGRR
     --background=COLOUR  (see above). If none is specified, then white is
-			 used; however, a mask is always generated.
+                         used; however, a mask is always generated.
 
-    -m,	      -M,	 These two options work together to determine the
+    -m,       -M,        These two options work together to determine the
     --no-mask --no-blend masking and blending as follows:
-	      --no-alpha   -m -M  Effect
-			   n  n  No mask, no anti-aliasing (see -R).
-			   Y  n  Simple mask, no anti-aliasing (ditto).
-			   n  Y  Background blended, always anti-aliased.
-			   Y  Y  Full alpha channel, always anti-aliased.
+              --no-alpha   -m -M  Effect
+                           n  n  No mask, no anti-aliasing (see -R).
+                           Y  n  Simple mask, no anti-aliasing (ditto).
+                           n  Y  Background blended, always anti-aliased.
+                           Y  Y  Full alpha channel, always anti-aliased.
 
-    -n,			 If an alpha channel is created, then it is inverted,
-    --inverse-alpha	 ie. 0 = opaque rather than transparent.
+    -n,                  If an alpha channel is created, then it is inverted,
+    --inverse-alpha      ie. 0 = opaque rather than transparent.
 
-    -r,			 Artworks rendering control. The default is 11.0.
-    --render=LEVEL	 (See the rendering level option in the front end.)
+    -r,                  Artworks rendering control. The default is 11.0.
+    --render=LEVEL       (See the rendering level option in the front end.)
 
-    -v,			 Be (more) verbose.
+    -v,                  Be (more) verbose.
     --verbose
 
 
@@ -512,40 +512,40 @@ The back ends
 
   <Spr2Png$Dir>.png2spr [options] SRC DEST
 
-    -b,			 Use either the given colour, the image's colour or
+    -b,                  Use either the given colour, the image's colour or
     --background[=BGND]  white for the rendered PNG. The format is &BBGGRR
-			 (as described above). If this is not present, then
-			 an alpha channel will be generated (if no -M); else
-			 the image will instead be background blended.
-			 (Overrides -s and -c.)
+                         (as described above). If this is not present, then
+                         an alpha channel will be generated (if no -M); else
+                         the image will instead be background blended.
+                         (Overrides -s and -c.)
 
-    -g,			 Use either the given image gamma, the image's own
-    --gamma[=GAMMA]	 gamma or 1/2.2. If not present, then the default of
-			 1/2.2 is used.
+    -g,                  Use either the given image gamma, the image's own
+    --gamma[=GAMMA]      gamma or 1/2.2. If not present, then the default of
+                         1/2.2 is used.
 
-    -d,			 Use the given display gamma correction, else 2.2.
+    -d,                  Use the given display gamma correction, else 2.2.
     --display-gamma=GAMMA
 
-    -M,			 Ignore transparency information, and don't generate
-    --no-alpha		 an alpha channel. (Overrides -s and -c.)
+    -M,                  Ignore transparency information, and don't generate
+    --no-alpha           an alpha channel. (Overrides -s and -c.)
 
-    -s,			 Generate a greyscale sprite for the alpha channel.
-    --separate-alpha	 (Implied for greyscale PNGs.)
+    -s,                  Generate a greyscale sprite for the alpha channel.
+    --separate-alpha     (Implied for greyscale PNGs.)
 
-    -c,			 If the alpha channel consists of fully transparent
-    --check-mask	 and fully opaque, create a simple mask instead (and
-			 not a separate alpha channel).
-			 (Implied for paletted or greyscale PNGs with simple
-			 transparency - ie. with a tRNS chunk.)
+    -c,                  If the alpha channel consists of fully transparent
+    --check-mask         and fully opaque, create a simple mask instead (and
+                         not a separate alpha channel).
+                         (Implied for paletted or greyscale PNGs with simple
+                         transparency - ie. with a tRNS chunk.)
 
-    -n,			 If the PNG contains an alpha channel (and it isn't
-			 ignored or optimised out) then it is inverted, ie.
-    --inverse-alpha	 ie. 0 = opaque rather than transparent.
+    -n,                  If the PNG contains an alpha channel (and it isn't
+                         ignored or optimised out) then it is inverted, ie.
+    --inverse-alpha      ie. 0 = opaque rather than transparent.
 
-    -f,			 Allow the sprite to have any values for its scale
-    --free-dpi		 parameters. Without this, the values are clamped to
-			 22.5 (rounded to 22), 45, 90 and 180, these being
-			 the only values which RISC OS will handle natively.
+    -f,                  Allow the sprite to have any values for its scale
+    --free-dpi           parameters. Without this, the values are clamped to
+                         22.5 (rounded to 22), 45, 90 and 180, these being
+                         the only values which RISC OS will handle natively.
 
 
   For all three programs, those short options which do not take arguments may

@@ -1,18 +1,18 @@
 #ifndef __spr2png_types_h
 #define __spr2png_types_h
 
-#define fail_BAD_ARGUMENT	1
-#define fail_OS_ERROR		2
-#define fail_LOAD_ERROR		3
-#define fail_BAD_DATA		4
-#define fail_BAD_IMAGE		5
-#define fail_TASKWINDOW		6
-#define fail_NO_AWRENDER	7
-#define fail_UNSUPPORTED	8
-#define fail_LIBPNG_FAIL	128
-#define fail_CONVERT_FAIL	128
-#define fail_NO_MEM		129
-#define fail_NO_24BPP		255
+#define fail_BAD_ARGUMENT       1
+#define fail_OS_ERROR           2
+#define fail_LOAD_ERROR         3
+#define fail_BAD_DATA           4
+#define fail_BAD_IMAGE          5
+#define fail_TASKWINDOW         6
+#define fail_NO_AWRENDER        7
+#define fail_UNSUPPORTED        8
+#define fail_LIBPNG_FAIL        128
+#define fail_CONVERT_FAIL       128
+#define fail_NO_MEM             129
+#define fail_NO_24BPP           255
 
 typedef struct { // 32-bit ints required
   long size;

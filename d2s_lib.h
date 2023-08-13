@@ -7,14 +7,14 @@
 /* In c.d2s_conv: */
 
 extern void *convertdraw (const void *data, size_t nSize, int simplemask,
-			  int invert, double scale_x, double scale_y,
-			  long background, int trim,
-			  void (*std_sighandler) (int), jmp_buf main_j);
+                          int invert, double scale_x, double scale_y,
+                          long background, int trim,
+                          void (*std_sighandler) (int), jmp_buf main_j);
 
 extern void *convertartworks (const void *data, size_t nSize, int simplemask,
-			      int invert, double scale_x, double scale_y,
-			      int renderlevel, long background, int trim,
-			      void (*std_sighandler) (int), jmp_buf main_j);
+                              int invert, double scale_x, double scale_y,
+                              int renderlevel, long background, int trim,
+                              void (*std_sighandler) (int), jmp_buf main_j);
 
 /* In s.d2s_render: */
 
@@ -28,9 +28,9 @@ extern int vduvars[];
 extern _kernel_oserror *aw_fileinit (const void *file, size_t * size);
 
 extern _kernel_oserror *render (const void *area, const void *file,
-				size_t size, const draw_matrix * matrix,
-				int type, int thicken, const char *vdu,
-				size_t vdusize);
+                                size_t size, const draw_matrix * matrix,
+                                int type, int thicken, const char *vdu,
+                                size_t vdusize);
 
 extern void makemask (sprite_t * sprite, long width, long height);
 
