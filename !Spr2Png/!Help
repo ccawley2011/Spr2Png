@@ -294,12 +294,13 @@ Conversion from PNG
 
   è Create a separate mask
       When ticked, a separate grey-scale sprite is created for the alpha
-      channel. (This option is implied for greyscale PNGs.)
+      channel. (This option is implied for greyscale PNGs with complex
+      transparency.)
 
-  è Try to reduce mask
-      When ticked, if the alpha channel can be reduced to a simple mask (as
-      normally used in RISC OS sprites), it will be (even if the above option
-      is ticked). (Images with simple masks have this kind of mask anyway.)
+  è Reduce mask
+      When ticked, the alpha channel will be reduced to a simple mask (as
+      normally used in RISC OS sprites), unless the above option is ticked.
+      (Images with simple masks have this kind of mask anyway.)
 
   è Alpha channel is inverse
       Normally, the alpha channel scale ranges from 0 (transparent) to 255
@@ -517,7 +518,7 @@ The back ends
                          (as described above). If this is not present, then
                          an alpha channel will be generated (if no -M); else
                          the image will instead be background blended.
-                         (Overrides -s and -c.)
+                         (Overrides -s and -r.)
 
     -g,                  Use either the given image gamma, the image's own
     --gamma[=GAMMA]      gamma or 1/2.2. If not present, then the default of
@@ -527,16 +528,16 @@ The back ends
     --display-gamma=GAMMA
 
     -M,                  Ignore transparency information, and don't generate
-    --no-alpha           an alpha channel. (Overrides -s and -c.)
+    --no-alpha           an alpha channel. (Overrides -s and -r.)
 
     -s,                  Generate a greyscale sprite for the alpha channel.
-    --separate-alpha     (Implied for greyscale PNGs.)
+    --separate-alpha     (Implied for greyscale PNGs with complex
+                         transparency.)
 
-    -c,                  If the alpha channel consists of fully transparent
-    --check-mask         and fully opaque, create a simple mask instead (and
-                         not a separate alpha channel).
-                         (Implied for paletted or greyscale PNGs with simple
-                         transparency - ie. with a tRNS chunk.)
+    -r,                  Reduce the alpha channel to a simple mask with only
+    --reduce-alpha       fully transparent and fully opaque pixels.
+                         (Implied for PNGs with simple transparency - ie.
+                         with a tRNS chunk.)
 
     -n,                  If the PNG contains an alpha channel (and it isn't
                          ignored or optimised out) then it is inverted, ie.

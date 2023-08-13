@@ -786,7 +786,7 @@ ELSE T%=FNticked(-3,16):cmd$="png2spr"
  IF $gammadisp%>"" THEN PROCadd(a$,"d"+$gammadisp%)
  IF FNticked(-3,12) THEN PROCadd(a$,"M")
  IF FNticked(-3,13) THEN PROCadd(a$,"s")
- IF FNticked(-3,14) THEN PROCadd(a$,"c")
+ IF FNticked(-3,14) THEN PROCadd(a$,"r")
  IF FNticked(-3,15) THEN PROCadd(a$,"n")
 ENDIF
 IF T% THEN

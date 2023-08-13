@@ -101,7 +101,7 @@ WSaveSpr.9:Enter the image gamma value here (>0, <=10).|MAny value present here 
 WSaveSpr.11:Enter the display gamma value here (>0, <=10).|MThe default is 2.2.
 WSaveSpr.12:Tick this option to cause any transparency information to be completely ignored.
 WSaveSpr.13:Tick this option to create a separate mask (except where the mask is simple).
-WSaveSpr.14:¤WOpt4.1
+WSaveSpr.14:Tick this option if you want to reduce the alpha channel (if present) to a simple mask.
 WSaveSpr.15:¤WOpt2.1
 
 IM-1:\TSpr2Png main menu.

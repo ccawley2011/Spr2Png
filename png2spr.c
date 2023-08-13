@@ -30,7 +30,7 @@ static double image_gamma = 0;
 static struct
   {
     char use;
-    char simplify;
+    char reduce;
     char separate;
     char tRNS;
     char inverse;
@@ -74,8 +74,8 @@ help (void)
 "  -d, --display-gamma=GAMMA  specify display gamma correction value\n"
 "                               if none, then use 2.2; requires --gamma\n"
 "  -M, --no-alpha             ignore any transparency information\n"
+"  -r, --reduce-alpha         reduce the alpha channel to a simple mask\n"
 "  -s, --separate-alpha       create a separate alpha channel\n"
-"  -c, --check-mask           create a simple mask if possible\n"
 "  -n, --inverse-alpha        invert the alpha channel (ie. 0=solid)\n"
 "  -f, --free-dpi             allow any DPI values (don't clamp to RISC OS)\n"
 "\n"
@@ -579,9 +579,7 @@ read_png(FILE *fp)
           {
             sprite_t *mask_ptr;
             png_bytep mask;
-            mask_type is = mask_COMPLEX;
-            if (alpha.simplify)
-              is = find_mask_type (spr_base, 1, 2);
+            mask_type is = find_mask_type (spr_base, 1, 2);
             switch (is)
               {
               case mask_COMPLEX:
@@ -604,7 +602,7 @@ read_png(FILE *fp)
                     mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
                     merged    = (png_bytep) (((int) merged    + 3) & ~3);
                   }
-                if (is == mask_SIMPLE && alpha.simplify)
+                if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
                   {
                     _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
                     memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
@@ -665,9 +663,11 @@ read_png(FILE *fp)
           {
           case mask_COMPLEX:
             debug_puts ("-> complex");
-            /**/rgba_separate:
+            if (alpha.reduce)
+              goto reduce_complex;
             if (alpha.separate)
               {
+                /**/separate_simple:
                 onerr (_swix (OS_SpriteOp, _INR (0, 6),  256+15,
                               spr_area, maskid, 0, width, height, 28));
                 _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
@@ -717,8 +717,9 @@ read_png(FILE *fp)
             break;
           case mask_SIMPLE:
             debug_puts ("-> simple");
-            if (!alpha.simplify)
-              goto rgba_separate;
+            if (alpha.separate)
+              goto separate_simple;
+            /**/reduce_complex:
             _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
             make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4);
             break;
@@ -841,8 +842,8 @@ main (int argc, char *argv[])
             case 'M':
               alpha.use = 0;
               break;
-            case 'c':
-              alpha.simplify = 1;
+            case 'r':
+              alpha.reduce = 1;
               break;
             case 's':
               alpha.separate = 1;
@@ -878,8 +879,8 @@ main (int argc, char *argv[])
                 case 'M':
                   alpha.use = 0;
                   break;
-                case 'c':
-                  alpha.simplify = 1;
+                case 'r':
+                  alpha.reduce = 1;
                   break;
                 case 's':
                   alpha.separate = 1;
@@ -950,7 +951,7 @@ main (int argc, char *argv[])
           "too few filenames (need both input and output)");
 
   if (bgnd != -2)
-    alpha.simplify = alpha.separate = 0;
+    alpha.reduce = alpha.separate = 0;
 
   _swi (Hourglass_On, _IN (0), 0);
 
