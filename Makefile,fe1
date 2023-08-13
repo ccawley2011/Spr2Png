@@ -19,7 +19,7 @@ d2s_OBJS =	o.draw2spr o.d2s_conv o.d2s_render o.d2s_trim \
 d2s_LIBS =	o.heap o.library C:o.stubs
 
 # Final targets:
-All:	!Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr # !Version
+All:	!Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr !Spr2Png.!RunImage # !Version
 
 !Version: !Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr
 	pipe "!Spr2Png.spr2png --version" "sed -e \"1! d\" -e \"1 s/^spr2png \([^)]*)\).*$/set spr2png$version \\1/\"" > !Version'
@@ -40,6 +40,9 @@ All:	!Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr # !Version
 !Spr2Png.png2spr: $(p2s_OBJS) $(p2s_LIBS)
 	$(link) $(Linkflags) $(p2s_OBJS) $(p2s_LIBS)
         squeeze $@
+
+!Spr2Png.!RunImage: bas.!RunImage
+        tokenize bas.!RunImage -out $@
 
 clean:
 	remove !Spr2Png.spr2png

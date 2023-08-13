@@ -1,0 +1,943 @@
+REM > !Spr2Png.!RunImage
+REM Written by Darren Salt
+
+ver$="0.26 (04 May 2006)"
+webS$="http://www.youmustbejoking.demon.co.uk/"
+webA$=webS$+"progs.graphics.html#spr2png"
+email$="mailto:ds@youmustbejoking.demon.co.uk"
+msgs%=0:slot%=164
+ON ERROR PROCshutdown:ERROR EXT ERR,REPORT$
+PROCinit
+REPEAT
+ SYS "Wimp_Poll",1,q% TO r%
+ IF r%=17 OR r%=18 THEN
+  CASE q%!16 OF
+  WHEN 0:quit%=TRUE
+  WHEN &400C2:SYS "OS_WriteN",q%+28 TO a$
+   IF a$="Spr2Png" THEN PROCinitialise:notme%=TRUE
+  ENDCASE
+ ENDIF
+UNTIL notme% OR quit%
+click%=-1:info%=0
+WHILE NOT quit%
+ IF info% THEN
+  SYS "OS_ReadMonotonicTime" TO r%
+  IF infot%-r%<1 THEN PROCdoinfo:infot%+=250:IF infot%-r%<1 THEN infot%=r%+250
+  SYS "Wimp_PollIdle",&1830,q%,infot% TO r%
+ ELSE SYS "Wimp_Poll",&1831+(picker%<0),q% TO r%
+ ENDIF
+ CASE r% OF
+ WHEN 0:IF picker%<0 THEN PROCopenpicker
+ WHEN 1:PROCredraw
+ WHEN 2:IF !q%=savew% THEN PROCopensave:ELSE SYS "Wimp_OpenWindow",,q%
+ WHEN 3:SYS "Wimp_CloseWindow",,q%:IF !q%=infow% THEN info%=0
+ WHEN 6:PROCmouse
+ WHEN 7:PROCdrag
+ WHEN 8:PROCkey
+ WHEN 9:PROCmenu
+ WHEN 17,18:PROCmessage
+ WHEN 19:PROCbounce
+ ENDCASE
+ENDWHILE
+SYS "Wimp_CloseDown":ON ERROR OFF
+PROCwipedir
+END
+
+DEF PROCwipedir
+SYS "XOS_File",17,"<Wimp$ScrapDir>.Spr2Png" TO A%
+IF A%>0 AND A%<3 THEN
+ SYS "XOS_CLI","%Wipe <Wimp$ScrapDir>.Spr2Png ~CF~VR" TO A%;F%
+ IF F% AND 1 THEN SYS "Wimp_ReportError",A%
+ENDIF
+ENDPROC
+
+DEF PROCinit
+notme%=FALSE:quit%=FALSE:scrap%=FALSE:picker%=0:pickwind%=0:pwwind%=0
+compwind%=15:strategy%=0:complevel%=9:sRGB%=0
+DIM q% 1536,q2% 320,menu% 100,stmenu% 124,rendmenu% 148,iccmenu% 148,iccsub% 124
+DIM mtext% 512,chroma%(3),chroma$(3)
+mtextend%=mtext%+512:!q2%=0:myref%=0:msgs%=FNloadmsgs("<Spr2Png$Dir>.Messages")
+chroma$()="0.3127,0.329","0.64,0.33","0.3,0.6","0.15,0.06"
+RESTORE +0:P%=q%:REPEAT READ !P%:P%+=4:UNTIL P%!-4=0
+SYS "Wimp_Initialise",310,&4B534154,"Spr2Png",q% TO wver%,task%
+ENDPROC
+DATA 1,2,3,4,1282,&400C0,&400C2,&400C9,&47700,&808C1,&808C2,&808C3,0
+
+DEF FNloadmsgs(a$)
+LOCAL B%,L%:SYS "MessageTrans_FileInfo",,"<Spr2Png$Dir>.Messages" TO ,,L%
+DIM B% 17+LEN a$,L% L%:$(B%+16)=a$:SYS "MessageTrans_OpenFile",B%,B%+16,L%
+=B%
+
+DEF PROCshutdown
+SYS "XWimp_CloseDown":IF msgs% THEN SYS "XMessageTrans_CloseFile",msgs%
+ENDPROC
+
+DEF PROCinitialise
+LOCAL ERROR
+ON ERROR LOCAL RESTORE ERROR:SYS "XWimp_CloseTemplate":SYS "XWimp_CloseDown":ERROR EXT ERR,REPORT$
+PROCwipedir
+SYS "OS_ReadModeVariable",-1,5 TO ,,A%:a$="":IF A%<2 THEN a$="22"
+SYS "OS_Byte",129,,255 TO ,A%:IF A%>=&A8 THEN a$="8"+a$
+SYS "OS_File",5,"<Spr2Png$Dir>.Sprites"+a$ TO ,,,,L%:DIM icn% L%+4:!icn%=L%+4
+icn%!8=16:SYS "OS_SpriteOp",256+9,icn%
+SYS "OS_SpriteOp",256+10,icn%,"<Spr2Png$Dir>.Sprites"+a$
+SYS "Wimp_OpenTemplate",,"<Spr2Png$Dir>.Templates":DIM optw%(6)
+infow%=FNloadt("Info"):ver%=q%!204:$ver%=ver$:savew%=FNloadt("SaveBox")
+savename%=q%!236:other%=q%!144+7:wheight%=q%!12-q%!4:title%=q%!72
+optw%(0)=FNloadt("Opt0Sprite"):optw%(1)=FNloadt("Opt1Draw"):scalex%=q%!172
+scaley%=q%!236:awrender%=q%!300:optw%(2)=FNloadt("Opt2Misc"):verbv%=q%!112+5
+optw%(3)=FNloadt("Opt3Output"):bgnd%=q%!172:optw%(4)=FNloadt("Opt4Reduce")
+optw%(5)=FNloadt("Opt5Pack"):compwindic%=q%!364:strategyic%=q%!492
+complevelic%=q%!588:optw%(6)=FNloadt("Opt6Render"):gamma%=q%!140:sRGBic%=q%!204
+FOR n%=0 TO 3:chroma%(n%)=q%!(332+32*n%):NEXT
+outw%=FNloadt("Output"):outwx%=!q%:outwy%=q%!12:outtitle%=q%!72
+savesprw%=FNloadt("SaveSprite"):savesprname%=q%!236:bgndspr%=q%!300
+gammaspr%=q%!396:gammadisp%=q%!460
+SYS "Wimp_CloseTemplate"
+RESTORE ERROR:RESTORE +0:PROCmkmenu(menu%,"Spr2Png"):menu%!60+=1<<22:my%=228
+menu%!28+=8:PROCmkmenu(stmenu%,FNmsg("Strategy"))
+PROCmkmenu(rendmenu%,FNmsg("sRGB")):PROCmkmenu(iccmenu%,FNmsg("ICC"))
+PROCmkmenu(iccsub%,FNmsg("ICCsub"))
+!q%=-1:q%!4=0:q%!8=0:q%!12=68:q%!16=68:q%!20=&17003102
+DIM barind% 8:q%!24=barind%:q%!28=icn%:q%!32=1:$barind%="!spr2png"
+SYS "Wimp_CreateIcon",,q% TO baricon%:running%=0:optw%=3
+Menu%=0:PROCsetfilters:PROCtw_set(0,""):FOR n%=0 TO 3:PROCsetchroma(n%,n%):NEXT
+ENDPROC
+
+DATA Info,infow%,Abort,-1,Quit,-1,
+DATA Strategy0,-1,Strategy1,-1,Strategy2,-1,Strategy3,-1,
+DATA sRGB0,-1,sRGB1,-1,sRGB2,-1,sRGB3,-1,sRGB4,-1,
+DATA Reset,-1,White,iccsub%,Red,iccsub%,Green,iccsub%,Blue,iccsub%,
+DATA White,-1,Red,-1,Green,-1,Blue,-1,
+
+DEF FNloadt(a$)
+LOCAL A%,B%:SYS "Wimp_LoadTemplate",,-1,,,-1,a$ TO ,,B%,,,,A%
+IF A% ELSE ERROR 1,FNmsg1("Enotmpl",a$)
+DIM A% B%:SYS "Wimp_LoadTemplate",,q%,A%,A%+B%,-1,a$:q%!64=icn%
+SYS "Wimp_CreateWindow",,q% TO A%
+=A%
+
+DEF PROCmkmenu(M%,a$)
+LOCAL A%,L%,W%,F%:L%=LEN a$:W%=M%
+IF LEN a$<12 THEN F%=0:$M%=a$:ELSE F%=256:!M%=FNmtext(a$):M%!4=-1:M%!8=0
+M%!12=&70207:M%!20=44:M%!24=0:M%+=28
+READ a$
+WHILE a$>""
+ READ M%!4:!M%=F%:F%=0:M%!8=&7000021:a$=FNmsg(a$):A%=LEN a$:IF A%>L% THEN L%=A%
+ IF LEN a$<12 THEN $(M%+12)=a$:ELSE M%!12=FNmtext(a$):M%?9=1:M%!16=-1:M%!20=0
+ READ a$:M%+=24
+ENDWHILE
+M%!-24=128:W%!16=L%*16
+ENDPROC
+
+DEF FNmtext(a$)
+IF mtext%+LEN a$+1>=mtextend% THEN ERROR 1,"Not enough menu text space"
+LOCAL A%:A%=mtext%:$A%=a$:mtext%+=LEN a$+1
+=A%
+
+DEF PROCdoinfo
+LOCAL a$
+CASE info% OF
+WHEN 1:$ver%=ver$
+WHEN 2:a$="spr2png"
+WHEN 3:a$="png2spr"
+WHEN 4:a$="draw2spr"
+ENDCASE
+IF a$>"" THEN
+ $ver%=STRING$(255,CHR$ 13):$ver%=a$+": "
+ SYS "XOS_ReadVarVal",a$+"$version",ver%+LEN a$+2,254-LEN a$,,3
+ENDIF
+PROCreplot(infow%,3):info%=(info% AND 3)+1
+ENDPROC
+
+DEF PROCredraw
+CASE !q% OF
+WHEN optw%(3):SYS "Wimp_RedrawWindow",,q% TO more%
+ PROCredrawbg(more%,optw%(3),3,bgnd%)
+WHEN outw%:SYS "Wimp_RedrawWindow",,q% TO more%:PROCredrawout(more%)
+WHEN savesprw%:SYS "Wimp_RedrawWindow",,q% TO more%
+ PROCredrawbg(more%,savesprw%,7,bgndspr%)
+ENDCASE
+ENDPROC
+
+DEF PROCupdatebg(F%,W%,I%,B%)
+IF F% THEN PROCreplot(W%,I%-1)
+!q%=W%:q%!4=I%:SYS "Wimp_GetIconState",,q%
+q%!4=q%!8+4:q%!8=q%!12+4:q%!12=q%!16-4:q%!16=q%!20-4
+SYS "Wimp_UpdateWindow",,q% TO more%:PROCredrawbg(more%,W%,I%,B%)
+ENDPROC
+
+DEF PROCredrawbg(more%,q%!80,q%!84,B%)
+LOCAL A%,G%,H%,I%,J%:IF $B%>"" THEN A%=EVAL ("&"+$B%)<<8:ELSE A%=-1
+SYS "Wimp_GetWindowState",,q%
+SYS "Wimp_GetIconState",,q%+80:I%=q%!88+4:J%=q%!92+4
+IF A%=-1 THEN
+ q%!64=I%:q%!68=J%:q%!72=I%+36:q%!76=J%+36:q%!80=&102
+ q%!84=q%+96:q%!88=icn%:q%!92=6:$(q%+96)="hatch"
+ WHILE more%
+  SYS "Wimp_PlotIcon",-1,q%+64:SYS "Wimp_GetRectangle",,q% TO more%
+ ENDWHILE
+ELSE
+ WHILE more%
+  G%=q%!4-q%!20+I%:H%=q%!16-q%!24+J%:REM assume 36x36 OS units
+  SYS "ColourTrans_SetGCOL",A%,,,256:RECTANGLE FILL G%,H%,35
+  SYS "Wimp_GetRectangle",,q% TO more%
+ ENDWHILE
+ENDIF
+ENDPROC
+
+DEF PROCredrawout(more%)
+WHILE more%
+ G%=q%!4-q%!20:H%=q%!16-q%!24-1:SYS "Wimp_SetColour",7:P%=HIMEM
+ WHILE P%<HIMEM+outlen%
+  L%=LEN $P%:MOVE G%,H%:PRINT $P%;:P%+=L%+1:H%-=32
+ ENDWHILE
+ SYS "Wimp_GetRectangle",,q% TO more%
+ENDWHILE
+ENDPROC
+
+DEF PROCsetsavewheight
+IF optw%<0 THEN q%!8=q%!16-wheight%:ENDPROC
+q%!40=optw%(optw%):SYS "Wimp_GetWindowState",,q%+40
+q%!8=q%!16-wheight%-(q%!56-q%!48)
+ENDPROC
+
+DEF PROCopensave
+IF optw%<0 OR wver%>=380 THEN SYS "Wimp_OpenWindow",,q%:ENDPROC
+q%!40=optw%(optw%):SYS "Wimp_GetWindowState",,q%+40
+q%!44=q%!4:q%!52=q%!12:q%!56+=q%!8-q%!48:q%!48=q%!8
+IF q%!28<>optw%(optw%) THEN q%!68=q%!28
+q%!28=q%!40:SYS "Wimp_OpenWindow",,q%+40:SYS "Wimp_OpenWindow",,q%
+SYS "Wimp_GetWindowState",,q%+40
+q%!44=q%!4:q%!52=q%!12:q%!56+=q%!8-q%!48:q%!48=q%!8:SYS "Wimp_OpenWindow",,q%+40
+ENDPROC
+
+DEF PROCopenpane
+q%!44=q%!4:q%!52=q%!12:q%!48+=q%!16-wheight%-q%!56:q%!56=q%!16-wheight%
+SYS "Wimp_OpenWindow",,q%+40,&4B534154,savew%,&AA0000
+ENDPROC
+
+DEF PROCclosesave
+!q%=savew%:SYS "Wimp_CloseWindow",,q%:!q%=savesprw%:SYS "Wimp_CloseWindow",,q%
+IF optw%>=0 THEN !q%=optw%(optw%):SYS "Wimp_CloseWindow",,q%
+ENDPROC
+
+DEF PROCmouse
+CASE q%!12 OF
+WHEN -2
+ IF q%!8<>2 THEN
+  IF outlen% THEN
+   !q%=outw%:SYS "Wimp_GetWindowState",,q%
+   q%!28=-1:SYS "Wimp_OpenWindow",,q%:outopen%=TRUE
+  ENDIF
+ ELSE PROCopenmenu(FALSE,!q%-64,my%)
+ ENDIF
+WHEN outw%:IF q%!8=2 THEN PROCopenmenu(TRUE,!q%-64,q%!4+64)
+WHEN infow%
+ CASE q%!16 OF
+ WHEN 2:PROClaunch(email$)
+ WHEN 8:IF q%!8=4 THEN PROClaunch(webS$):ELSE PROClaunch(webA$)
+ WHEN 9:SYS "XOS_CLI","Filer_Run <Spr2Png$Dir>.!Help"
+ ENDCASE
+WHEN savew%
+ IF q%!8<>2 THEN
+  CASE q%!16 OF
+  WHEN 0:PROCdragicon(savew%,0)
+  WHEN 1:PROCseticon(-1,0,1<<21,0):PROCshadeicons:o$="/spr":t$="/png"
+   IF FNticked(-1,0) THEN SWAP o$,t$:$other%="b60;R5,3":ELSE $other%="ff9;R5,3"
+   IF RIGHT$($savename%,4)=o$ THEN
+    $(savename%-4+LEN $savename%)=t$:SYS "Wimp_GetCaretPosition",,q%
+    IF !q%=savew% THEN SYS "Wimp_SetCaretPosition",savew%,4,,,-1,q%!20
+    PROCreplot(-1,4)
+   ENDIF
+  WHEN 2:PROCclosesave:PROCremovescrap
+  WHEN 3:IF FNpath($savename%) THEN IF FNprocess($savename%)
+  WHEN 5,6,7,8,9,10,11:A%=q%!16-5:PROCtick(-1,q%!16,TRUE):W%=0
+   IF optw%<>A% THEN
+    IF optw%>=0 THEN
+     SYS "Wimp_GetCaretPosition",,q%:IF !q%=optw%(optw%) THEN PROCmovetosavew
+     !q%=optw%(optw%):SYS "Wimp_GetWindowState",,q%:Z%=q%!28
+     SYS "Wimp_CloseWindow",,q%
+    ENDIF
+    !q%=savew%:SYS "Wimp_GetWindowState",,q%:H%=q%!8:IF Z% THEN q%!28=Z%
+    optw%=A%:PROCsetsavewheight
+    IF H%>0 AND q%!8<0 THEN
+     SYS "OS_ReadModeVariable",-1,5 TO ,,Y%:Y%=1<<Y%:q%!16-=q%!8-Y%:q%!8=Y%
+    ENDIF
+    PROCopensave:IF wver%>=380 THEN PROCopenpane
+   ENDIF
+  ENDCASE
+ ENDIF
+WHEN optw%(0):REM IF q%!8<>2 AND q%!16=0 THEN PROCshade(4,0,FNticked(0,0))
+WHEN optw%(2)
+ IF q%!8<>2 AND q%!16=0 THEN
+  CASE $verbv% OF
+  WHEN "ff":$verbv%="n"
+  WHEN "n":IF q%!8=4 THEN $verbv%="ff":ELSE $verbv%="n2"
+  WHEN "n2":IF q%!8=4 THEN $verbv%="ff":ELSE $verbv%="n3"
+  WHEN "n3":IF q%!8=4 THEN $verbv%="ff":ELSE $verbv%="n"
+  ENDCASE
+  PROCreplot(2,0)
+ ENDIF
+WHEN optw%(3):IF q%!8<>2 AND q%!16=3 THEN picker%=-1
+WHEN optw%(5)
+ IF q%!8<>2 THEN
+  CASE q%!16 OF
+  WHEN 1:PROCsetfilters
+  WHEN 2,3,4,5,6:SYS "Wimp_GetIconState",,q%+12:M%=1<<(q%!16-2)
+   IF q%!36 AND 1<<21 THEN filter%=filter% OR M%:ELSE filter%=filter% AND NOT M%
+   IF filter% ELSE PROCtick(5,2,TRUE):filter%=1
+  WHEN 9-(q%!8=1):IF compwind%>9 THEN compwind%-=1:PROCsetcompwind
+  WHEN 10+(q%!8=1):IF compwind%<15 THEN compwind%+=1:PROCsetcompwind
+  WHEN 13:Menu%=stmenu%:PROCgetpos(X%,Y%,5,13):A%=Menu%+(28+24*strategy%)
+   ?A%=?A% OR 1:SYS "Wimp_CreateMenu",,Menu%,X%,Y%
+  WHEN 16-(q%!8=1):IF complevel% THEN complevel%-=1:PROCsetcomplevel
+  WHEN 17+(q%!8=1):IF complevel%<9 THEN complevel%+=1:PROCsetcomplevel
+  ENDCASE
+ ENDIF
+WHEN optw%(6)
+ IF q%!8<>2 THEN
+  CASE q%!16 OF
+  WHEN 4:Menu%=rendmenu%:PROCgetpos(X%,Y%,6,4):A%=Menu%+(28+24*sRGB%)
+   ?A%=?A% OR 1:SYS "Wimp_CreateMenu",,Menu%,X%,Y%
+  WHEN 6:PROCshadechroma
+  WHEN 11:Menu%=iccmenu%:PROCgetpos(X%,Y%,6,11)
+   SYS "Wimp_CreateMenu",,Menu%,X%,Y%
+  ENDCASE
+ ENDIF
+WHEN savesprw%
+ IF q%!8<>2 THEN
+  CASE q%!16 OF
+  WHEN 0:PROCdragicon(savesprw%,0)
+  WHEN 2:PROCclosesave:PROCremovescrap
+  WHEN 3:IF FNpath($savesprname%) THEN IF FNprocess($savesprname%)
+  WHEN 5,12:PROCtickbg
+  WHEN 7:IF q%!8<>2 THEN picker%=-3
+  ENDCASE
+ ENDIF
+ENDCASE
+ENDPROC
+
+DEF PROClaunch(a$)
+SYS "XOS_Module",18,"AcornURI" TO ;F%
+IF F% AND 1 THEN
+ !q%=256:q%!12=0:q%!16=&4AF80:$(q%+20)=a$+CHR$ 0:SYS "Wimp_SendMessage",17,q%
+ELSE SYS "URI_Dispatch",,a$
+ENDIF
+ENDPROC
+
+DEF PROCopenmenu(I%,X%,Y%)
+menu%?52=128 AND I%<>0:Menu%=menu%:SYS "Wimp_CreateMenu",,menu%,X%,Y%
+ENDPROC
+
+DEF PROCopenpicker
+SYS "XOS_Module",18,"ColourPicker" TO ;A%:IF A% AND 1 THEN ENDPROC
+SYS "Wimp_GetCaretPosition",,q%+64
+IF picker%=-1 THEN PROCgetpos(X%,Y%,3,3):ELSE PROCgetpos(X%,Y%,-3,7)
+SYS "Wimp_SetCaretPosition",q%!64,q%!68,q%!72,q%!76,q%!80,q%!88,q%!92
+q%!8=X%:q%!20=Y%:q%!4=q%+44:q%!12=1<<31:q%!16=q%!12-1
+q%!24=0:q%!28=0:q%!36=0:q%!40=0:$(q%+44)=FNmsg("SelBgnd")
+IF picker%=-1 THEN
+ pwwind%=savew%:pwicon%=3:pwbgnd%=bgnd%
+ELSE pwwind%=savesprw%:pwicon%=7:pwbgnd%=bgndspr%
+ENDIF
+IF $pwbgnd%>"" THEN q%!32=EVAL ("&"+$pwbgnd%)<<8:!q%=1:ELSE q%!32=-1:!q%=3
+SYS "ColourPicker_OpenDialogue",1,q% TO picker%,pickwind%
+ENDPROC
+
+DEF PROCgetpos(RETURN X%,RETURN Y%,W%,I%)
+!q%=FNw(W%):SYS "Wimp_GetWindowState",,q%:X%=q%!4:Y%=q%!16
+q%!4=I%:SYS "Wimp_GetIconState",,q%:X%+=q%!16:Y%+=q%!20
+IF W%>=0 THEN Y%+=wheight%-8
+ENDPROC
+
+DEF PROCsetcompwind
+$compwindic%=STR$ compwind%+" bit":PROCreplot(5,8)
+ENDPROC
+
+DEF PROCsetcomplevel
+LOCAL a$:a$=FNmsg("Level"+STR$ complevel%):IF a$="" THEN a$=STR$ complevel%
+$complevelic%=a$:PROCreplot(5,15)
+ENDPROC
+
+DEF PROCdrag
+SYS "Wimp_GetPointerInfo",,q%+128
+SYS "Wimp_SendMessage",19,q%,q%!140,q%!144 TO ,,T%
+IF T%=task% OR T%=&706D6957 THEN ENDPROC
+IF dragw%<>savew% OR FNticked(-1,0) THEN q%!40=&FF9:ELSE q%!40=&B60
+q%!20=q%!140:q%!24=q%!144:q%!36=-1
+IF dragw%=savew% THEN
+ $(q%+44)=FNleaf($savename%,FALSE)+CHR$ 0
+ELSE $(q%+44)=FNleaf($savesprname%,FALSE)+CHR$ 0
+ENDIF
+!q%=256:q%!12=0:q%!16=1:q%!28=1:q%!32=-1>>>1
+SYS "Wimp_SendMessage",17,q%,q%!20,q%!24:myref%=q%!8
+ENDPROC
+
+DEF PROCdragicon(!q%,q%!4)
+LOCAL A%,spr%:SYS "Wimp_GetIconState",,q%:spr%=(q%!24 AND 1<<21) OR !q%<>savew%
+q%!40=!q%:SYS "Wimp_GetWindowState",,q%+40:q%!8+=q%!44-q%!60
+q%!16+=q%!44-q%!60:q%!12+=q%!56-q%!64:q%!20+=q%!56-q%!64
+q%!24=0:q%!28=0:q%!32=-1:q%!36=-1:SYS "OS_Byte",161,28 TO ,,A%
+IF A% AND 2 THEN
+ IF spr% THEN
+  SYS &62400,197,1,"file_ff9",q%+8,q%+24 TO ;B%:IF B% AND 1 THEN A%=0
+ ELSE SYS &62400,197,1,"file_b60",q%+8,q%+24 TO ;B%:IF B% AND 1 THEN A%=0
+ ENDIF
+ENDIF
+IF A% AND 2 ELSE !q%=-1:q%!4=5:SYS "Wimp_DragBox",,q%
+ENDPROC
+
+DEF PROCsetfilters
+LOCAL A%,n%:A%=FNticked(5,1)=0:filter%=0:FOR n%=2 TO 6:PROCshade(5,n%,A%):NEXT
+IF A% ELSE FOR n%=0 TO 4:filter%+=1<<n% AND FNticked(5,n%+2)>0:NEXT
+ENDPROC
+
+DEF PROCshadechroma
+LOCAL n%:FOR n%=7 TO 11:PROCshade(6,n%,sRGB% OR FNticked(6,6)=0):NEXT
+PROCshade(6,6,sRGB%)
+ENDPROC
+
+DEF PROCshadeicons
+LOCAL spr%,draw%,notaw%,png%,n%
+REM In
+spr%=vectorfile%<>0:draw%=vectorfile%=0:aw%=vectorfile%<>-2
+REM Out
+png%=FNticked(-1,0)<>0
+REM Set icons...
+PROCshade(-1,1,draw%):PROCshade(-1,5,spr%)
+PROCshade(-1,6,draw%):PROCshade(-1,9,png%):PROCshade(-1,10,png%)
+PROCshade(1,6,aw%):REM PROCshade(1,7,NOT png%):PROCshade(1,8,NOT png%)
+PROCshade(2,1,spr% AND png%)
+PROCshade(3,0,png%):PROCshade(3,5,png%)
+PROCshade(6,1,sRGB%):PROCshade(6,5,sRGB%=0):PROCshadechroma
+REM Close inappropriate panes
+IF (optw%=0 AND spr%) OR (optw%=1 AND draw%) OR (optw%>3 AND png%) THEN
+ !q%=optw%(optw%):SYS "Wimp_CloseWindow",,q%
+ PROCtick(-1,optw%+5,FALSE):IF optw%>3 THEN optw%=2:ELSE optw%=1-optw%
+ PROCtick(-1,optw%+5,TRUE):!q%=savew%:SYS "Wimp_GetWindowState",,q%
+ PROCsetsavewheight:PROCopensave:IF wver%>=380 THEN PROCopenpane
+ENDIF
+SYS "Wimp_GetCaretPosition",,q%
+IF !q%=optw%(1) OR !q%=optw%(3) THEN
+ SYS "Wimp_GetIconState",,q%:IF q%!24 AND 1<<22 THEN PROCmovetosavew
+ENDIF
+ENDPROC
+
+DEF PROCtickbg
+LOCAL A%:A%=FNticked(-3,5) OR FNticked(-3,12)
+PROCshade(-3,13,A%):PROCshade(-3,14,A%)
+ENDPROC
+
+DEF PROCkey
+IF !q%=pwwind% THEN PROCupdatebg(FALSE,pwwind%,pwicon%,pwbgnd%):ENDPROC
+CASE q%!24 OF
+WHEN 27:IF !q%=pickwind% ELSE PROCclosesave:ENDPROC
+ SYS "Wimp_ProcessKey",q%!24
+WHEN 13
+ CASE !q% OF
+ WHEN pickwind%:REM -
+ WHEN savew%:IF FNpath($savename%) THEN IF FNprocess($savename%)
+ WHEN savesprw%
+  CASE q%!4 OF
+  WHEN 4:IF FNpath($savesprname%) THEN IF FNprocess($savesprname%)
+  WHEN 11:SYS "Wimp_SetCaretPosition",savesprw%,4,,,-1,LEN $savesprname%
+  ENDCASE
+ ENDCASE
+WHEN &18A,&18E:REM down
+ CASE !q% OF
+ WHEN pickwind%:REM -
+ WHEN savew%:PROCmovetopane(1)
+ WHEN optw%(optw%+(optw%=0))
+  IF !q%=optw%(3) AND q%!4=2 THEN PROCupdatebg(FALSE,!q%,3,bgnd%)
+  PROCmovetonext(1)
+ OTHERWISE:SYS "Wimp_ProcessKey",q%!24
+ ENDCASE
+WHEN &19A,&18F:REM up
+ CASE !q% OF
+ WHEN pickwind%:REM -
+ WHEN savew%:PROCmovetopane(-1)
+ WHEN optw%(optw%+(optw%=0))
+  IF !q%=optw%(3) AND q%!4=2 THEN PROCupdatebg(FALSE,!q%,3,bgnd%)
+  PROCmovetonext(-1)
+ OTHERWISE:SYS "Wimp_ProcessKey",q%!24
+ ENDCASE
+OTHERWISE
+ CASE !q% OF
+ WHEN pickwind%:REM -
+ WHEN optw%(3):IF q%!24>&FF THEN SYS "Wimp_ProcessKey",q%!24
+  IF q%!4=2 THEN PROCupdatebg(FALSE,!q%,3,bgnd%)
+ WHEN savesprw%
+  CASE q%!4 OF
+  WHEN 6:IF q%!24>&FF THEN SYS "Wimp_ProcessKey",q%!24
+   IF $bgndspr%="" ELSE IF FNticked(-3,5) ELSE PROCtick(-3,5,TRUE):PROCtickbg
+   PROCupdatebg(FALSE,!q%,7,bgndspr%)
+  WHEN 9:IF q%!24>&FF THEN SYS "Wimp_ProcessKey",q%!24
+   IF $gammaspr%="" ELSE IF FNticked(-3,8) ELSE PROCtick(-3,8,TRUE)
+  OTHERWISE:SYS "Wimp_ProcessKey",q%!24
+  ENDCASE
+ OTHERWISE:SYS "Wimp_ProcessKey",q%!24
+ ENDCASE
+ENDCASE
+ENDPROC
+
+DEF PROCmovetosavew
+SYS "Wimp_SetCaretPosition",savew%,4,,,-1,LEN $savename%
+ENDPROC
+
+DEF PROCmovetopane(D%)
+LOCAL I%:I%=FNfindwritable(-1,D%)
+IF I%>=0 THEN SYS "Wimp_SetCaretPosition",!q%,q%!4,,,-1,LEN $(q%!28)
+ENDPROC
+
+DEF PROCmovetonext(D%)
+SYS "Wimp_GetCaretPosition",,q%
+LOCAL I%:I%=FNfindwritable(q%!4,D%)
+IF I%<0 THEN
+ PROCmovetosavew
+ELSE !q%=optw%(optw%):q%!4=I%:SYS "Wimp_GetIconState",,q%
+ SYS "Wimp_SetCaretPosition",optw%(optw%),I%,,,-1,LEN $q%!28
+ENDIF
+ENDPROC
+
+DEF FNfindwritable(I%,D%)
+LOCAL F%,T%,S%:!q%=optw%(optw%):SYS "Wimp_GetWindowInfo",,q%+1
+IF I%<0 THEN
+ IF D%<0 THEN F%=q%!88-1:S%=-1:ELSE T%=q%!88-1:S%=1
+ELSE IF D%<0 THEN F%=I%-1:S%=-1:ELSE F%=I%+1:T%=q%!88-1:S%=1
+ENDIF
+IF F%-S%=T% THEN =-1
+FOR q%!4=F% TO T% STEP S%
+ SYS "Wimp_GetIconState",,q%
+ IF (q%!24 AND &F000)>&D000 AND (q%!24 AND 1<<22)=0 THEN =q%!4
+NEXT
+=-1
+
+DEF PROCmenu
+LOCAL A%
+CASE Menu% OF
+WHEN menu%
+ CASE !q% OF
+ WHEN 1:PROCabort
+ WHEN 2:quit%=TRUE
+ ENDCASE
+WHEN stmenu%
+ IF !q%>-1 THEN
+  A%=Menu%+(28+24*strategy%):?A%=?A% AND 254:A%=Menu%+(28+24*!q%):?A%=?A% OR 1
+  strategy%=!q%:$strategyic%=FNmsg("Strategy"+STR$ !q%):PROCreplot(5,12)
+ ENDIF
+WHEN rendmenu%
+ IF !q%>-1 THEN
+  A%=Menu%+(28+24*sRGB%):?A%=?A% AND 254:A%=stmenu%+(28+24*!q%):?A%=?A% OR 1
+  sRGB%=!q%:$sRGBic%=FNmsg("sRGBs"+STR$ !q%):PROCreplot(6,3)
+  PROCshade(6,1,sRGB%):PROCshade(6,5,sRGB%=0):PROCshadechroma
+ ENDIF
+WHEN iccmenu%
+ CASE !q% OF
+ WHEN 0:FOR A%=0 TO 3:PROCsetchroma(A%,A%):NEXT
+ WHEN 1,2,3,4:IF q%!4>=0 THEN PROCsetchroma(!q%-1,q%!4)
+ ENDCASE
+ENDCASE
+SYS "Wimp_GetPointerInfo",,q%
+IF q%!8 AND 1 THEN SYS "Wimp_CreateMenu",,Menu%:ELSE Menu%=0
+ENDPROC
+
+DEF PROCsetchroma(X%,Y%)
+$chroma%(X%)=chroma$(Y%):PROCreplot(6,7+X%):SYS "Wimp_GetCaretPosition",,q%
+IF !q%=optw%(6) AND (q%!4>6 AND q%!4<11) THEN
+ SYS "Wimp_SetCaretPosition",!q%,q%!4,,,-1,LEN chroma$(Y%)
+ENDIF
+ENDPROC
+
+DEF PROCmessage
+CASE q%!16 OF
+WHEN 0:quit%=TRUE
+WHEN 1:PROCdatasave
+WHEN 2:PROCdatasaveack
+WHEN 3:IF running% ELSE PROCdataload
+WHEN 4:PROCdataloadack
+WHEN 1282:PROChelp
+WHEN &400C0
+ IF q%!20=infow% THEN info%=4:SYS "OS_ReadMonotonicTime" TO infot%:PROCdoinfo
+ SYS "Wimp_CreateSubMenu",,q%!20,q%!24,q%!28
+WHEN &400C2:SYS "XOS_GenerateError",q%+28 TO a$
+ IF a$="Spr2Png" THEN
+  !q%=20:q%!12=q%!8:q%!16=0:SYS "Wimp_SendMessage",17,q%,q%!4
+ ENDIF
+WHEN &400C3:IF !q2% AND q2%!4=q%!4 THEN !q2%=0:PROCabort
+ REMIF q%!4=running% THEN PROCnotrunning
+WHEN &400C9:Menu%=0:info%=0
+WHEN &47700:IF q%!24 AND 1 THEN $pwbgnd%="":ELSE $pwbgnd%=STR$~(q%!28>>>8)
+ PROCupdatebg(TRUE,pwwind%,pwicon%,pwbgnd%):PROCreplot(3,2):PROCreplot(-3,6)
+ IF pwwind%=savesprw% AND $pwbgnd%>"" THEN
+  IF FNticked(-3,5) ELSE PROCtick(-3,5,TRUE):PROCtickbg
+ ENDIF
+WHEN &808C1:PROCtw_output
+WHEN &808C2:REM ignore - text handle
+WHEN &808C3:PROCnotrunning
+ENDCASE
+ENDPROC
+
+DEF PROCbounce
+CASE q%!16 OF
+WHEN 3:PROCtellthemoff(FNmsg("Enoxfer")):myref%=0
+ENDCASE
+ENDPROC
+
+DEF PROCdatasave
+IF q%!12<>myref% OR q%!40<>&FF9 AND q%!40<>&B60 AND ((q%!40<>&AFF AND q%!40<>&D94) OR INKEY-129<&A5) THEN myref%=0:ENDPROC
+SYS "OS_File",8,"<Wimp$ScrapDir>.Spr2Png":q%!12=q%!8:q%!16=2:q%!36=-1
+$(q%+44)="<Wimp$ScrapDir>.Spr2Png."+FN0(q%+44)+CHR$ 0
+!q%=43+LEN $(q%+40) AND -4:SYS "Wimp_SendMessage",17,q%,q%!4:myref%=q%!8
+scrap%=TRUE:vectorfile%=(q%!40=&AFF)+(q%!40=&D94)
+ENDPROC
+
+DEF PROCdataload
+LOCAL @%:@%="+G8.5":LOCAL ERROR
+ON ERROR LOCAL PROCtellthemoff(REPORT$):ENDPROC
+in$=FN0(q%+44):SYS "XOS_File",5,in$ TO F%,,T%;A%
+IF (A% AND 1) OR F%<>1 THEN ENDPROC
+A%=T%>>8:IF A%<>&FFFFFFF9 AND A%<>&FFFFFB60 AND ((A%<>&FFFFFAFF AND A%<>&FFFFFD94) OR INKEY-129<&A5) THEN ENDPROC
+q%!12=savew%:SYS "Wimp_CloseWindow",,q%+12
+q%!12=savesprw%:SYS "Wimp_CloseWindow",,q%+12
+vectorfile%=(q%!40=&AFF)+2*(q%!40=&D94):scrap%=FALSE
+q%!12=q%!8:q%!16=4:SYS "Wimp_SendMessage",17,q%,q%!4:myref%=q%!8
+IF q%!40=&B60 THEN
+ IF $bgndspr%>"" THEN $bgndspr%=RIGHT$("00000"+$bgndspr%,6)
+ IF 1E5*VAL $gammaspr%>1E6 THEN $gammaspr%=""
+ IF 1E5*VAL $gammadisp%>1E6 THEN $gammadisp%=""
+ a$=FNleaf(in$,TRUE)
+ CASE TRUE OF
+ WHEN RIGHT$(a$,1)="/":a$=MID$(a$,LEN a$-1)
+ WHEN FNcoll(RIGHT$(a$,2),"/p")=0:a$=LEFT$(a$,LEN a$-2)
+ WHEN FNcoll(RIGHT$(a$,3),"/pn")=0:a$=LEFT$(a$,LEN a$-3)
+ WHEN FNcoll(RIGHT$(a$,4),"/png")=0:a$=LEFT$(a$,LEN a$-4)
+ ENDCASE
+ IF a$="" THEN a$="PNGSprite"
+ $savesprname%=a$:!q%=savesprw%:dragw%=savesprw%:SYS "Wimp_GetWindowState",,q%
+ q%!12-=q%!4:q%!8-=q%!16:q%!4=ADVAL7-64:q%!16=ADVAL8+64
+ q%!12+=q%!4:q%!8+=q%!16:q%!28=-1:SYS "Wimp_OpenWindow",,q%
+ SYS "Wimp_SetCaretPosition",savesprw%,4,,,-1,LEN $savesprname%
+ELSE IF $bgnd%>"" THEN $bgnd%=RIGHT$("00000"+$bgnd%,6)
+ A%=1E5*VAL $gamma%:IF A%>1E6 THEN A%=1E6:ELSE IF A% ELSE A%=5E4:REM default
+ IF $gamma%>"" THEN $gamma%=STR$ (A%/1E5)
+ IF vectorfile%=0 THEN PROCtick(-1,0,FALSE):$other%="ff9;R5,3"
+ IF FNticked(-1,0) THEN t$="/spr":ELSE t$="/png"
+ $savename%=FNleaf(in$,TRUE)+t$:PROCshadeicons
+ !q%=savew%:dragw%=savew%:SYS "Wimp_GetWindowState",,q%:q%!28=-1
+ q%!12-=q%!4:q%!4=ADVAL7-64:q%!16=ADVAL8+64:q%!12+=q%!4:q%!8=q%!16-wheight%
+ CASE vectorfile% OF
+ WHEN -1:$title%=FNmsg1("SaveAs","Draw")
+ WHEN -2:$title%=FNmsg1("SaveAs","Artworks")
+ OTHERWISE:$title%=FNmsg("SaveSprAs")
+ ENDCASE
+ PROCsetsavewheight:PROCopensave:IF wver%>=380 THEN PROCopenpane
+ PROCmovetosavew
+ENDIF
+ENDPROC
+
+DEF PROCdatasaveack
+IF q%!4=task% OR q%!12<>myref% THEN myref%=0:ENDPROC
+out$=FN0(q%+44)
+FOR n%=0 TO 255 STEP 4:q2%!n%=q%!n%:NEXT:q2%!16=3:q2%!12=0
+IF FNprocess(out$) AND running%=0 THEN
+ SYS "OS_File",17,q2%+44 TO ,,,,q2%!36
+ SYS "XWimp_SendMessage",18,q2%,q2%!4:!q2%=0:myref%=q2%!8
+ENDIF
+ENDPROC
+
+DEF PROCdataloadack
+REM IF q%!12=myref% AND LEFT$(FN0(q%+44),11)="<Wimp$Scrap" THEN PROCdel(FN0(q%+44))
+myref%=0
+ENDPROC
+
+DEF PROCremovescrap
+IF scrap% THEN PROCdel(in$)
+ENDPROC
+
+DEF PROCdel(a$)
+LOCAL A%,F%:SYS "XOS_File",6,a$ TO A%;F%:scrap%=FALSE
+IF F% AND 1 AND (!A% AND &FFFF00FF)<>&100C2 THEN PROCtellthemoff(FN0(A%+4))
+ENDPROC
+
+DEF FN0(A%)
+LOCAL a$:SYS "OS_WriteN",A% TO a$
+=a$
+
+DEF FNcoll(a$,b$)
+LOCAL A%:SYS "Territory_Collate",-1,a$,b$,1 TO A%
+=A%
+
+DEF FNleaf(f$,F%)
+WHILE INSTR(f$,":"):f$=MID$(f$,INSTR(f$,":")+1):ENDWHILE
+WHILE INSTR(f$,"."):f$=MID$(f$,INSTR(f$,".")+1):ENDWHILE
+=f$
+
+DEF PROCtellthemoff($(q%+4))
+LOCAL !q%:SYS "Wimp_ReportError",q%,1,"Spr2Png"
+ENDPROC
+
+DEF PROChelp
+LOCAL A%,a$,b$:A%=q%+20:$A%="":!q%=256:q%!12=q%!8:q%!16=1283
+CASE q%!32 OF
+WHEN -2:IF running% THEN a$="Ibar.R":ELSE a$="Ibar"
+WHEN infow%:a$="WInfo"
+WHEN savew%:a$="WSave."+STR$ q%!36:b$="W*"
+WHEN savesprw%:a$="WSaveSpr."+STR$ q%!36:b$="W*"
+WHEN optw%(optw%-(optw%<0)):a$="WOpt"+STR$ optw%+"."+STR$ q%!36:b$="W*"
+OTHERWISE
+ CASE Menu% OF
+ WHEN menu%:a$="I"
+ WHEN stmenu%:a$="S"
+ WHEN rendmenu%:a$="C"
+ WHEN iccmenu%:a$="ICC"
+ ENDCASE
+ SYS "Wimp_GetMenuState",,A%:b$=a$+"M-1":a$+="M"+STR$ !A%
+ IF Menu%!(36+!A%*24) AND 1<<22 THEN a$+="g"
+ IF !A%>0 AND (A%!4>=0 OR q%!36=-1) THEN a$+="."+STR$ A%!4
+ VDU4,30:PRINTa$"    ";:VDU5
+ENDCASE
+IF a$>"" THEN
+ $A%=FNmsg(a$):IF $A%="" THEN $A%=FNmsg(b$)
+ IF ?A%=164 THEN $A%=FNmsg($(A%+1))
+ SYS "Wimp_SendMessage",17,q%,q%!4
+ENDIF
+ENDPROC
+
+DEF FNpath(a$)
+LOCAL I%:I%=INSTR(a$,"::")+2
+IF I% THEN
+ IF INSTR(a$,".",I%)>0 THEN =TRUE
+ELSE IF INSTR(a$,":")>0 THEN =TRUE
+ENDIF
+PROCtellthemoff(FNmsg("Edragic"))
+=FALSE
+
+DEF FNprocess(out$)
+LOCAL a$,D%,S%,T%,cmd$:D%=FALSE
+SYS "OS_SetVarVal","Spr2Png$In",in$,LEN in$
+SYS "OS_SetVarVal","Spr2Png$Out",out$,LEN out$
+IF dragw%=savew% THEN
+ IF FNticked(1,7) ELSE PROCadd(a$,"m")
+ IF FNticked(1,8) ELSE PROCadd(a$,"M")
+ IF FNticked(-1,0) THEN
+  cmd$="draw2spr":REM Dest is sprite
+ ELSE cmd$="spr2png":REM Dest is PNG
+  IF sRGB% THEN
+   IF FNticked(6,5) THEN
+    PROCadd(a$,"I+"+STR$ sRGB%):D%=FALSE
+   ELSE PROCadd(a$,"I"+STR$ sRGB%):D%=FALSE
+   ENDIF
+  ELSE
+   IF $gamma%>"" THEN
+    A%=1E5*VAL $gamma%:IF A% ELSE A%=5E4:REM default
+    IF A%>1E6 THEN PROCtellthemoff(FNmsg("Egamma")):=FALSE
+    PROCadd(a$,"g"+STR$ (A%/1E5)):D%=0
+   ENDIF
+   IF FNticked(6,6) THEN
+    PROCadd(a$,"C"+$chroma%(0)+","+$chroma%(1)+","+$chroma%(2)+","+$chroma%(3))
+   ENDIF
+  ENDIF
+  IF filter% THEN
+   PROCadd(a$,"f")
+   FOR n%=0 TO 4
+    IF filter% AND 1<<n% THEN a$+=MID$("nsuap",n%,1):D%=FALSE
+   NEXT
+  ENDIF
+  IF FNticked(0,0) THEN PROCadd(a$,"a")
+  IF FNticked(3,0) THEN PROCadd(a$,"i")
+  IF FNticked(3,4) THEN PROCadd(a$,"x")
+  IF FNticked(3,6) THEN PROCadd(a$,"X")
+  IF FNticked(4,0) THEN PROCadd(a$,"r")
+  IF FNticked(4,1) THEN PROCadd(a$,"c")
+  IF FNticked(4,2) THEN PROCadd(a$,"s")
+  IF FNticked(4,3) THEN PROCadd(a$,"p")
+  IF FNticked(4,4) THEN PROCadd(a$,"G")
+  IF FNticked(4,5) THEN PROCadd(a$,"B")
+  PROCadd(a$,STR$ complevel%)
+  IF compwind%<15 THEN PROCadd(a$,"w"+STR$ compwind%)
+  PROCadd(a$,"z"+STR$ strategy%)
+ ENDIF
+ IF FNticked(0,1) THEN PROCadd(a$,"n")
+ IF FNticked(3,5) THEN PROCadd(a$,"t")
+ CASE $verbv% OF
+ WHEN "n":PROCadd(a$,"v")
+ WHEN "n2":PROCadd(a$,"vv")
+ WHEN "n3":PROCadd(a$,"vvv")
+ ENDCASE
+ IF $bgnd%>"" THEN PROCadd(a$,"b"+$bgnd%)
+ IF vectorfile% THEN
+  IF ($scalex%>"" AND FNvalidscale($scalex%)=0) OR ($scaley%>"" AND FNvalidscale($scaley%)=0) THEN PROCtellthemoff("Escale"):=FALSE
+  IF FNticked(-1,0) THEN s$="s":ELSE s$="S"
+  CASE TRUE OF
+  WHEN $scalex%>"" AND $scaley%>"":PROCadd(a$,s$+$scalex%+","+$scaley%)
+  WHEN $scalex%>"":PROCadd(a$,s$+$scalex%)
+  WHEN $scaley%>"":PROCadd(a$,s$+$scaley%)
+  ENDCASE
+  IF vectorfile%=-2 THEN
+   IF FNticked(-1,0) THEN s$="r":ELSE s$="R"
+   IF $awrender%>"" THEN PROCadd(a$,s$+$awrender%)
+  ENDIF
+ ENDIF
+ T%=FNticked(2,1) OR FNticked(-1,0)
+ELSE T%=FNticked(-3,16):cmd$="png2spr"
+ IF FNticked(-3,5) THEN PROCadd(a$,"b"+$bgndspr%):PROCadd(a$,"")
+ IF FNticked(-3,8) THEN PROCadd(a$,"g"+$gammaspr%):PROCadd(a$,"")
+ IF $gammadisp%>"" THEN PROCadd(a$,"d"+$gammadisp%)
+ IF FNticked(-3,12) THEN PROCadd(a$,"M")
+ IF FNticked(-3,13) THEN PROCadd(a$,"s")
+ IF FNticked(-3,14) THEN PROCadd(a$,"c")
+ IF FNticked(-3,15) THEN PROCadd(a$,"n")
+ENDIF
+IF T% THEN
+ SYS "Wimp_SlotSize",-1,-1 TO ,S%:SYS "Wimp_SlotSize",-1,slot%*1024
+ SYS "Wimp_SlotSize",-1,-1 TO ,D%
+ IF D%<131072 THEN SYS "Wimp_SlotSize",-1,S%:ERROR 1,FNmsg1("Enomem",cmd$)
+ SYS "XWimp_StartTask",FNcmd(cmd$,a$) TO A%;F%
+ SYS "Wimp_SlotSize",-1,S%:IF F% AND 1 ELSE A%=0
+ELSE SYS "XWimp_StartTask",FNtw(cmd$,a$) TO A%;F%
+ !q%=outw%:SYS "Wimp_CloseWindow",,q%:PROCtw_set(0,"*"+cmd$+" *")
+ENDIF
+IF F% AND 1 THEN
+ SYS "OS_WriteN",A%+4 TO f$:PROCtellthemoff(f$)
+ELSE PROCclosesave:outopen%=FALSE:running%=A%:IF running% THEN PROCbar(0)
+ENDIF
+=TRUE
+
+DEF FNtw(cmd$,a$)="%TaskWindow """+FNcmd(cmd$,a$)+""" -wimpslot "+STR$ slot%+"K -name ""*"+cmd$+""" -quit -task &"+STR$ ~task%+" -txt 0"
+DEF FNcmd(cmd$,a$)="/<Spr2Png$Dir>."+cmd$+" <Spr2Png$In> <Spr2Png$Out>"+a$
+
+DEF FNticked(!q%,q%!4)
+!q%=FNw(!q%):SYS "Wimp_GetIconState",,q%
+=q%!24 AND 1<<21
+
+DEF FNw(W%)
+CASE W% OF
+WHEN -3:=savesprw%
+WHEN -1:=savew%
+OTHERWISE:IF W%>=0 AND W%<99 THEN =optw%(W%)
+ENDCASE
+=W%
+
+DEF FNvalidscale(a$)
+IF a$="" THEN =0
+LOCAL x,y:x=VAL a$:a$=FNnum(a$):IF x=0 THEN =0
+CASE LEFT$(a$,1) OF
+WHEN "%":x=x/100
+WHEN ":":a$=MID$(a$,2):y=VAL a$:IF y>0 THEN a$=FNnum(a$):x=x/y:ELSE =0
+WHEN "":REM no action
+OTHERWISE:=0
+ENDCASE
+=x>0 AND x<=10
+
+DEF FNnum(a$)
+WHILE a$>"" AND INSTR("0123456789",LEFT$(a$,1)):a$=MID$(a$,2):ENDWHILE
+IF LEFT$(a$,1)="." THEN
+ REPEAT a$=MID$(a$,2):UNTIL a$="" OR INSTR("0123456789",LEFT$(a$,1))=0
+ENDIF
+=a$
+
+DEF PROCadd(RETURN a$,o$)
+IF o$="" ELSE IF D% THEN a$+=o$:ELSE a$+=" -"+o$
+D%=LEN o$=1
+ENDPROC
+
+DEF PROCbar(I%)
+?barind%=35+2*(I%<>0):PROCreplot(-2,baricon%)
+menu%!60=(menu%!60 AND NOT (1<<22)) OR (1<<22 AND running%=0)
+IF Menu%=menu% THEN SYS "Wimp_CreateMenu",,menu%
+ENDPROC
+
+DEF PROCtick(W%,I%,T%)
+PROCseticon(W%,I%,1<<21 AND T%<>0,1<<21)
+ENDPROC
+
+DEF PROCshade(W%,I%,T%)
+PROCseticon(W%,I%,1<<22 AND T%<>0,1<<22)
+IF T% ELSE ENDPROC
+SYS "Wimp_GetCaretPosition",,q2%+256
+IF q2%!256=FNw(W%) AND q2%!260=I% THEN PROCmovetonext(1)
+ENDPROC
+
+DEF PROCreplot(W%,I%)
+PROCseticon(W%,I%,0,0)
+ENDPROC
+
+DEF PROCseticon(!q%,q%!4,q%!8,q%!12)
+!q%=FNw(!q%):SYS "Wimp_SetIconState",,q%
+ENDPROC
+
+DEF FNmsg(a$):LOCAL p0$,p1$
+DEF FNmsg1(a$,p0$):LOCAL p1$
+DEF FNmsg2(a$,p0$,p1$)
+LOCAL F%:SYS "XMessageTrans_Lookup",msgs%,a$,q%+1024,256,p0$,p1$ TO ,,a$;F%
+IF F% AND 1 THEN =""
+=a$
+
+DEF PROCclaim(M%)
+IF M% AND M%<claim% THEN ENDPROC
+SYS "XWimp_SlotSize",M%+HIMEM-&8000,-1
+SYS "Wimp_SlotSize",-1,-1 TO claim%:claim%-=HIMEM-&8000
+ENDPROC
+
+DEF PROCtw_output
+q%!12=q%!8:SYS "Wimp_SendMessage",17,q%,q%!4
+LOCAL C%,N%,W%,O%,L%:N%=q%!20:W%=q%+24:L%=outlines%
+PROCclaim(outlen%+q%!20+1):N%=0:O%=outlen%
+WHILE N%<q%!20 AND outlen%<claim%
+ C%=W%?N%:N%+=1
+ CASE C% OF
+ WHEN 8:IF outlen% THEN outlen%-=1
+ WHEN 10:C%=13:outlines%+=1
+ WHEN 13:REPEAT outlen%-=1:UNTIL outlen%<0 OR ?(HIMEM+outlen%)=10:outlen%+=1
+ ENDCASE
+ IF C%=13 OR (C%>31 AND C%<>127) THEN ?(HIMEM+outlen%)=C%:outlen%+=1
+ENDWHILE
+IF outlen%<claim% THEN:?(HIMEM+outlen%)=13
+ELSE IF outlen% THEN ?(HIMEM+outlen%-1)=13
+ENDIF
+IF O%=0 AND outlen% THEN PROCtw_open
+N%=0:!q%=0:q%!4=0:q%!12=0:W%=0
+WHILE N%<outlen%
+ q%!4-=32:C%=LEN $(HIMEM+N%):N%+=C%+1:IF W%<C% THEN W%=C%
+ENDWHILE
+q%!8=W%*16:q%!40=outw%:SYS "Wimp_GetWindowState",,q%+40
+SYS "Wimp_SetExtent",outw%,q%:SYS "Wimp_ForceRedraw",outw%,0,q%!4,q%!8,L%*-32
+IF q%!72 AND 1<<18 THEN
+ IF q%!8<=800 THEN q%!52=q%!44+q%!8
+ IF q%!4>=-256 THEN q%!48=q%!56+q%!4
+ENDIF
+IF outopen%=FALSE OR (q%?74 AND 1) THEN
+ q%!64=q%!4:SYS "Wimp_OpenWindow",,q%+40:outopen%=TRUE
+ENDIF
+ENDPROC
+
+DEF PROCtw_open
+$q%=STRING$(16,CHR$ 0):SYS "Wimp_SetExtent",outw%,q%
+!q%=outw%:q%!4=outwx%:q%!8=outwy%:q%!12=outwx%:q%!16=outwy%
+q%!20=0:q%!24=0:q%!28=-1:SYS "Wimp_OpenWindow",,q%
+ENDPROC
+
+DEF PROCtw_set(R%,a$)
+outopen%=FALSE:$outtitle%=a$
+IF R% ELSE claim%=0:PROCclaim(0):outlen%=0:outlines%=0
+IF wver%>=380 THEN
+ SYS "Wimp_ForceRedraw",outw%,&4B534154,3
+ELSE SYS "Wimp_GetCaretPosition",,q%:SYS "XWimp_SetCaretPosition",outw%,-1
+ SYS "XWimp_SetCaretPosition",!q%,q%!4,q%!8,q%!12,q%!16,q%!20
+ENDIF
+ENDPROC
+
+DEF PROCnotrunning
+running%=0:myref%=0:PROCbar(1):PROCtw_set(1,LEFT$($outtitle%,LEN $outtitle%-2))
+IF !q2% THEN
+ SYS "OS_File",17,q2%+44 TO ,,,,q2%!36
+ SYS "XWimp_SendMessage",18,q2%,q2%!4:!q2%=0:myref%=q2%!8
+ENDIF
+ENDPROC
+
+DEF PROCabort
+IF running% THEN
+ !q%=20:q%!12=0:q%!16=&808C4:SYS "Wimp_SendMessage",17,q%,running%
+ENDIF
+ENDPROC
