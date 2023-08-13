@@ -357,7 +357,13 @@ read_png(FILE *fp)
                           colour->blue << 16;
           debug_printf ("  -> colour = &%06X\n", trns.colour);
         }
-      if (trns.list)
+      if (colour_type & PNG_COLOR_MASK_ALPHA)
+        {
+          alpha.tRNS = 0;
+          png_set_tRNS_to_alpha (png_ptr);
+          debug_puts ("  -> list will be converted\n");
+        }
+      else if (trns.list)
         {
           int i;
           for (i = trns.len - 1; i >= 0; --i)
@@ -370,17 +376,9 @@ read_png(FILE *fp)
                 colour_type |= PNG_COLOR_MASK_ALPHA;
                 break;
               }
+          debug_printf ("  -> list will be %s\n",
+                        alpha.tRNS ? "used" : "converted");
         }
-      else
-        {
-          png_set_tRNS_to_alpha (png_ptr);
-          if (colour_type == PNG_COLOR_TYPE_PALETTE)
-            bit_depth = 24;
-          colour_type |= PNG_COLOR_MASK_ALPHA;
-        }
-      if (trns.list)
-        debug_printf ("  -> list will be %s\n",
-                      alpha.tRNS ? "used" : "converted");
     }
 
   if (bgnd != -2)
@@ -441,14 +439,18 @@ read_png(FILE *fp)
   if ((colour_type & ~PNG_COLOR_MASK_ALPHA) == PNG_COLOR_TYPE_RGB)
     bit_depth = 24;
 
-  if (colour_type == PNG_COLOR_TYPE_GRAY && !alpha.tRNS)
+  if ((colour_type & PNG_COLOR_MASK_ALPHA) == 0 && !alpha.tRNS)
     {
-      debug_puts ("(no need for filler)");
+      debug_puts ("(no need for alpha)");
       alpha.use = 0;
     }
 
-  if (alpha.use || alpha.tRNS)
-    png_set_filler(png_ptr, 0x00, PNG_FILLER_AFTER); /* RGBA if appropriate */
+  if (colour_type == PNG_COLOR_TYPE_RGB)
+    {
+      debug_puts ("(adding filler)");
+      png_set_filler(png_ptr, 0x00, PNG_FILLER_AFTER); /* RGBA if appropriate */
+    }
+
   png_read_update_info(png_ptr, info_ptr); /* Update info structure etc. */
 
   {
@@ -458,36 +460,24 @@ read_png(FILE *fp)
     int mode, palsize = 0;
     row_width = png_get_rowbytes(png_ptr, info_ptr) + 3 & ~3;
     size_t size = 16 + 2 * (44 + 256 * 4 * 2); /* 2 sprites, 2 palettes */
+
     if (IS_GREY (colour_type))
-      {
-        if (alpha.use || alpha.tRNS)
-          {
-            debug_puts ("(is grey, masked)");
-            int w = (2 * width + 7) & ~7;
-            w = (w < row_width) ? row_width : w;
-            size += w * height; /* sprite and mask */
-          }
-        else
-          {
-            debug_puts ("(is grey)");
-            size += ((width + 3) & ~3) * height; /* sprite */
-          }
-      }
+        debug_puts ("(is grey)");
     else
-      {
         debug_puts ("(is rgb)");
-        size += row_width * height; /* sprite image */
-        if ((colour_type & PNG_COLOR_MASK_ALPHA) && alpha.use)
-          {
-            debug_puts ("(has alpha)");
-            size += ((width + 3) & ~3) * height; /* mask sprite */
-          }
-        else if (alpha.tRNS)
-          {
-            debug_puts ("(has simple mask)");
-            size += ((width + 31) >> 3 & ~3) * height; /* sprite mask */
-          }
+
+    size += row_width * height; /* sprite image */
+    if ((colour_type & PNG_COLOR_MASK_ALPHA) && alpha.use)
+      {
+        debug_puts ("(has alpha)");
+        size += ((width + 3) & ~3) * height; /* mask sprite */
       }
+    else if (alpha.tRNS)
+      {
+        debug_puts ("(has simple mask)");
+        size += ((width + 31) >> 3 & ~3) * height; /* sprite mask */
+      }
+
     debug_printf ("Creating sprite (area size = %X)...\n", size);
     spr_area = malloc (size);
     row_ptrs = calloc (height, sizeof(char *));
@@ -574,7 +564,13 @@ read_png(FILE *fp)
     png_read_image (png_ptr, row_ptrs);
     free (row_ptrs);
 
-    if (alpha.use && IS_GREY (colour_type))
+    if (alpha.use && alpha.tRNS)
+      {
+        debug_puts ("Processing simple mask...\n");
+        onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
+        make_trns (spr_ptr, bit_depth, colour_type);
+      }
+    else if (alpha.use && IS_GREY (colour_type))
       {
         int x;
         png_bytep mask_base, merged = spr_base;
@@ -584,8 +580,6 @@ read_png(FILE *fp)
             sprite_t *mask_ptr;
             png_bytep mask;
             mask_type is = mask_COMPLEX;
-            if (alpha.tRNS)
-              alpha.simplify = 1;
             if (alpha.simplify)
               is = find_mask_type (spr_base, 1, 2);
             switch (is)
@@ -615,11 +609,7 @@ read_png(FILE *fp)
                     _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
                     memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
                             (int) ((((width + 31) >> 3) & ~3) * height));
-                    if (alpha.tRNS)
-                      make_trns (spr_ptr, 8, PNG_COLOR_TYPE_GRAY);
-                    else
-                      make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, mask,
-                                1);
+                    make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1);
                   }
                 else
                   {
@@ -665,12 +655,6 @@ read_png(FILE *fp)
                 merged   = (png_bytep) (((int) merged   + 3) & ~3);
               }
           }
-      }
-    else if (alpha.use && alpha.tRNS)
-      {
-        debug_puts ("Processing simple mask...");
-        onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
-        make_trns (spr_ptr, bit_depth, colour_type);
       }
     else if (alpha.use && (colour_type & PNG_COLOR_MASK_ALPHA))
       {
