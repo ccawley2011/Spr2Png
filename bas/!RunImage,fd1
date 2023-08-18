@@ -5,7 +5,7 @@ ver$="0.26 (04 May 2006)"
 webS$="http://www.youmustbejoking.demon.co.uk/"
 webA$=webS$+"progs.graphics.html#spr2png"
 email$="mailto:ds@youmustbejoking.demon.co.uk"
-msgs%=0:slot%=164
+msgs%=0:slot%=256
 ON ERROR PROCshutdown:ERROR EXT ERR,REPORT$
 PROCinit
 REPEAT
