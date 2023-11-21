@@ -320,13 +320,6 @@ read_png(FILE *fp)
   puts ("Initialising image translation...");
 #endif
 
-  /* Expand greyscale images to the full 8 bits from 1, 2, or 4 bits/pixel */
-  if (IS_GREY (colour_type) && bit_depth < 8)
-    {
-      png_set_expand_gray_1_2_4_to_8 (png_ptr);
-      bit_depth = 8;
-    }
-
   if (alpha.use && png_get_valid (png_ptr, info_ptr, PNG_INFO_tRNS))
     {
       png_color_16p colour;
