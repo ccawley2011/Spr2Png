@@ -27,6 +27,7 @@ static int png_init;
 static long bgnd = -2;
 static double display_gamma = 2.2;
 static double image_gamma = 0;
+static char pack_mask = 0;
 static struct
   {
     char use;
@@ -74,6 +75,7 @@ help (void)
 "  -d, --display-gamma=GAMMA  specify display gamma correction value\n"
 "                               if none, then use 2.2; requires --gamma\n"
 "  -M, --no-alpha             ignore any transparency information\n"
+"  -p  --pack-mask            pack simple masks to 1bpp (RISC OS 3.6+)\n"
 "  -r, --reduce-alpha         reduce the alpha channel to a simple mask\n"
 "  -s, --separate-alpha       create a separate alpha channel\n"
 "  -n, --inverse-alpha        invert the alpha channel (ie. 0=solid)\n"
@@ -154,26 +156,27 @@ add_grey_palette (spritearea_t *const area, sprite_t *const spr)
 
 
 static void
-make1bpp (png_bytep mask, png_bytep spr, int step)
+makemask (png_bytep mask, png_bytep spr, int step, int mask_depth)
 {
   long x, y;
 
-  debug_puts ("-> making 1bpp mask");
+  debug_printf ("-> making %dbpp mask", mask_depth);
   spr -= 1;
   for (y = height; y; --y)
     {
-      int b = 1, w = 0;
+      int val = (1 << mask_depth) - 1;
+      int b = val, w = 0;
       for (x = width; x; --x)
         {
           if (*(spr += step))
             w |= b;
-          if ((b = b << 1) == 256)
+          if ((b = b << mask_depth) > 255)
             {
               *mask++ = w;
-              b = 1; w = 0;
+              b = val; w = 0;
             }
         }
-      if (b != 1)
+      if (b != val)
         *mask++ = w;
       mask = (png_bytep) (((int) mask + 3) & ~3);
       spr = (png_bytep) (((int) spr + 4 - step) & ~3) + step - 1;
@@ -182,7 +185,7 @@ make1bpp (png_bytep mask, png_bytep spr, int step)
 
 
 static void
-make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type)
+make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type, int mask_depth)
 {
   png_bytep mask;
   long x, y;
@@ -195,18 +198,19 @@ make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type)
       debug_printf ("Simple mask, 24bit (&%06X)\n", trns.colour);
       for (y = height; y; --y)
         {
-          int b = 1, w = 0;
+          int val = (1 << mask_depth) - 1;
+          int b = val, w = 0;
           for (x = width; x; --x)
             {
               if (*spr4++ != trns.colour)
                 w |= b;
-              if ((b = b << 1) == 256)
+              if ((b = b << mask_depth) > 255)
                 {
                   *mask++ = w;
-                  b = 1; w = 0;
+                  b = val; w = 0;
                 }
             }
-          if (b != 1)
+          if (b != val)
             *mask++ = w;
           mask = (png_bytep) (((int) mask + 3) & ~3);
         }
@@ -220,7 +224,8 @@ make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type)
          bit_depth, trns.colour, pb, colour_type);
       for (y = height; y; --y)
         {
-          int b = 1, w = 0, ps = 0, c = *spr++;
+          int val = (1 << mask_depth) - 1;
+          int b = val, w = 0, ps = 0, c = *spr++;
           for (x = width; x; --x)
             {
               int cc = (c >> ps) & pb;
@@ -235,13 +240,13 @@ make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type)
                 case 0:  if (cc != trns.colour) w |= b; break;
                 default: if (cc >= trns.len || trns.list[cc]) w |= b;
                 }
-              if ((b = b << 1) == 256)
+              if ((b = b << mask_depth) > 255)
                 {
                   *mask++ = w;
-                  b = 1; w = 0;
+                  b = val; w = 0;
                 }
             }
-          if (b != 1)
+          if (b != val)
             *mask++ = w;
           if (!ps)
             spr--;
@@ -450,7 +455,7 @@ read_png(FILE *fp)
     spritearea_t *spr_area;
     sprite_t *spr_ptr;
     png_bytep spr_base, *row_ptrs;
-    int mode, palsize = 0;
+    unsigned int mode, palsize = 0;
     row_width = png_get_rowbytes(png_ptr, info_ptr) + 3 & ~3;
     size_t size = 16 + 2 * (44 + 256 * 4 * 2); /* 2 sprites, 2 palettes */
 
@@ -480,15 +485,6 @@ read_png(FILE *fp)
     spr_area->sprites = 0;
     spr_area->first = 16;
     spr_area->free = 16;
-    switch (bit_depth)
-      {
-      case  1: mode = 1; palsize =   2; break;
-      case  2: mode = 2; palsize =   4; break;
-      case  4: mode = 3; palsize =  16; break;
-      case  8: mode = 4; palsize = 256; break;
-      case 16: mode = 5; break;
-      default: mode = 6;
-      }
 
     {
       png_uint_32 ppix = png_get_x_pixels_per_meter (png_ptr, info_ptr);
@@ -505,7 +501,30 @@ read_png(FILE *fp)
         }
     }
 
-    mode = mode << 27 | 90 << 14 | 90 << 1 | 1;
+    if (bit_depth > 8 || dpix != 90 || dpiy != 90 || pack_mask)
+      {
+        switch (bit_depth)
+          {
+          case  1: mode = 1; palsize =   2; break;
+          case  2: mode = 2; palsize =   4; break;
+          case  4: mode = 3; palsize =  16; break;
+          case  8: mode = 4; palsize = 256; break;
+          case 16: mode = 5; break;
+          default: mode = 6;
+        }
+        mode = mode << 27 | 90 << 14 | 90 << 1 | 1;
+      }
+    else
+      {
+        switch (bit_depth)
+          {
+          case  1: mode = 25; palsize =   2; break;
+          case  2: mode = 26; palsize =   4; break;
+          case  4: mode = 27; palsize =  16; break;
+          default: mode = 28; palsize = 256; break;
+        }
+      }
+
     onerr (_swix (OS_SpriteOp, _INR (0, 6),
                   256+15, spr_area, pngid, 0, width, height, mode));
     _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2), 256+24, spr_area, pngid, &spr_ptr);
@@ -561,7 +580,10 @@ read_png(FILE *fp)
       {
         debug_puts ("Processing simple mask...\n");
         onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
-        make_trns (spr_ptr, bit_depth, colour_type);
+        if (mode > 255)
+            make_trns (spr_ptr, bit_depth, colour_type, 1);
+        else
+            make_trns (spr_ptr, bit_depth, colour_type, bit_depth);
       }
     else if (alpha.use && IS_GREY (colour_type))
       {
@@ -598,9 +620,18 @@ read_png(FILE *fp)
                 if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
                   {
                     _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
-                    memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
-                            (int) ((((width + 31) >> 3) & ~3) * height));
-                    make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1);
+                    if (mode > 255)
+                      {
+                        memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
+                                (int) ((((width + 31) >> 3) & ~3) * height));
+                        makemask ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1, 1);
+                      }
+                    else
+                      {
+                        memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
+                                (int) (row_width * height));
+                        makemask ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1, bit_depth);
+                      }
                   }
                 else
                   {
@@ -714,7 +745,10 @@ read_png(FILE *fp)
               goto separate_simple;
             /**/reduce_complex:
             _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
-            make1bpp ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4);
+            if (mode > 255)
+                makemask ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4, 1);
+            else
+                makemask ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4, bit_depth);
             break;
           case mask_OPAQUE:
             debug_puts ("-> unnecessary");
@@ -725,7 +759,8 @@ read_png(FILE *fp)
             break;
           }
       }
-    spr_ptr->mode = (spr_ptr->mode & 0xF8000001) | dpiy << 14 | dpix << 1;
+    if (mode > 255)
+      spr_ptr->mode = (spr_ptr->mode & 0xF8000001) | dpiy << 14 | dpix << 1;
     return spr_area;
   }
 }
@@ -742,6 +777,7 @@ static const optslist args[] = {
   {'g', "gamma", OPTIONAL_PARAM},
   {'g', "image-gamma", OPTIONAL_PARAM},
   {'n', "inverse-alpha", NO_PARAM},
+  {'p', "pack-mask", NO_PARAM},
   {'s', "separate-alpha", NO_PARAM},
   {3, "cname", REQUIRED_PARAM},
   {4, "csprite", REQUIRED_PARAM},
@@ -835,6 +871,9 @@ main (int argc, char *argv[])
             case 'M':
               alpha.use = 0;
               break;
+            case 'p':
+              pack_mask = 1;
+              break;
             case 'r':
               alpha.reduce = 1;
               break;
@@ -871,6 +910,9 @@ main (int argc, char *argv[])
                 {
                 case 'M':
                   alpha.use = 0;
+                  break;
+                case 'p':
+                  pack_mask = 1;
                   break;
                 case 'r':
                   alpha.reduce = 1;

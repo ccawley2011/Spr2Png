@@ -307,6 +307,10 @@ Conversion from PNG
       (opaque). This option tells Spr2Png to create an inverse mask, ie.
       using 0 as opaque.
 
+  è Pack mask
+      When ticked, masks will always be created with one bit per pixel instead
+      of matching the bit depth of the image. Files created with this option
+      are only supported with RISC OS 3.6 or later.
 
   PNGs with 16 bits per channel (ie. 48-bit RGB, 16-bit grey) will always be
   reduced to 8 bits per channel (ie. 24-bit RGB, 8-bit grey).
@@ -539,6 +543,11 @@ The back ends
                          (Implied for PNGs with simple transparency - ie.
                          with a tRNS chunk.)
 
+    -p                   Always create simple masks with one bit per pixel.
+    --pack-mask          Files created with this option are only supported
+                         with RISC OS 3.6 or later.
+                         (Implied for true colour PNGs)
+
     -n,                  If the PNG contains an alpha channel (and it isn't
                          ignored or optimised out) then it is inverted, ie.
     --inverse-alpha      ie. 0 = opaque rather than transparent.
@@ -661,7 +670,7 @@ Browser display of PNGs
   è Mozilla, Netscape 6 etc.
       These have PNG support as good as that of Browse.
 
-  <URL:http://www.youmustbejoking.demon.co.uk/pngtest/> will show you how
+  <URL:https://old-www.moreofthesa.me.uk/pngtest/> will show you how
   your browser copes with various PNGs with various options. (This is not an
   exhaustive test; it only tests colour depths and bKGD chunks.)
 
@@ -700,11 +709,11 @@ Credits & copyrights
 
   libpng (the PNG library):
     Glenn Randers-Pehrson, Greg Roelofs, Guy Eric Schalnat and others
-    <URL:ftp://ftp.freesoftware.com/pub/png/>
+    <URL:http://www.libpng.org/pub/png/>
 
   zlib (the compression library):
     Jean-loup Gailly & Mark Adler
-    <URL:ftp://ftp.cdrom.com/pub/infozip/zlib/>
+    <URL:https://zlib.net>
 
   Draw to sprite:
     modified from Peter Hartley's Draw rendering code in InterGif
@@ -714,9 +723,9 @@ Credits & copyrights
     with help from Rob Davison and AWViewer.
 
 
-  The spr2png and png2spr back-ends use libpng 1.2.8rel-5.1 and zlib
-  1.2.3-11, built from source distributed by Debian.
-    <URL:http://www.debian.org/>
+  The spr2png and png2spr back-ends use libpng 1.6.37 and zlib
+  1.2.12.f, built from source distributed by RISC OS Open.
+    <URL:https://www.riscosopen.org/>
 
 
 
@@ -732,6 +741,5 @@ Footnotes
 Contact
 =======
 
-  Home page: <URL:http://www.youmustbejoking.demon.co.uk/>
-  Home link: <URL:http://www.youmustbejoking.demon.co.uk/progs.graphics.html#spr2png>
-  Email:     <URL:mailto:ds@youmustbejoking.demon.co.uk>
+  Home page:          <URL:https://github.com/ccawley2011/Spr2Png>
+  Previous home page: <URL:https://old-www.moreofthesa.me.uk/progs.graphics.html#spr2png>
