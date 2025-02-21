@@ -185,16 +185,14 @@ makemask (png_bytep mask, png_bytep spr, int step, int mask_depth)
 
 
 static void
-make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type, int mask_depth)
+make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int mask_depth)
 {
-  png_bytep mask;
   long x, y;
 
-  mask = (png_bytep) spr_ptr + spr_ptr->mask;
   if (colour_type == PNG_COLOR_TYPE_RGB ||
       colour_type == PNG_COLOR_TYPE_RGB_ALPHA)
     {
-      png_uint_32p spr4 = (png_uint_32p) ((char *) spr_ptr + spr_ptr->image);
+      png_uint_32p spr4 = (png_uint_32p) spr;
       debug_printf ("Simple mask, 24bit (&%06X)\n", trns.colour);
       for (y = height; y; --y)
         {
@@ -217,7 +215,6 @@ make_trns (sprite_t *spr_ptr, int bit_depth, int colour_type, int mask_depth)
     }
   else
     {
-      png_bytep spr = (png_bytep) spr_ptr + spr_ptr->image;
       int pb = (1 << bit_depth) - 1;
       debug_printf
         ("Simple mask, %ibit (&%02X, mask = &%02X, colour type = %i)\n",
@@ -579,11 +576,41 @@ read_png(FILE *fp)
     if (alpha.use && alpha.tRNS)
       {
         debug_puts ("Processing simple mask...\n");
-        onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
-        if (mode > 255)
-            make_trns (spr_ptr, bit_depth, colour_type, 1);
+        if (alpha.separate)
+          {
+            sprite_t *mask_ptr;
+            onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
+                          spr_area, maskid, 0, width, height, 25));
+            _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
+                   256+24, spr_area, maskid,  &mask_ptr);
+            make_trns ((png_bytep) mask_ptr + mask_ptr->image,
+                       (png_bytep) spr_ptr + spr_ptr->image,
+                        bit_depth, colour_type, 1);
+            if (alpha.inverse)
+              {
+                png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
+                y = (int) ((((width + 31) >> 3) & ~3) * height);
+                do
+                  {
+                    y--; p[y] = ~p[y];
+                  }
+                while (y);
+                _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
+                       "mask_i");
+              }
+          }
         else
-            make_trns (spr_ptr, bit_depth, colour_type, bit_depth);
+          {
+            onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
+            if (mode > 255)
+                make_trns ((png_bytep) spr_ptr + spr_ptr->mask,
+                           (png_bytep) spr_ptr + spr_ptr->image,
+                           bit_depth, colour_type, 1);
+            else
+                make_trns ((png_bytep) spr_ptr + spr_ptr->mask,
+                           (png_bytep) spr_ptr + spr_ptr->image,
+                           bit_depth, colour_type, bit_depth);
+          }
       }
     else if (alpha.use && IS_GREY (colour_type))
       {
