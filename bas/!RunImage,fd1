@@ -2,9 +2,7 @@ REM > !Spr2Png.!RunImage
 REM Written by Darren Salt
 
 ver$="0.26 (04 May 2006)"
-webS$="http://www.youmustbejoking.demon.co.uk/"
-webA$=webS$+"progs.graphics.html#spr2png"
-email$="mailto:ds@youmustbejoking.demon.co.uk"
+webS$="https://github.com/ccawley2011/Spr2Png/"
 msgs%=0:slot%=256
 ON ERROR PROCshutdown:ERROR EXT ERR,REPORT$
 PROCinit
@@ -235,8 +233,7 @@ WHEN -2
 WHEN outw%:IF q%!8=2 THEN PROCopenmenu(TRUE,!q%-64,q%!4+64)
 WHEN infow%
  CASE q%!16 OF
- WHEN 2:PROClaunch(email$)
- WHEN 8:IF q%!8=4 THEN PROClaunch(webS$):ELSE PROClaunch(webA$)
+ WHEN 8:PROClaunch(webS$)
  WHEN 9:SYS "XOS_CLI","Filer_Run <Spr2Png$Dir>.!Help"
  ENDCASE
 WHEN savew%
