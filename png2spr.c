@@ -54,7 +54,7 @@ static long row_width;
 static void
 version (void)
 {
-  printf ("%s %s © Darren Salt\n"
+  printf ("%s %s " COPYRIGHT " Darren Salt\n"
           "Uses libpng %s and zlib %s.\n"
           "For copyright information, see the png2spr help file.\n",
           program_name, program_version, png_libpng_ver, zlibVersion ());

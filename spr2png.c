@@ -89,7 +89,7 @@ static void
 version (void)
 {
   char *pv = modver ("PNG"), *zv = modver ("ZLib");
-  printf ("%s %s © Darren Salt\n"
+  printf ("%s %s " COPYRIGHT " Darren Salt\n"
           "Uses libpng %s (module %s) and zlib %s (module %s).\n"
           "For copyright information, see the spr2png help file.\n",
           program_name, program_version,
@@ -103,7 +103,7 @@ version (void)
 static void
 version (void)
 {
-  printf ("%s %s © Darren Salt\n"
+  printf ("%s %s " COPYRIGHT " Darren Salt\n"
           "Uses libpng %s and zlib %s.\n"
           "For copyright information, see the spr2png help file.\n",
           program_name, program_version, png_libpng_ver, zlibVersion ());

@@ -4,6 +4,8 @@
 #include "C:kernel.h"
 #include "types.h"
 
+#define COPYRIGHT "\xA9"
+
 extern long width, height;
 
 extern spritearea_t *sprites; /* == unsigned char */

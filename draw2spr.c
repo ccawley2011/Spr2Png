@@ -45,7 +45,7 @@ shutdown (void)
 static void
 version (void)
 {
-  printf ("%s %s © Darren Salt\n"
+  printf ("%s %s " COPYRIGHT " Darren Salt\n"
           "For copyright information, see the spr2png help file.\n",
           program_name, program_version);
   exit (0);
