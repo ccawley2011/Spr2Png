@@ -231,7 +231,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   rgb_t *oSprite;
   long pass, passes, sectiony;
   long basey = tm.y;
-  const int mul = (simplemask & 1) ? 1 : 4;
+  const int mul = (simplemask & simplemask_NO_BLEND) ? 1 : 4;
   const char *filetype = type ? "Artworks" : "Draw";
   const char *sprname = type ? "awfile" : "drawfile";
 
@@ -245,7 +245,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   debug_printf ("Image size = %li,%li\nBbox = %li,%li,%li,%li\nClaiming memory for output image...\n", width, height, box.min.x, box.min.y, box.max.x, box.max.y);
 
   areasize = sizeof (sprite_t) + sizeof (spritearea_t) + height *
-             ((simplemask & 1)
+             ((simplemask & simplemask_NO_BLEND)
               ? (width * 4 + (width + 31 & ~31) / 2)
               : (width * 16 + (width + 31 & ~31) / 2));
   pixels = spr_malloc ((int) areasize, "Output image");
@@ -266,7 +266,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   if (verbose > 1)
     printf ("Rendering %s file\n", filetype);
 
-  if (simplemask & 1) {
+  if (simplemask & simplemask_NO_BLEND) {
     area = pixels;
     passes = 1;
     spritex = width;
@@ -326,7 +326,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
   cache_fontmax ();
   setsignal (sighandler);
-  if ((simplemask & 1) == 0)
+  if ((simplemask & simplemask_NO_BLEND) == 0)
     set_fontmax (0);
 
   for (pass = 0; pass < passes; pass++) {
@@ -372,14 +372,14 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
           clip[5] = (char) (spritex * 2 - 1);
           clip[6] = (char) ((spritex * 2 - 1) >> 8);
         }
-        err = render (area, data, nSize, &tm, type, simplemask & 1,
+        err = render (area, data, nSize, &tm, type, simplemask & simplemask_NO_BLEND,
                       clip, sizeof (clip));
         if (err)
           break;
       }
     }
     else
-      err = render (area, data, nSize, &tm, type, simplemask & 1, 0, 0);
+      err = render (area, data, nSize, &tm, type, simplemask & simplemask_NO_BLEND, 0, 0);
     if (err)
       fail (fail_OS_ERROR, err->errmess);
     makemask (pSprite, spritex, sectiony);
@@ -389,11 +389,11 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
       _swi (OS_SpriteOp, _INR (0, 2), 256+12, area, "<Wimp$ScrapDir>.d2s-work");
 #endif
 
-    if ((simplemask & 1) == 0)
+    if ((simplemask & simplemask_NO_BLEND) == 0)
       antialias ((rgb_t *) ((char *) pSprite + pSprite->image),
                  (png_byte *) pSprite + pSprite->mask,
                  oSprite + offset * width, background, width, thisy,
-                 simplemask & 2);
+                 simplemask & simplemask_NO_MASK);
   }
 
   if (trim)
@@ -406,10 +406,10 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
             oSprite[--i].alpha ^= 255;
           } while (i);
         } break;
-      case 1:
+      case simplemask_NO_BLEND:
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
         break;
-      case 2:
+      case simplemask_NO_MASK:
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
         { /* kill the alpha channel */
           int i = width * height;
@@ -418,14 +418,14 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
           } while (i);
         }
         break;
-      default: /*3*/
+      default: /*simplemask_NO_MASK|simplemask_NO_BLEND*/
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
     }
 
-  if (simplemask & 2)
+  if (simplemask & simplemask_NO_MASK)
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
 
-  if (simplemask & 1)
+  if (simplemask & simplemask_NO_BLEND)
     debug_printf ("Image is at %p\n", pixels);
   else
     debug_printf ("Slice is at %p, image is at %p\n", area, pixels);
@@ -434,7 +434,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   set_fontmax (1);
   setsignal (std_sighandler);
 
-  if ((simplemask & 1) == 0)
+  if ((simplemask & simplemask_NO_BLEND) == 0)
     heap_free (area);
 
   return pixels;

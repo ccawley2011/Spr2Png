@@ -6,6 +6,9 @@
 
 /* In c.d2s_conv: */
 
+#define simplemask_NO_BLEND (1 << 0)
+#define simplemask_NO_MASK  (1 << 1)
+
 extern void *convertdraw (const void *data, size_t nSize, int simplemask,
                           int invert, double scale_x, double scale_y,
                           long background, int trim,

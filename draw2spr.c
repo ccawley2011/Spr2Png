@@ -190,13 +190,13 @@ main (int argc, const char *const argv[])
               caller_sprite = arg;
               break;
             case 'M':
-              simplemask |= 1;
+              simplemask |= simplemask_NO_BLEND;
               break;
             case 'b':
               p = arg;
               goto get_background;
             case 'm':
-              simplemask |= 2;
+              simplemask |= simplemask_NO_MASK;
               break;
             case 'n':
               inverse = 1;
@@ -227,7 +227,7 @@ main (int argc, const char *const argv[])
                   no_press_space = 1;
                   break;
                 case 'M':
-                  simplemask |= 1;
+                  simplemask |= simplemask_NO_BLEND;
                   break;
                 case 'b':
                   if (p[1])
@@ -244,7 +244,7 @@ main (int argc, const char *const argv[])
                     fail (fail_BAD_ARGUMENT, "bad background colour value");
                   break;
                 case 'm':
-                  simplemask |= 2;
+                  simplemask |= simplemask_NO_MASK;
                   break;
                 case 'n':
                   inverse = 1;
@@ -348,10 +348,11 @@ main (int argc, const char *const argv[])
                 "Verbosity : %i\n"
                 "Scale     : %g,%g\n"
                 "Background: %08lX\n",
-                from, to, simplemask & 1 ? "no" : "yes",
-                simplemask & 2 ? "no" : "yes", trim ? "yes" : "no",
-                inverse ? "yes" : "no", verbose, scale_x, scale_y,
-                background);
+                from, to,
+                simplemask & simplemask_NO_BLEND ? "no" : "yes",
+                simplemask & simplemask_NO_MASK ? "no" : "yes",
+                trim ? "yes" : "no", inverse ? "yes" : "no",
+                verbose, scale_x, scale_y, background);
 
   y = readtype (from);
 
