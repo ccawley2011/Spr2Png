@@ -135,7 +135,7 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
   png_byte t;
 
   static const char mconv[] =
-    { 4, 3, 3, 2, 3, 2, 2, 1, 3, 2, 2, 1, 2, 1, 1, 0 };
+    { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
   debug_printf ("Antialiasing...\nSrc =%p\nMask=%p\nDest=%p\nw   =%li\nh   =%li\n",
                 srcBits, maskBits, destBits, w, h);
@@ -154,7 +154,7 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
       t = mconv[m[0]]+mconv[m[1]]+mconv[m[2]]+mconv[m[3]];
       if (t && nomask) {
         t = 16;
-        m[3] = m[2] = m[1] = m[0] = 0;
+        m[3] = m[2] = m[1] = m[0] = 15;
       }
       destBits->alpha = t == 16 ? 255 : t << 4;
       if (t) {
@@ -163,7 +163,7 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
         for (j = 3; j >= 0; --j) {
           img -= 4 * w;
           for (i = 3; i >= 0; --i) {
-            if (!(m[j] & 1 << i)) {
+            if ((m[j] & 1 << i)) {
               r += img[i].r;
               g += img[i].g;
               b += img[i].b;
@@ -408,13 +408,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
         } break;
       case 1:
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-        {
-          int i = (width + 31 & ~31) / 32 * height;
-          long *mask = (long *) ((char *) pSprite + pSprite->mask);
-          do {
-            mask[--i] ^= -1;
-          } while (i);
-        } break;
+        break;
       case 2:
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
         { /* kill the alpha channel */
@@ -423,13 +417,12 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
             oSprite[--i].alpha = 0;
           } while (i);
         }
-        _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
         break;
       default: /*3*/
         trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-        _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
     }
-  else if (simplemask & 2)
+
+  if (simplemask & 2)
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
 
   if (simplemask & 1)

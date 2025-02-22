@@ -261,36 +261,36 @@ makemask
         ADD     r0,r0,r4        ; mask
 mx      MOVS    r3,r1,LSR #3
         BEQ     mx7
-mxL     MOV     lr,#255         ; do 8 pixels at a time
+mxL     MOV     lr,#0           ; do 8 pixels at a time
         LDMIA   ip!,{r4-r7}
         TST     r4,#&FF<<24
-        BICEQ   lr,lr,#1
+        ORREQ   lr,lr,#1
         TST     r5,#&FF<<24
-        BICEQ   lr,lr,#2
+        ORREQ   lr,lr,#2
         TST     r6,#&FF<<24
-        BICEQ   lr,lr,#4
+        ORREQ   lr,lr,#4
         TST     r7,#&FF<<24
-        BICEQ   lr,lr,#8
+        ORREQ   lr,lr,#8
         LDMIA   ip!,{r4-r7}
         TST     r4,#&FF<<24
-        BICEQ   lr,lr,#16
+        ORREQ   lr,lr,#16
         TST     r5,#&FF<<24
-        BICEQ   lr,lr,#32
+        ORREQ   lr,lr,#32
         TST     r6,#&FF<<24
-        BICEQ   lr,lr,#64
+        ORREQ   lr,lr,#64
         TST     r7,#&FF<<24
-        BICEQ   lr,lr,#128
+        ORREQ   lr,lr,#128
         STRB    lr,[r0],#1
         SUBS    r3,r3,#1
         BNE     mxL
 mx7     ANDS    r3,r1,#7
         BEQ     mx0
-        MOV     lr,#255
+        MOV     lr,#0
         MOV     r4,#1
 mxS     LDR     r5,[ip],#4      ; do remaining pixels
         MOV     r4,r4,LSL #1;SA
         TST     r5,#&FF<<24
-        BICEQ   lr,lr,r4,LSR #1
+        ORREQ   lr,lr,r4,LSR #1
         SUBS    r3,r3,#1
         BNE     mxS
         STRB    lr,[r0],#1
