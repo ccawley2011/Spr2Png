@@ -257,6 +257,53 @@ make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int ma
 }
 
 
+static void
+make_trns_wide (png_bytep mask, png_bytep spr, int bit_depth, int colour_type)
+{
+  long x, y;
+
+  if (colour_type == PNG_COLOR_TYPE_RGB ||
+      colour_type == PNG_COLOR_TYPE_RGB_ALPHA)
+    {
+      make_trns (mask, spr, bit_depth, colour_type, 8);
+    }
+  else if (trns.len == 0)
+    {
+      make_trns (mask, spr, bit_depth, colour_type, 8);
+    }
+  else
+    {
+      int pb = (1 << bit_depth) - 1;
+      debug_printf
+        ("Wide mask, %ibit (&%02X, mask = &%02X, colour type = %i)\n",
+         bit_depth, trns.colour, pb, colour_type);
+      for (y = height; y; --y)
+        {
+          int ps = 0, c = *spr++;
+          for (x = width; x; --x)
+            {
+              int cc = (c >> ps) & pb;
+              ps += bit_depth;
+              if (ps == 8)
+                {
+                  ps = 0;
+                  c = *spr++;
+                }
+
+              if (cc < trns.len)
+                *mask++ = trns.list[cc];
+              else
+                *mask++ = 0xff;
+            }
+          if (!ps)
+            spr--;
+          mask = (png_bytep) (((int) mask + 3) & ~3);
+          spr = (png_bytep) (((int) spr + 3) & ~3);
+        }
+    }
+}
+
+
 static int
 clamp_dpi (int dpi)
 {
@@ -361,17 +408,24 @@ read_png(FILE *fp)
           png_set_tRNS_to_alpha (png_ptr);
           debug_puts ("  -> list will be converted\n");
         }
-      else if (trns.list)
+      else if (trns.list && !alpha.separate)
         {
           int i;
           for (i = trns.len - 1; i >= 0; --i)
             if (trns.list[i] && trns.list[i] < 255)
               {
-                alpha.tRNS = 0;
-                png_set_tRNS_to_alpha (png_ptr);
-                if (colour_type == PNG_COLOR_TYPE_PALETTE)
-                  bit_depth = 24;
-                colour_type |= PNG_COLOR_MASK_ALPHA;
+                if (alpha.wide)
+                  {
+                    alpha.tRNS = 2;
+                  }
+                else
+                  {
+                    alpha.tRNS = 0;
+                    png_set_tRNS_to_alpha (png_ptr);
+                    if (colour_type == PNG_COLOR_TYPE_PALETTE)
+                      bit_depth = 24;
+                    colour_type |= PNG_COLOR_MASK_ALPHA;
+                  }
                 break;
               }
           debug_printf ("  -> list will be %s\n",
@@ -443,7 +497,7 @@ read_png(FILE *fp)
       alpha.use = 0;
     }
 
-  if (alpha.wide && (!alpha.use || alpha.tRNS || alpha.separate))
+  if (alpha.wide && (!alpha.use || alpha.tRNS == 1 || alpha.separate))
     {
       debug_puts ("(no need for wide masks)");
       alpha.wide = 0;
@@ -471,7 +525,7 @@ read_png(FILE *fp)
         debug_puts ("(is rgb)");
 
     size += row_width * height; /* sprite image */
-    if ((colour_type & PNG_COLOR_MASK_ALPHA) && alpha.use)
+    if (((colour_type & PNG_COLOR_MASK_ALPHA) || alpha.separate || alpha.wide) && alpha.use)
       {
         debug_puts ("(has alpha)");
         size += ((width + 3) & ~3) * height; /* mask sprite */
@@ -592,12 +646,13 @@ read_png(FILE *fp)
           {
             sprite_t *mask_ptr;
             onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
-                          spr_area, maskid, 0, width, height, 25));
+                          spr_area, maskid, 0, width, height, 28));
             _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
                    256+24, spr_area, maskid,  &mask_ptr);
-            make_trns ((png_bytep) mask_ptr + mask_ptr->image,
-                       (png_bytep) spr_ptr + spr_ptr->image,
-                        bit_depth, colour_type, 1);
+            add_grey_palette (spr_area, mask_ptr);
+            make_trns_wide ((png_bytep) mask_ptr + mask_ptr->image,
+                            (png_bytep) spr_ptr + spr_ptr->image,
+                            bit_depth, colour_type);
             if (alpha.inverse)
               {
                 png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
@@ -614,7 +669,11 @@ read_png(FILE *fp)
         else
           {
             onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
-            if (mode > 255)
+            if (alpha.wide)
+                make_trns_wide ((png_bytep) spr_ptr + spr_ptr->mask,
+                                (png_bytep) spr_ptr + spr_ptr->image,
+                                bit_depth, colour_type);
+            else if (mode > 255)
                 make_trns ((png_bytep) spr_ptr + spr_ptr->mask,
                            (png_bytep) spr_ptr + spr_ptr->image,
                            bit_depth, colour_type, 1);
