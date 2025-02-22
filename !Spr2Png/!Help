@@ -85,6 +85,10 @@ Conversion to PNG
            N     Y      Background blended, always anti-aliased.
            Y     Y      Full alpha channel, always anti-aliased.
 
+    è Wide mask
+        When ticked, masks will use alpha transparency. Files created with
+        this option are only supported with RISC OS Select or 5.21 or later.
+
   è Misc
       Options which don't fit elsewhere.
 
@@ -504,6 +508,10 @@ The back ends
                            Y  n  Simple mask, no anti-aliasing (ditto).
                            n  Y  Background blended, always anti-aliased.
                            Y  Y  Full alpha channel, always anti-aliased.
+
+    -w                   Generate an alpha transparent mask. Files created
+    --wide-mask          with this option are only supported with RISC OS
+                         Select or 5.21 or later.
 
     -n,                  If an alpha channel is created, then it is inverted,
     --inverse-alpha      ie. 0 = opaque rather than transparent.

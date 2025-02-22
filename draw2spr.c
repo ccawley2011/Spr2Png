@@ -67,6 +67,7 @@ help (void)
           "  -m, --no-mask          don't generate a mask\n"
           "  -M, --no-blend,        don't create an alpha channel or background blend\n"
           "      --no-alpha\n"
+          "  -w  --wide-mask        use wide masks for the alpha channel\n"
           "  -r, --render=LEVEL     Artworks rendering level (default is 11.0 = full)\n"
           "                         (without -m, the image is always anti-aliased)\n"
           "\n"
@@ -84,6 +85,7 @@ static const optslist args[] = {
   {'M', "no-alpha", NO_PARAM},
   {'M', "no-blend", NO_PARAM},
   {'m', "no-mask", NO_PARAM},
+  {'w', "wide-mask", NO_PARAM},
   {'r', "render", REQUIRED_PARAM},
   {'s', "scale", REQUIRED_PARAM},
   {'t', "trim", NO_PARAM},
@@ -198,6 +200,9 @@ main (int argc, const char *const argv[])
             case 'm':
               simplemask |= simplemask_NO_MASK;
               break;
+            case 'w':
+              simplemask |= simplemask_WIDE;
+              break;
             case 'n':
               inverse = 1;
               break;
@@ -245,6 +250,9 @@ main (int argc, const char *const argv[])
                   break;
                 case 'm':
                   simplemask |= simplemask_NO_MASK;
+                  break;
+                case 'w':
+                  simplemask |= simplemask_WIDE;
                   break;
                 case 'n':
                   inverse = 1;
@@ -343,6 +351,7 @@ main (int argc, const char *const argv[])
                 "Output    : %s\n"
                 "Blended   : %s\n"
                 "Masked    : %s\n"
+                "Wide      : %s\n"
                 "Trim      : %s\n"
                 "Inverse   : %s\n"
                 "Verbosity : %i\n"
@@ -351,6 +360,7 @@ main (int argc, const char *const argv[])
                 from, to,
                 simplemask & simplemask_NO_BLEND ? "no" : "yes",
                 simplemask & simplemask_NO_MASK ? "no" : "yes",
+                simplemask & simplemask_WIDE ? "yes" : "no",
                 trim ? "yes" : "no", inverse ? "yes" : "no",
                 verbose, scale_x, scale_y, background);
 

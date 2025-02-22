@@ -257,8 +257,16 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
   debug_puts ("Creating output sprite...");
 
-  /* OS_SpriteOp create sprite; 24bit, 90dpi */
-  _swi (OS_SpriteOp, _INR (0, 6), 256+15, pixels, sprname, 0, width, height, 0x301680B5);
+  if (simplemask == simplemask_WIDE)
+    {
+      /* OS_SpriteOp create sprite; 24bit, 90dpi, wide */
+      _swi (OS_SpriteOp, _INR (0, 6), 256+15, pixels, sprname, 0, width, height, 0xB01680B5);
+    }
+  else
+    {
+      /* OS_SpriteOp create sprite; 24bit, 90dpi */
+      _swi (OS_SpriteOp, _INR (0, 6), 256+15, pixels, sprname, 0, width, height, 0x301680B5);
+    }
 
   pSprite = (sprite_t *) ((char *) pixels + 16);
   oSprite = (rgb_t *) ((char *) pSprite + pSprite->image);
@@ -396,35 +404,6 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
                  simplemask & simplemask_NO_MASK);
   }
 
-  if (trim)
-    switch (simplemask) {
-      case 0:
-        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-        if (invert) {
-          int i = width * height;
-          do {
-            oSprite[--i].alpha ^= 255;
-          } while (i);
-        } break;
-      case simplemask_NO_BLEND:
-        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-        break;
-      case simplemask_NO_MASK:
-        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-        { /* kill the alpha channel */
-          int i = width * height;
-          do {
-            oSprite[--i].alpha = 0;
-          } while (i);
-        }
-        break;
-      default: /*simplemask_NO_MASK|simplemask_NO_BLEND*/
-        trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
-    }
-
-  if (simplemask & simplemask_NO_MASK)
-    _swi (OS_SpriteOp, _INR (0, 2), 256+30, area, sprname); /* OS_SpriteOp remove mask */
-
   if (simplemask & simplemask_NO_BLEND)
     debug_printf ("Image is at %p\n", pixels);
   else
@@ -436,6 +415,54 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
   if ((simplemask & simplemask_NO_BLEND) == 0)
     heap_free (area);
+
+  switch (simplemask) {
+    case 0:
+      if (invert) {
+      int i = width * height;
+        do {
+          oSprite[--i].alpha ^= 255;
+        } while (i);
+      } break;
+    case simplemask_NO_MASK:
+    case simplemask_NO_MASK|simplemask_WIDE:
+      { /* kill the alpha channel */
+        int i = width * height;
+        do {
+          oSprite[--i].alpha = 0;
+        } while (i);
+      }
+      break;
+    case simplemask_WIDE:
+      {
+        png_bytep spr_base, mask_base;
+        int x, y;
+
+        _swi (OS_SpriteOp, _INR (0, 2), 256+29, pixels, sprname); /* OS_SpriteOp add mask */
+
+        pSprite = (sprite_t *) ((char *) pixels + 16);
+        spr_base = (png_bytep) pSprite + pSprite->image;
+        mask_base = (png_bytep) pSprite + pSprite->mask;
+        spr_base -= 1;
+
+        for (y = (int) height; y; --y)
+          {
+            for (x = (int) width; x; --x)
+              {
+                *mask_base++ = *(spr_base += 4);
+                *spr_base = 0;
+              }
+            mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+          }
+      }
+      break;
+  }
+
+  if (simplemask & simplemask_NO_MASK)
+    _swi (OS_SpriteOp, _INR (0, 2), 256+30, pixels, sprname); /* OS_SpriteOp remove mask */
+
+  if (trim)
+    trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
 
   return pixels;
 }

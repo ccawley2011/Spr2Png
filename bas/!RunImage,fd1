@@ -719,6 +719,7 @@ IF dragw%=savew% THEN
  IF FNticked(1,8) ELSE PROCadd(a$,"M")
  IF FNticked(-1,0) THEN
   cmd$="draw2spr":REM Dest is sprite
+  IF FNticked(1,9) THEN PROCadd(a$,"w")
  ELSE cmd$="spr2png":REM Dest is PNG
   IF sRGB% THEN
    IF FNticked(6,5) THEN

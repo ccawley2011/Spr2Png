@@ -59,6 +59,7 @@ WOpt1.4:Enter the Y scaling here, or leave blank to default to the X scaling or 
 WOpt1.6:Enter the Artworks rendering level here (useful values are 0, 5, 10, 11), or leave blank for the default.
 WOpt1.7:Tick this option if the output sprite is to have a mask.
 WOpt1.8:Tick this option if the output sprite is to be anti-aliased and is to have an alpha mask or, if no mask, be background blended.
+WOpt1.9:Tick this option if the output sprite is to have a wide mask.
 
 WOpt2.0:\Stoggle whether spr2png/draw2spr is verbose.|M\Ato set the level of verbosity.
 WOpt2.1:Tick this option if the operation is to be performed in single-tasking mode.
