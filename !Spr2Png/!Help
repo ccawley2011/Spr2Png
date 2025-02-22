@@ -252,8 +252,7 @@ Conversion from PNG
 -------------------
 
   This requires RISC OS 3.50 or later; it normally generates 32-bit RGB
-  colour sprites. (It does not yet generate sprites with Select-style alpha
-  channels.)
+  colour sprites.
 
   Drag a PNG to the Spr2Png icon on the icon bar and a different save box
   will appear. This contains the normal save box clutter and the following:
@@ -311,6 +310,10 @@ Conversion from PNG
       When ticked, masks will always be created with one bit per pixel instead
       of matching the bit depth of the image. Files created with this option
       are only supported with RISC OS 3.6 or later.
+
+  è Wide mask
+      When ticked, masks will use alpha transparency. Files created with this
+      option are only supported with RISC OS Select or 5.21 or later.
 
   PNGs with 16 bits per channel (ie. 48-bit RGB, 16-bit grey) will always be
   reduced to 8 bits per channel (ie. 24-bit RGB, 8-bit grey).
@@ -551,6 +554,10 @@ The back ends
     -n,                  If the PNG contains an alpha channel (and it isn't
                          ignored or optimised out) then it is inverted, ie.
     --inverse-alpha      ie. 0 = opaque rather than transparent.
+
+    -w                   Generate an alpha transparent mask. Files created
+    --wide-mask          with this option are only supported with RISC OS
+                         Select or 5.21 or later.
 
     -f,                  Allow the sprite to have any values for its scale
     --free-dpi           parameters. Without this, the values are clamped to

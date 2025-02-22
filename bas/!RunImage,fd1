@@ -777,7 +777,7 @@ IF dragw%=savew% THEN
   ENDIF
  ENDIF
  T%=FNticked(2,1) OR FNticked(-1,0)
-ELSE T%=FNticked(-3,17):cmd$="png2spr"
+ELSE T%=FNticked(-3,18):cmd$="png2spr"
  IF FNticked(-3,5) THEN PROCadd(a$,"b"+$bgndspr%):PROCadd(a$,"")
  IF FNticked(-3,8) THEN PROCadd(a$,"g"+$gammaspr%):PROCadd(a$,"")
  IF $gammadisp%>"" THEN PROCadd(a$,"d"+$gammadisp%)
@@ -786,6 +786,7 @@ ELSE T%=FNticked(-3,17):cmd$="png2spr"
  IF FNticked(-3,14) THEN PROCadd(a$,"r")
  IF FNticked(-3,15) THEN PROCadd(a$,"n")
  IF FNticked(-3,16) THEN PROCadd(a$,"p")
+ IF FNticked(-3,17) THEN PROCadd(a$,"w")
 ENDIF
 IF T% THEN
  SYS "Wimp_SlotSize",-1,-1 TO ,S%:SYS "Wimp_SlotSize",-1,slot%*1024

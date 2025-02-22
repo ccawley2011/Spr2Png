@@ -35,6 +35,7 @@ static struct
     char separate;
     char tRNS;
     char inverse;
+    char wide;
   } alpha = { 1 };
 
 static struct
@@ -79,6 +80,8 @@ help (void)
 "  -r, --reduce-alpha         reduce the alpha channel to a simple mask\n"
 "  -s, --separate-alpha       create a separate alpha channel\n"
 "  -n, --inverse-alpha        invert the alpha channel (ie. 0=solid)\n"
+"  -w  --wide-mask            use wide masks for the alpha channel\n"
+"                             (RISC OS Select, 5.21+)\n"
 "  -f, --free-dpi             allow any DPI values (don't clamp to RISC OS)\n"
 "\n"
 "      --help                 display this help text then exit\n"
@@ -440,6 +443,12 @@ read_png(FILE *fp)
       alpha.use = 0;
     }
 
+  if (alpha.wide && (!alpha.use || alpha.tRNS || alpha.separate))
+    {
+      debug_puts ("(no need for wide masks)");
+      alpha.wide = 0;
+    }
+
   if (colour_type == PNG_COLOR_TYPE_RGB)
     {
       debug_puts ("(adding filler)");
@@ -498,7 +507,7 @@ read_png(FILE *fp)
         }
     }
 
-    if (bit_depth > 8 || dpix != 90 || dpiy != 90 || pack_mask)
+    if (bit_depth > 8 || dpix != 90 || dpiy != 90 || pack_mask || alpha.wide)
       {
         switch (bit_depth)
           {
@@ -510,6 +519,9 @@ read_png(FILE *fp)
           default: mode = 6;
         }
         mode = mode << 27 | 90 << 14 | 90 << 1 | 1;
+
+        if (alpha.wide)
+          mode |= 1 << 31;
       }
     else
       {
@@ -525,7 +537,7 @@ read_png(FILE *fp)
     onerr (_swix (OS_SpriteOp, _INR (0, 6),
                   256+15, spr_area, pngid, 0, width, height, mode));
     _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2), 256+24, spr_area, pngid, &spr_ptr);
-    debug_printf ("Image will have:\n  %i-bit colour\n", bit_depth);
+    debug_printf ("Image will have:\n  %i-bit colour (mode %x)\n", bit_depth, mode);
 
     if (palsize) /* write palette */
       {
@@ -644,7 +656,13 @@ read_png(FILE *fp)
                     mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
                     merged    = (png_bytep) (((int) merged    + 3) & ~3);
                   }
-                if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
+                if (alpha.wide && !alpha.separate)
+                  {
+                    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                    memcpy ((png_bytep) spr_ptr + spr_ptr->mask, mask,
+                            (int) (((width + 3) & ~3) * height));
+                  }
+                else if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
                   {
                     _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
                     if (mode > 255)
@@ -747,6 +765,22 @@ read_png(FILE *fp)
                       mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
                     }
               }
+            else if (alpha.wide)
+              {
+                /**/wide_simple:
+                _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                mask_base = (png_bytep) spr_ptr + spr_ptr->mask;
+                spr_base -= 1;
+                for (y = (int) height; y; --y)
+                  {
+                    for (x = (int) width; x; --x)
+                      {
+                        *mask_base++ = *(spr_base += 4);
+                        *spr_base = 0;
+                      }
+                    mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                  }
+              }
             else
               {
                 if (alpha.inverse)
@@ -770,6 +804,8 @@ read_png(FILE *fp)
             debug_puts ("-> simple");
             if (alpha.separate)
               goto separate_simple;
+            else if (alpha.wide)
+              goto wide_simple;
             /**/reduce_complex:
             _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
             if (mode > 255)
@@ -806,6 +842,7 @@ static const optslist args[] = {
   {'n', "inverse-alpha", NO_PARAM},
   {'p', "pack-mask", NO_PARAM},
   {'s', "separate-alpha", NO_PARAM},
+  {'w', "wide-mask", NO_PARAM},
   {3, "cname", REQUIRED_PARAM},
   {4, "csprite", REQUIRED_PARAM},
   {0, 0, NO_PARAM}
@@ -925,6 +962,9 @@ main (int argc, char *argv[])
               break;
             case 'n':
               alpha.inverse = 1;
+              break;
+            case 'w':
+              alpha.wide = 1;
             }
         }
       else if (p[0] == '-')
@@ -994,6 +1034,9 @@ main (int argc, char *argv[])
                   break;
                 case 'n':
                   alpha.inverse = 1;
+                  break;
+                case 'w':
+                  alpha.wide = 1;
                   break;
                 default:
                   fail (fail_BAD_ARGUMENT, "unknown option -%c\n", *p);
