@@ -362,8 +362,10 @@ read_png(FILE *fp)
   /* png_set_packing (png_ptr); ** force min. 8bpp */
   png_set_packswap(png_ptr); /* left pixel in low bit(s) */
 
-  if (!alpha.use)
+  if (!alpha.use) {
     png_set_strip_alpha (png_ptr); /* strip alpha, no bgnd */
+    colour_type &= ~PNG_COLOR_MASK_ALPHA;
+  }
 
 #ifdef DEBUG
   printf ("Source has\n  size = %li x %li\n  depth %i\n  colour type %i\n  interlace type %i\n", width, height, bit_depth, colour_type, interlace_type);
@@ -422,9 +424,11 @@ read_png(FILE *fp)
                   {
                     alpha.tRNS = 0;
                     png_set_tRNS_to_alpha (png_ptr);
-                    if (colour_type == PNG_COLOR_TYPE_PALETTE)
+                    if (colour_type == PNG_COLOR_TYPE_PALETTE) {
                       bit_depth = 24;
-                    colour_type |= PNG_COLOR_MASK_ALPHA;
+                      colour_type = PNG_COLOR_TYPE_RGB_ALPHA;
+                    } else
+                      colour_type |= PNG_COLOR_MASK_ALPHA;
                   }
                 break;
               }
@@ -456,12 +460,14 @@ read_png(FILE *fp)
             {
               colour_type |= PNG_COLOR_MASK_COLOR;
               bit_depth = 24;
+              png_set_tRNS_to_alpha (png_ptr);
               png_set_gray_to_rgb (png_ptr);
             }
           png_set_background (png_ptr, &mbgnd, PNG_BACKGROUND_GAMMA_SCREEN,
                               0, 1.0);
         }
       pngid = alpha.use ? "png_blend" : "png_unblend";
+      colour_type &= ~PNG_COLOR_MASK_ALPHA;
       alpha.use = 0;
     }
   else if (!alpha.use && (colour_type && PNG_COLOR_MASK_ALPHA))
