@@ -683,9 +683,9 @@ reduce8alphato8 (char *image, char *image8, char **mask)
       *im++ = *imsrc++;
       *msk++ = *imsrc++;
     } while (--x);
-    im = (char *) ((int) im + 3 & ~3);
-    imsrc = (char *) ((int) imsrc + 3 & ~3);
-    msk = (char *) ((int) msk + 3 & ~3);
+    im = (char *) ((uintptr_t) im + 3 & ~3);
+    imsrc = (char *) ((uintptr_t) imsrc + 3 & ~3);
+    msk = (char *) ((uintptr_t) msk + 3 & ~3);
   } while (--y);
   if (m)
   {
@@ -1064,7 +1064,7 @@ packgrey (const char *image)
       if (bits == 0)
         return 8;
     }
-    im = (const char *) ((int) im + 3 & ~3);
+    im = (const char *) ((uintptr_t) im + 3 & ~3);
   }
   return (bits & 1) ? 1 : (bits & 2) ? 2 : 4;
 }
@@ -1138,7 +1138,7 @@ main (int argc, const char *const argv[])
 {
   FILE *fp = 0, *ifp = 0;
   png_infop info_ptr;
-  long size;
+  size_t size;
   long x, y, xres, yres;
   int lnbpp, masklnbpp;
   long maskcolour;              /* png_color & rgb_t fit in a word */
@@ -1733,14 +1733,14 @@ main (int argc, const char *const argv[])
     sscanf (fromtemp + strlen (fromtemp) - 8, "%X", &ifp->__signature);
   }
   fseek (ifp, 0, SEEK_END);
-  size = ftell (ifp);
+  size = (size_t) ftell (ifp);
   fseek (ifp, 0, SEEK_SET);
-  sprites = spr_malloc (size + 4L, "input file");
-  if (fread ((char *) (sprites) + 4, (int) size, 1, ifp) != 1)
+  sprites = spr_malloc (size + 4, "input file");
+  if (fread ((char *) (sprites) + 4, size, 1, ifp) != 1)
     fail (fail_OS_ERROR, "couldn't load file");
   if (fclose (ifp))
     fail (fail_OS_ERROR, 0);
-  sprites->size = size + 4L;
+  sprites->size = size + 4;
 
   if (sprites->first > sprites->free)
     fail (fail_BAD_DATA, "invalid sprite file");
@@ -1815,7 +1815,7 @@ main (int argc, const char *const argv[])
       masklnbpp = m > 255 ? 0 : lnbpp;  /* 1-bit mask if new fmt */
 
     /* Check for a separate mask sprite */
-    maskspr = (sprite_t *) (imagespr->size + (int) imagespr);
+    maskspr = (sprite_t *) (imagespr->size + (uintptr_t) imagespr);
     if (maskspr >= (sprite_t *) (sprites->free + (char *) sprites))
       maskspr = 0;
 
@@ -1921,8 +1921,8 @@ main (int argc, const char *const argv[])
       if (checkmask)
       {
         memset (image, 0,
-                (int) (lnbpp < 4 ? height * (width + 3 & -4)
-                                 : height * width * 4));
+                (size_t) (lnbpp < 4 ? height * (width + 3 & -4)
+                                    : height * width * 4));
         lnbpp = 0;
         alpha = 0;      /* image wiped; no point in keeping it */
       }
@@ -2401,7 +2401,7 @@ main (int argc, const char *const argv[])
       {
         /* maskcolour *should* be 0, for paletted images */
         png_byte *mask = spr_malloc (maskcolour + 1L, "8bpp mask");
-        memset (mask, (int) maskcolour + 1, (int) maskcolour);
+        memset (mask, (int) maskcolour + 1, (size_t) maskcolour);
         mask[maskcolour] = 0;
         debug_printf ("Mask colour number = %li\n", maskcolour);
         png_set_tRNS (png_ptr, info_ptr, mask, (int) maskcolour + 1, 0);

@@ -100,7 +100,7 @@ int
 main (int argc, const char *const argv[])
 {
   FILE *ifp = 0;
-  long size;
+  size_t size;
   long y;
   void *drawfile, *image;
   char simplemask = 0, inverse = 0, trim = 0;
@@ -380,23 +380,23 @@ main (int argc, const char *const argv[])
   if (ifp == NULL)
     fail (fail_OS_ERROR, 0);
   fseek (ifp, 0, SEEK_END);
-  size = ftell (ifp);
+  size = (size_t) ftell (ifp);
   fseek (ifp, 0, SEEK_SET);
   drawfile = spr_malloc (size, "input file");
-  if (fread (drawfile, (int) size, 1, ifp) != 1)
+  if (fread (drawfile, size, 1, ifp) != 1)
     fail (fail_OS_ERROR, "couldn't load file");
 
   switch (y)
     {
     case 0xAFF:         /* Draw file */
-      image = convertdraw (drawfile, (int) size, simplemask, inverse,
+      image = convertdraw (drawfile, size, simplemask, inverse,
                            scale_x, scale_y, background, trim,
                            sighandler, jump);
       if (!image)
         fail (fail_NO_MEM, "couldn't convert %s file", "Draw");
       break;
     case 0xD94:         /* Artworks file */
-      image = convertartworks (drawfile, (int) size, simplemask, inverse,
+      image = convertartworks (drawfile, size, simplemask, inverse,
                                scale_x, scale_y, renderlevel, background,
                                trim, sighandler, jump);
       if (!image)

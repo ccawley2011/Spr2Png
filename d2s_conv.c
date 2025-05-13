@@ -225,7 +225,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
            int trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
   long spritex, spritey;
-  long areasize;
+  size_t areasize;
   spritearea_t *area = 0, *pixels;
   sprite_t *pSprite;
   rgb_t *oSprite;
@@ -248,7 +248,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
              ((simplemask & simplemask_NO_BLEND)
               ? (width * 4 + (width + 31 & ~31) / 2)
               : (width * 16 + (width + 31 & ~31) / 2));
-  pixels = spr_malloc ((int) areasize, "Output image");
+  pixels = spr_malloc (areasize, "Output image");
   if (!pixels)
     fail (fail_NO_MEM, "not enough memory to convert %s file", filetype);
   pixels->size = areasize;
@@ -290,7 +290,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
                  + sizeof (sprite_t) + sizeof (spritearea_t);
       if (!sectiony)
         break;
-      area = heap_malloc ((int) areasize);
+      area = heap_malloc (areasize);
       if (area || type /* kludge to get around Artworks problem */)
         break;
     }
@@ -303,7 +303,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     area->first = area->free = 16;
 
     debug_printf ("Sprite slice: %li*%li, %li bytes\nCreating slice sprite...\n",
-                  spritex, sectiony, areasize);
+                  spritex, sectiony, (long)areasize);
 
     _swi (OS_SpriteOp, _INR (0, 6), /* OS_SpriteOp create sprite; 24bit, 90dpi */
           256+15, area, sprname, 0, spritex, sectiony, 0x301680B5);
@@ -452,7 +452,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
                 *mask_base++ = *(spr_base += 4);
                 *spr_base = 0;
               }
-            mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+            mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
           }
       }
       break;

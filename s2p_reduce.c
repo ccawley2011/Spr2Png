@@ -54,7 +54,7 @@ reducetogrey (long *image, char *mask, int rgba)
         }
         i++;
       }
-      m = (char *) (((int) m + 3) & ~3);
+      m = (char *) (((uintptr_t) m + 3) & ~3);
     }
   }
   else
@@ -80,7 +80,7 @@ reducetogrey (long *image, char *mask, int rgba)
         imret += 2;
         im += 1;
       }
-      if ((int) imret & 2)
+      if ((uintptr_t) imret & 2)
         imret += 2;
     }
   else if (mask)
@@ -93,9 +93,9 @@ reducetogrey (long *image, char *mask, int rgba)
         imret += 2;
         im += 1;
       }
-      if ((int) imret & 2)
+      if ((uintptr_t) imret & 2)
         imret += 2;
-      mask = (char *) (((int) mask + 3) & ~3);
+      mask = (char *) (((uintptr_t) mask + 3) & ~3);
     }
   else
     for (y = height; y; --y)
@@ -105,8 +105,8 @@ reducetogrey (long *image, char *mask, int rgba)
         *imret++ = im->r;
         im += 1;
       }
-      if ((int) imret & 3)
-        imret = (char *)((int) imret + 3 & ~3);
+      if ((uintptr_t) imret & 3)
+        imret = (char *)((uintptr_t) imret + 3 & ~3);
     }
   if (verbose)
     puts ("Image successfully reduced to greyscale");

@@ -1,6 +1,9 @@
 #ifndef __spr2png_types_h
 #define __spr2png_types_h
 
+#include <stddef.h>
+#include <stdint.h>
+
 #define fail_BAD_ARGUMENT       1
 #define fail_OS_ERROR           2
 #define fail_LOAD_ERROR         3

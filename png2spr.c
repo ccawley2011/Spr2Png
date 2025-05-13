@@ -142,7 +142,7 @@ find_mask_type (png_bytep mask, int indent, int step)
           if (p == 0) all255 = mask_SIMPLE;
           else if (p < 255) return mask_COMPLEX;
         }
-      mask = (png_bytep) (((int) mask - indent + 3) & ~3) + indent;
+      mask = (png_bytep) (((uintptr_t) mask - indent + 3) & ~3) + indent;
     }
   return all255;
 }
@@ -181,8 +181,8 @@ makemask (png_bytep mask, png_bytep spr, int step, int mask_depth)
         }
       if (b != val)
         *mask++ = w;
-      mask = (png_bytep) (((int) mask + 3) & ~3);
-      spr = (png_bytep) (((int) spr + 4 - step) & ~3) + step - 1;
+      mask = (png_bytep) (((uintptr_t) mask + 3) & ~3);
+      spr = (png_bytep) (((uintptr_t) spr + 4 - step) & ~3) + step - 1;
     }
 }
 
@@ -213,7 +213,7 @@ make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int ma
             }
           if (b != val)
             *mask++ = w;
-          mask = (png_bytep) (((int) mask + 3) & ~3);
+          mask = (png_bytep) (((uintptr_t) mask + 3) & ~3);
         }
     }
   else
@@ -250,8 +250,8 @@ make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int ma
             *mask++ = w;
           if (!ps)
             spr--;
-          mask = (png_bytep) (((int) mask + 3) & ~3);
-          spr = (png_bytep) (((int) spr + 3) & ~3);
+          mask = (png_bytep) (((uintptr_t) mask + 3) & ~3);
+          spr = (png_bytep) (((uintptr_t) spr + 3) & ~3);
         }
     }
 }
@@ -297,8 +297,8 @@ make_trns_wide (png_bytep mask, png_bytep spr, int bit_depth, int colour_type)
             }
           if (!ps)
             spr--;
-          mask = (png_bytep) (((int) mask + 3) & ~3);
-          spr = (png_bytep) (((int) spr + 3) & ~3);
+          mask = (png_bytep) (((uintptr_t) mask + 3) & ~3);
+          spr = (png_bytep) (((uintptr_t) spr + 3) & ~3);
         }
     }
 }
@@ -704,12 +704,12 @@ read_png(FILE *fp)
               case mask_COMPLEX:
               case mask_SIMPLE:
                 debug_puts ((is == mask_SIMPLE) ? "-> simple" : "-> complex");
-                mask = malloc ((int) (((width + 3) & ~3) * height));
+                mask = malloc ((size_t) (((width + 3) & ~3) * height));
                 if (!mask)
                   fail (fail_NO_MEM, "out of memory");
                 mask_base = mask;
                 memset (mask, 0,
-                        (int) ((((width + 31) >> 3) & ~3) * height));
+                        (size_t) ((((width + 31) >> 3) & ~3) * height));
                 for (y = (int) height; y; --y)
                   {
                     for (x = (int) width; x; --x)
@@ -717,15 +717,15 @@ read_png(FILE *fp)
                         *spr_base++ = *merged++;
                         *mask_base++ = *merged++;
                       }
-                    spr_base  = (png_bytep) (((int) spr_base  + 3) & ~3);
-                    mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
-                    merged    = (png_bytep) (((int) merged    + 3) & ~3);
+                    spr_base  = (png_bytep) (((uintptr_t) spr_base  + 3) & ~3);
+                    mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
+                    merged    = (png_bytep) (((uintptr_t) merged    + 3) & ~3);
                   }
                 if (alpha.wide && !alpha.separate)
                   {
                     _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
                     memcpy ((png_bytep) spr_ptr + spr_ptr->mask, mask,
-                            (int) (((width + 3) & ~3) * height));
+                            (size_t) (((width + 3) & ~3) * height));
                   }
                 else if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
                   {
@@ -733,13 +733,13 @@ read_png(FILE *fp)
                     if (mode > 255)
                       {
                         memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
-                                (int) ((((width + 31) >> 3) & ~3) * height));
+                                (size_t) ((((width + 31) >> 3) & ~3) * height));
                         makemask ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1, 1);
                       }
                     else
                       {
                         memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
-                                (int) (row_width * height));
+                                (size_t) (row_width * height));
                         makemask ((png_bytep) spr_ptr + spr_ptr->mask, mask, 1, bit_depth);
                       }
                   }
@@ -764,7 +764,7 @@ read_png(FILE *fp)
                       }
                     else
                       memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
-                              (int) (((width + 3) & ~3) * height));
+                              (size_t) (((width + 3) & ~3) * height));
                   }
                 free (mask);
                 break;
@@ -783,8 +783,8 @@ read_png(FILE *fp)
                     *spr_base++ = *merged;
                     merged += 2;
                   }
-                spr_base = (png_bytep) (((int) spr_base + 3) & ~3);
-                merged   = (png_bytep) (((int) merged   + 3) & ~3);
+                spr_base = (png_bytep) (((uintptr_t) spr_base + 3) & ~3);
+                merged   = (png_bytep) (((uintptr_t) merged   + 3) & ~3);
               }
           }
       }
@@ -817,7 +817,7 @@ read_png(FILE *fp)
                           *mask_base++ = ~*(spr_base += 4);
                           *spr_base = 0;
                         }
-                      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                      mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
                     }
                 else
                   for (y = (int) height; y; --y)
@@ -827,7 +827,7 @@ read_png(FILE *fp)
                           *mask_base++ = *(spr_base += 4);
                           *spr_base = 0;
                         }
-                      mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                      mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
                     }
               }
             else if (alpha.wide)
@@ -843,7 +843,7 @@ read_png(FILE *fp)
                         *mask_base++ = *(spr_base += 4);
                         *spr_base = 0;
                       }
-                    mask_base = (png_bytep) (((int) mask_base + 3) & ~3);
+                    mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
                   }
               }
             else
