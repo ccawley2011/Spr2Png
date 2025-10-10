@@ -76,7 +76,6 @@ o.d2s_ver:      c.d2s_ver
 o.png2spr:      c.png2spr
 o.p2s_ver:      c.p2s_ver
 
-o.strdup:       s.strdup
 o.heap:         s.heap
 o.library:      c.library
 
