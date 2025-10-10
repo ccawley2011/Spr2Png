@@ -6,7 +6,7 @@
 
 #define fail_BAD_ARGUMENT       1
 #define fail_OS_ERROR           2
-#define fail_LOAD_ERROR         3
+#define fail_IO_ERROR           3
 #define fail_BAD_DATA           4
 #define fail_BAD_IMAGE          5
 #define fail_TASKWINDOW         6

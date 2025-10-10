@@ -2522,7 +2522,7 @@ main (int argc, const char *const argv[])
     fail (fail_OS_ERROR, 0);
   shutdown ();
 
-  onerr (_swix (OS_File, _INR(0, 2), 18, to, 0xB60));
+  settype (to, 0xB60);
 
   if (verbose)
     puts ("Finished.");

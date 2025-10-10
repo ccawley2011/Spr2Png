@@ -118,6 +118,13 @@ readtype (const char *file)     /* -2 if not found, -1 if untyped */
 }
 
 
+void
+settype (const char *file, int type)
+{
+  onerr (_swix (OS_File, _INR(0, 2), 18, file, type));
+}
+
+
 #ifdef DEBUG
 void *(spr_malloc) (size_t l, const char *const msg)
 #else

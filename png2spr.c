@@ -149,10 +149,80 @@ find_mask_type (png_bytep mask, int indent, int step)
 
 
 static void
+rename_sprite (spritearea_t *const area, sprite_t *const spr, const char *name)
+{
+  size_t len = strlen(name);
+  if (len > 12)
+    len = 12;
+  memset(spr->name, 0, 12);
+  memcpy(spr->name, name, len);
+}
+
+
+static sprite_t *
+create_sprite (spritearea_t *const area, const char *name, long width, long height,
+               unsigned int mode, int bit_depth, unsigned int palsize)
+{
+  sprite_t *spr = (sprite_t *)((char*)area + area->free);
+  int pitch = (((width * bit_depth) + 31) & ~31) >> 3;
+  long size = 0x2c + (palsize * 8) + (pitch * height);
+
+  if (area->free + size > area->size)
+    fail(fail_NO_MEM, "not enough memory to create sprite");
+
+  area->sprites += 1;
+  area->free    += size;
+  spr->size      = size;
+  rename_sprite (area, spr, name);
+  spr->width     = (pitch >> 2) - 1;
+  spr->height    = height - 1;
+  spr->dummy1    = 0;
+  spr->dummy2    = ((width * bit_depth) - 1) & 31;
+  spr->image     = 0x2c + (palsize * 8);
+  spr->mask      = 0x2c + (palsize * 8);
+  spr->mode      = mode;
+  return spr;
+}
+
+
+static void
+create_mask (spritearea_t *const area, sprite_t *const spr)
+{
+  unsigned int row_width, mask_size;
+
+  if (spr->image != spr->mask)
+    return; /* A mask already exists */
+
+  row_width = (spr->width + 1) << 2;
+  if (spr->mode & 0x80000000)
+    mask_size = ((width + 3) & ~3) * height; /* wide sprite mask */
+  else if (spr->mode > 255)
+    mask_size = ((width + 31) >> 3 & ~3) * height; /* new sprite mask */
+  else
+    mask_size = (row_width * height); /* old sprite mask */
+
+  if (area->free + mask_size > area->size)
+    fail(fail_NO_MEM, "not enough memory to create mask");
+
+  area->free += mask_size;
+  spr->size  += mask_size;
+  spr->mask   = spr->image + (row_width * height);
+}
+
+
+static void
+write_sprite (FILE *fp, spritearea_t *const area)
+{
+  const char *carea = (const char *)area;
+  if (fwrite(carea + 4, area->free - 4, 1, fp) != 1)
+    fail(fail_IO_ERROR, "could not write sprite area to file");
+}
+
+
+static void
 add_grey_palette (spritearea_t *const area, sprite_t *const spr)
 {
   int y, *pal = (int *) spr + 11;
-  onerr (_swix (ColourTrans_WritePalette, _INR (0, 4), area, spr, 0x8000, 0, 1));
   for (y = 255; y >= 0; --y)
     pal[y*2+1] = pal[y*2] = (y * 0x10101) << 8;
 }
@@ -425,7 +495,7 @@ read_png(FILE *fp)
                     alpha.tRNS = 0;
                     png_set_tRNS_to_alpha (png_ptr);
                     if (colour_type == PNG_COLOR_TYPE_PALETTE) {
-                      bit_depth = 24;
+                      bit_depth = 32;
                       colour_type = PNG_COLOR_TYPE_RGB_ALPHA;
                     } else
                       colour_type |= PNG_COLOR_MASK_ALPHA;
@@ -459,7 +529,7 @@ read_png(FILE *fp)
                   mbgnd.green != mbgnd.blue))
             {
               colour_type |= PNG_COLOR_MASK_COLOR;
-              bit_depth = 24;
+              bit_depth = 32;
               png_set_tRNS_to_alpha (png_ptr);
               png_set_gray_to_rgb (png_ptr);
             }
@@ -495,7 +565,7 @@ read_png(FILE *fp)
         }
     }
   if ((colour_type & ~PNG_COLOR_MASK_ALPHA) == PNG_COLOR_TYPE_RGB)
-    bit_depth = 24;
+    bit_depth = 32;
 
   if ((colour_type & PNG_COLOR_MASK_ALPHA) == 0 && !alpha.tRNS)
     {
@@ -521,9 +591,12 @@ read_png(FILE *fp)
     spritearea_t *spr_area;
     sprite_t *spr_ptr;
     png_bytep spr_base, *row_ptrs;
-    unsigned int mode, palsize = 0;
-    row_width = png_get_rowbytes(png_ptr, info_ptr) + 3 & ~3;
+    unsigned int mode;
+    size_t palsize = 0;
     size_t size = 16 + 2 * (44 + 256 * 4 * 2); /* 2 sprites, 2 palettes */
+
+    row_width = png_get_rowbytes(png_ptr, info_ptr) + 3 & ~3;
+    size += row_width * height; /* sprite image */
 
     if (IS_GREY (colour_type))
         debug_puts ("(is grey)");
@@ -572,7 +645,6 @@ read_png(FILE *fp)
         }
       }
 
-    size += row_width * height; /* sprite image */
     if (((colour_type & PNG_COLOR_MASK_ALPHA) || alpha.separate || alpha.wide) && alpha.use)
       {
         debug_puts ("(has alpha)");
@@ -597,9 +669,8 @@ read_png(FILE *fp)
     spr_area->first = 16;
     spr_area->free = 16;
 
-    onerr (_swix (OS_SpriteOp, _INR (0, 6),
-                  256+15, spr_area, pngid, 0, width, height, mode));
-    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2), 256+24, spr_area, pngid, &spr_ptr);
+    spr_ptr = create_sprite (spr_area, pngid, width, height,
+                             mode, bit_depth, palsize);
     debug_printf ("Image will have:\n  %i-bit colour (mode %x)\n", bit_depth, mode);
 
     if (palsize) /* write palette */
@@ -607,9 +678,6 @@ read_png(FILE *fp)
         int *const pal = (int *) spr_ptr + 11;
         if (IS_GREY (colour_type))
           {
-            /* cheat: force full-size palette */
-            onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
-                          spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
             debug_puts ("  a greyscale palette");
             for (y = --palsize; y >= 0; --y)
               pal[y*2+1] = pal[y*2] = ((y * 255 / palsize) * 0x10101) << 8;
@@ -617,9 +685,6 @@ read_png(FILE *fp)
         else if (palsize && png_get_valid (png_ptr, info_ptr, PNG_INFO_PLTE))
           {
             int *palptr;
-            /* cheat: force full-size palette */
-            onerr (_swix (ColourTrans_WritePalette, _INR (0, 4),
-                          spr_area, spr_ptr, 0x8000 /* rubbish */, 0, 1));
             memset (pal, 0, palsize*2*4);
             png_get_PLTE (png_ptr, info_ptr, (png_color **) &palptr,
                           (int *) &y);
@@ -654,10 +719,8 @@ read_png(FILE *fp)
         if (alpha.separate)
           {
             sprite_t *mask_ptr;
-            onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
-                          spr_area, maskid, 0, width, height, 28));
-            _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
-                   256+24, spr_area, maskid,  &mask_ptr);
+            mask_ptr = create_sprite (spr_area, maskid, width, height,
+                                      28, 8, 256);
             add_grey_palette (spr_area, mask_ptr);
             make_trns_wide ((png_bytep) mask_ptr + mask_ptr->image,
                             (png_bytep) spr_ptr + spr_ptr->image,
@@ -671,13 +734,12 @@ read_png(FILE *fp)
                     y--; p[y] = ~p[y];
                   }
                 while (y);
-                _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
-                       "mask_i");
+                rename_sprite (spr_area, mask_ptr, "mask_i");
               }
           }
         else
           {
-            onerr (_swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid));
+            create_mask (spr_area, spr_ptr);
             if (alpha.wide)
                 make_trns_wide ((png_bytep) spr_ptr + spr_ptr->mask,
                                 (png_bytep) spr_ptr + spr_ptr->image,
@@ -726,13 +788,13 @@ read_png(FILE *fp)
                   }
                 if (alpha.wide && !alpha.separate)
                   {
-                    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                    create_mask (spr_area, spr_ptr);
                     memcpy ((png_bytep) spr_ptr + spr_ptr->mask, mask,
                             (size_t) (((width + 3) & ~3) * height));
                   }
                 else if ((is == mask_SIMPLE || alpha.reduce) && !alpha.separate)
                   {
-                    _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                    create_mask (spr_area, spr_ptr);
                     if (mode > 255)
                       {
                         memset ((png_bytep) spr_ptr + spr_ptr->mask, 0,
@@ -748,10 +810,8 @@ read_png(FILE *fp)
                   }
                 else
                   {
-                    onerr (_swix (OS_SpriteOp, _INR (0, 6), 256+15,
-                                  spr_area, maskid, 0, width, height, 28));
-                    _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
-                           256+24, spr_area, maskid,  &mask_ptr);
+                    mask_ptr = create_sprite (spr_area, maskid, width, height,
+                                              28, 8, 256);
                     add_grey_palette (spr_area, mask_ptr);
                     if (alpha.inverse)
                       {
@@ -762,8 +822,7 @@ read_png(FILE *fp)
                             y--; p[y] = ~mask[y];
                           }
                         while (y);
-                        _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, maskid,
-                               "mask_i");
+                        rename_sprite(spr_area, mask_ptr, "mask_i");
                       }
                     else
                       memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
@@ -805,10 +864,8 @@ read_png(FILE *fp)
             if (alpha.separate)
               {
                 /**/separate_simple:
-                onerr (_swix (OS_SpriteOp, _INR (0, 6),  256+15,
-                              spr_area, maskid, 0, width, height, 28));
-                _swix (OS_SpriteOp, _INR (0, 2) | _OUT (2),
-                       256+24, spr_area, maskid,  &mask_ptr);
+                mask_ptr = create_sprite (spr_area, maskid, width, height,
+                                          28, 8, 256);
                 add_grey_palette (spr_area, mask_ptr);
                 mask_base = (png_bytep) mask_ptr + mask_ptr->image;
                 spr_base -= 1;
@@ -836,7 +893,7 @@ read_png(FILE *fp)
             else if (alpha.wide)
               {
                 /**/wide_simple:
-                _swix (OS_SpriteOp, _INR (0, 2), 256+29, spr_area, pngid);
+                create_mask (spr_area, spr_ptr);
                 mask_base = (png_bytep) spr_ptr + spr_ptr->mask;
                 spr_base -= 1;
                 for (y = (int) height; y; --y)
@@ -860,12 +917,10 @@ read_png(FILE *fp)
                         y--; spr_base[y*4] = ~spr_base[y*4];
                       }
                     while (y);
-                    _swix (OS_SpriteOp, _INR (0, 3), 256+26, spr_area, pngid,
-                           "png_rgba_i");
+                    rename_sprite (spr_area, spr_ptr, "png_rgba_i");
                   }
                 else
-                  _swix (OS_SpriteOp, _INR(0, 3), 256+26, spr_area, pngid,
-                         "png_rgba");
+                  rename_sprite (spr_area, spr_ptr, "png_rgba");
               }
             break;
           case mask_SIMPLE:
@@ -875,7 +930,7 @@ read_png(FILE *fp)
             else if (alpha.wide)
               goto wide_simple;
             /**/reduce_complex:
-            _swix (OS_SpriteOp, _INR (0, 2),  256+29, spr_area, pngid);
+            create_mask (spr_area, spr_ptr);
             if (mode > 255)
                 makemask ((png_bytep) spr_ptr + spr_ptr->mask, spr_base, 4, 1);
             else
@@ -1130,10 +1185,17 @@ main (int argc, char *argv[])
 
   fp = fopen (from, "rb");
   if (!fp)
-    fail (fail_LOAD_ERROR, "file '%s' not found or not readable", argv[1]);
+    fail (fail_IO_ERROR, "file '%s' not found or not readable", argv[1]);
   spr = read_png (fp);
   fclose (fp);
-  onerr (_swix (OS_SpriteOp, _INR (0, 2), 256+12, spr, to));
+
+  fp = fopen (to, "wb");
+  if (!fp)
+    fail (fail_IO_ERROR, "file '%s' not writable", argv[1]);
+  write_sprite (fp, spr);
+  fclose (fp);
+
+  settype (to, 0xFF9);
 
   return 0;
 }

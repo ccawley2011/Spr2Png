@@ -44,6 +44,7 @@ void swi (int swi);
 const char *argdup (const char *); /*option*/
 
 int readtype (const char *name);
+void settype (const char *name, int type);
 
 #ifdef DEBUG
 void *spr_malloc (size_t l, const char *const msg);
