@@ -530,28 +530,6 @@ read_png(FILE *fp)
     else
         debug_puts ("(is rgb)");
 
-    size += row_width * height; /* sprite image */
-    if (((colour_type & PNG_COLOR_MASK_ALPHA) || alpha.separate || alpha.wide) && alpha.use)
-      {
-        debug_puts ("(has alpha)");
-        size += ((width + 3) & ~3) * height; /* mask sprite */
-      }
-    else if (alpha.tRNS)
-      {
-        debug_puts ("(has simple mask)");
-        size += ((width + 31) >> 3 & ~3) * height; /* sprite mask */
-      }
-
-    debug_printf ("Creating sprite (area size = %X)...\n", size);
-    spr_area = malloc (size);
-    row_ptrs = calloc (height, sizeof(char *));
-    if (!spr_area || !row_ptrs)
-      fail (fail_NO_MEM, "out of memory");
-    spr_area->size = size;
-    spr_area->sprites = 0;
-    spr_area->first = 16;
-    spr_area->free = 16;
-
     {
       png_uint_32 ppix = png_get_x_pixels_per_meter (png_ptr, info_ptr);
       png_uint_32 ppiy = png_get_y_pixels_per_meter (png_ptr, info_ptr);
@@ -593,6 +571,31 @@ read_png(FILE *fp)
           default: mode = 28; palsize = 256; break;
         }
       }
+
+    size += row_width * height; /* sprite image */
+    if (((colour_type & PNG_COLOR_MASK_ALPHA) || alpha.separate || alpha.wide) && alpha.use)
+      {
+        debug_puts ("(has alpha)");
+        size += ((width + 3) & ~3) * height; /* mask sprite */
+      }
+    else if (alpha.tRNS)
+      {
+        debug_puts ("(has simple mask)");
+        if (mode > 255)
+            size += ((width + 31) >> 3 & ~3) * height; /* new sprite mask */
+        else
+            size += row_width * height; /* old sprite mask */
+      }
+
+    debug_printf ("Creating sprite (area size = %X)...\n", size);
+    spr_area = malloc (size);
+    row_ptrs = calloc (height, sizeof(char *));
+    if (!spr_area || !row_ptrs)
+      fail (fail_NO_MEM, "out of memory");
+    spr_area->size = size;
+    spr_area->sprites = 0;
+    spr_area->first = 16;
+    spr_area->free = 16;
 
     onerr (_swix (OS_SpriteOp, _INR (0, 6),
                   256+15, spr_area, pngid, 0, width, height, mode));
