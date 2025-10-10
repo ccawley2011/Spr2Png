@@ -665,7 +665,7 @@ read_png(FILE *fp)
             if (alpha.inverse)
               {
                 png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-                y = (int) ((((width + 31) >> 3) & ~3) * height);
+                y = (int) (((width + 3) & ~3) * height);
                 do
                   {
                     y--; p[y] = ~p[y];
