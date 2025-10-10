@@ -224,6 +224,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
            double scale_x, double scale_y, int type, long background,
            int trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
+  _kernel_oserror *err = NULL;
   long spritex, spritey;
   size_t areasize;
   spritearea_t *area = 0, *pixels;
@@ -340,7 +341,6 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   for (pass = 0; pass < passes; pass++) {
     long thisy = sectiony / mul;
     long offset = (pass * sectiony) / mul;
-    _kernel_oserror *err = NULL;
 
     if (verbose > 2)
       printf ("Pass %li of %li\n", pass + 1, passes);
@@ -389,7 +389,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     else
       err = render (area, data, nSize, &tm, type, simplemask & simplemask_NO_BLEND, 0, 0);
     if (err)
-      fail (fail_OS_ERROR, err->errmess);
+      break;
     makemask (pSprite, spritex, sectiony);
 
 #ifdef DEBUG
@@ -412,6 +412,9 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   /* Dangerous bit finished :-) */
   set_fontmax (1);
   setsignal (std_sighandler);
+
+  if (err)
+    fail (fail_OS_ERROR, err->errmess);
 
   if ((simplemask & simplemask_NO_BLEND) == 0)
     heap_free (area);
