@@ -1,21 +1,17 @@
 #ifndef __spr2png_library_h
 #define __spr2png_library_h
 
-#include "C:kernel.h"
 #include "types.h"
 
+#ifdef __riscos
 #define COPYRIGHT "\xA9"
+#else
+#define COPYRIGHT "(c)"
+#endif
 
-extern long width, height;
+extern int32_t width, height;
 
 extern spritearea_t *sprites; /* == unsigned char */
-
-typedef union {
-  char _msg[2048];
-  char used[256];
-  unsigned long unused[65536/32];
-  struct { char u[256]; long p[256]; } p;
-} wksp_t;
 
 typedef struct
 {
@@ -27,9 +23,6 @@ typedef struct
 }
 optslist;
 
-
-extern wksp_t wksp;
-
 extern int verbose;
 
 extern const char *program_name;
@@ -37,10 +30,7 @@ extern const char program_version[];
 extern const char *caller_name;
 extern const char *caller_sprite;
 
-
-void setsignal(void (*handler)(int));
 void fail (int ret, const char *msg, ...);
-void swi (int swi);
 const char *argdup (const char *); /*option*/
 
 int readtype (const char *name);
@@ -55,11 +45,24 @@ void *spr_malloc (size_t l);
 
 double readfloat (const char **);
 
-extern int no_press_space;
-int init_task (const char *task, const char *title);
-
 int argmatch (const optslist *args, const char *arg, const char **param);
 
+#ifdef __riscos
+#include "kernel.h"
+
+typedef union {
+  char _msg[2048];
+  char used[256];
+  uint32_t unused[65536/32];
+  struct { char u[256]; int32_t p[256]; } p;
+} wksp_t;
+
+extern wksp_t wksp;
+
+void setsignal(void (*handler)(int));
+
+extern int no_press_space;
+int init_task (const char *task, const char *title);
 
 /* In s.heap: */
 
@@ -76,6 +79,12 @@ extern void (*heap_free) (const void *const);
       fail (fail_OS_ERROR, zz->errmess); \
   }
 
+#else
+
+#define heap_malloc malloc
+#define heap_realloc realloc
+#define heap_free free
+
 #endif
 
 #ifdef DEBUG
@@ -84,4 +93,6 @@ extern void (*heap_free) (const void *const);
 #else
 #define debug_puts(x)
 #define debug_printf(x,...)
+#endif
+
 #endif

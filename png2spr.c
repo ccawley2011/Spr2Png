@@ -1,11 +1,13 @@
 #include <errno.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __riscos
+#include <setjmp.h>
 #include <signal.h>
 #include "swis.h"
 #include "kernel.h"
+#endif
 #include "zlib.h"
 #include "png.h"
 #include "library.h"
@@ -17,14 +19,11 @@
 
 extern const char program_version[];
 
-static jmp_buf jump;
-static _kernel_oserror sigerr;
-
 static png_structp png_ptr;
 static png_infop info_ptr;
 static int png_init;
 
-static long bgnd = -2;
+static int32_t bgnd = -2;
 static double display_gamma = 2.2;
 static double image_gamma = 0;
 static char pack_mask = 0;
@@ -47,7 +46,7 @@ static struct
 
 static char free_dpi = 0;
 
-static long row_width;
+static uint32_t row_width;
 
 
 #define IS_GREY(x) \
@@ -90,6 +89,10 @@ help (void)
   exit (0);
 }
 
+#ifdef __riscos
+
+static jmp_buf jump;
+static _kernel_oserror sigerr;
 
 static void
 sighandler (int sig)
@@ -118,6 +121,7 @@ shutdown (void)
   debug_puts ("Done.");
 }
 
+#endif
 
 typedef enum
   {
@@ -160,12 +164,12 @@ rename_sprite (spritearea_t *const area, sprite_t *const spr, const char *name)
 
 
 static sprite_t *
-create_sprite (spritearea_t *const area, const char *name, long width, long height,
+create_sprite (spritearea_t *const area, const char *name, uint32_t width, uint32_t height,
                unsigned int mode, int bit_depth, unsigned int palsize)
 {
   sprite_t *spr = (sprite_t *)((char*)area + area->free);
-  int pitch = (((width * bit_depth) + 31) & ~31) >> 3;
-  long size = 0x2c + (palsize * 8) + (pitch * height);
+  uint32_t pitch = (((width * bit_depth) + 31) & ~31) >> 3;
+  uint32_t size = 0x2c + (palsize * 8) + (pitch * height);
 
   if (area->free + size > area->size)
     fail(fail_NO_MEM, "not enough memory to create sprite");
@@ -222,16 +226,16 @@ write_sprite (FILE *fp, spritearea_t *const area)
 static void
 add_grey_palette (spritearea_t *const area, sprite_t *const spr)
 {
-  int y, *pal = (int *) spr + 11;
-  for (y = 255; y >= 0; --y)
-    pal[y*2+1] = pal[y*2] = (y * 0x10101) << 8;
+  int i, *pal = (int *) spr + 11;
+  for (i = 255; i >= 0; --i)
+    pal[i*2+1] = pal[i*2] = (i * 0x10101) << 8;
 }
 
 
 static void
 makemask (png_bytep mask, png_bytep spr, int step, int mask_depth)
 {
-  long x, y;
+  uint32_t x, y;
 
   debug_printf ("-> making %dbpp mask", mask_depth);
   spr -= 1;
@@ -260,7 +264,7 @@ makemask (png_bytep mask, png_bytep spr, int step, int mask_depth)
 static void
 make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int mask_depth)
 {
-  long x, y;
+  uint32_t x, y;
 
   if (colour_type == PNG_COLOR_TYPE_RGB ||
       colour_type == PNG_COLOR_TYPE_RGB_ALPHA)
@@ -330,7 +334,7 @@ make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int ma
 static void
 make_trns_wide (png_bytep mask, png_bytep spr, int bit_depth, int colour_type)
 {
-  long x, y;
+  uint32_t x, y;
 
   if (colour_type == PNG_COLOR_TYPE_RGB ||
       colour_type == PNG_COLOR_TYPE_RGB_ALPHA)
@@ -386,7 +390,7 @@ read_png(FILE *fp)
 {
   int obit_depth, bit_depth, colour_type, interlace_type;
   int dpix = 90, dpiy = 90;
-  long x, y;
+  uint32_t x, y;
   png_color_16 mbgnd;
   const char *pngid = "png";
   const char *maskid = "mask";
@@ -438,7 +442,7 @@ read_png(FILE *fp)
   }
 
 #ifdef DEBUG
-  printf ("Source has\n  size = %li x %li\n  depth %i\n  colour type %i\n  interlace type %i\n", width, height, bit_depth, colour_type, interlace_type);
+  printf ("Source has\n  size = %"PRIu32" x %"PRIu32"\n  depth %i\n  colour type %i\n  interlace type %i\n", width, height, bit_depth, colour_type, interlace_type);
   if (colour_type & PNG_COLOR_MASK_ALPHA)
     puts ("  alpha channel");
   puts ("Initialising image translation...");
@@ -676,26 +680,22 @@ read_png(FILE *fp)
     if (palsize) /* write palette */
       {
         int *const pal = (int *) spr_ptr + 11;
+        int i;
         if (IS_GREY (colour_type))
           {
             debug_puts ("  a greyscale palette");
-            for (y = --palsize; y >= 0; --y)
-              pal[y*2+1] = pal[y*2] = ((y * 255 / palsize) * 0x10101) << 8;
+            for (i = --palsize; i >= 0; --i)
+              pal[i*2+1] = pal[i*2] = ((i * 255 / palsize) * 0x10101) << 8;
           }
         else if (palsize && png_get_valid (png_ptr, info_ptr, PNG_INFO_PLTE))
           {
-            int *palptr;
+            png_color *palptr;
             memset (pal, 0, palsize*2*4);
-            png_get_PLTE (png_ptr, info_ptr, (png_color **) &palptr,
-                          (int *) &y);
-            debug_printf ("  a colour palette with %li entries\n", y);
-#ifdef USING_PNG_MODULE
-            for (--y; y >= 0; --y)
-              pal[y*2+1] = pal[y*2] = palptr[y];
-#else
-            for (--y; y >= 0; --y)
-              pal[y*2+1] = pal[y*2] = palptr[y] << 8;
-#endif
+            png_get_PLTE (png_ptr, info_ptr, &palptr, &i);
+            debug_printf ("  a colour palette with %i entries\n", i);
+
+            for (--i; i >= 0; --i)
+              pal[i*2+1] = pal[i*2] = (palptr[i].blue << 24) | (palptr[i].green << 16) | (palptr[i].red << 8);
           }
       }
 
@@ -708,7 +708,7 @@ read_png(FILE *fp)
 
     debug_puts ("Rendering...");
     spr_base = ((png_bytep) spr_ptr) + spr_ptr->image;
-    for (y = 0; y < height; ++y)
+    for (y = 0; y < (uint32_t)height; ++y)
       row_ptrs[y] = spr_base + y * row_width;
     png_read_image (png_ptr, row_ptrs);
     free (row_ptrs);
@@ -728,7 +728,7 @@ read_png(FILE *fp)
             if (alpha.inverse)
               {
                 png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-                y = (int) (((width + 3) & ~3) * height);
+                y = (((width + 3) & ~3) * height);
                 do
                   {
                     y--; p[y] = ~p[y];
@@ -775,9 +775,9 @@ read_png(FILE *fp)
                 mask_base = mask;
                 memset (mask, 0,
                         (size_t) ((((width + 31) >> 3) & ~3) * height));
-                for (y = (int) height; y; --y)
+                for (y = height; y; --y)
                   {
-                    for (x = (int) width; x; --x)
+                    for (x = width; x; --x)
                       {
                         *spr_base++ = *merged++;
                         *mask_base++ = *merged++;
@@ -816,7 +816,7 @@ read_png(FILE *fp)
                     if (alpha.inverse)
                       {
                         png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-                        y = (int) (((width + 3) & ~3) * height);
+                        y = (((width + 3) & ~3) * height);
                         do
                           {
                             y--; p[y] = ~mask[y];
@@ -838,9 +838,9 @@ read_png(FILE *fp)
         else
           {
             /**/lose_mask_grey:
-            for (y = (int) height; y; --y)
+            for (y = height; y; --y)
               {
-                for (x = (int) width; x; --x)
+                for (x = width; x; --x)
                   {
                     *spr_base++ = *merged;
                     merged += 2;
@@ -870,9 +870,9 @@ read_png(FILE *fp)
                 mask_base = (png_bytep) mask_ptr + mask_ptr->image;
                 spr_base -= 1;
                 if (alpha.inverse)
-                  for (y = (int) height; y; --y)
+                  for (y = height; y; --y)
                     {
-                      for (x = (int) width; x; --x)
+                      for (x = width; x; --x)
                         {
                           *mask_base++ = ~*(spr_base += 4);
                           *spr_base = 0;
@@ -880,9 +880,9 @@ read_png(FILE *fp)
                       mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
                     }
                 else
-                  for (y = (int) height; y; --y)
+                  for (y = height; y; --y)
                     {
-                      for (x = (int) width; x; --x)
+                      for (x = width; x; --x)
                         {
                           *mask_base++ = *(spr_base += 4);
                           *spr_base = 0;
@@ -896,9 +896,9 @@ read_png(FILE *fp)
                 create_mask (spr_area, spr_ptr);
                 mask_base = (png_bytep) spr_ptr + spr_ptr->mask;
                 spr_base -= 1;
-                for (y = (int) height; y; --y)
+                for (y = height; y; --y)
                   {
-                    for (x = (int) width; x; --x)
+                    for (x = width; x; --x)
                       {
                         *mask_base++ = *(spr_base += 4);
                         *spr_base = 0;
@@ -911,7 +911,7 @@ read_png(FILE *fp)
                 if (alpha.inverse)
                   {
                     spr_base += 3;
-                    y = (int) (((width + 3) & ~3) * height);
+                    y = (((width + 3) & ~3) * height);
                     do
                       {
                         y--; spr_base[y*4] = ~spr_base[y*4];
@@ -939,8 +939,8 @@ read_png(FILE *fp)
           case mask_OPAQUE:
             debug_puts ("-> unnecessary");
             spr_base -= 1;
-            for (y = (int) height; y; --y)
-              for (x = (int) width; x; --x)
+            for (y = height; y; --y)
+              for (x = width; x; --x)
                 *(spr_base += 4) = 0;
             break;
           }
@@ -988,6 +988,7 @@ main (int argc, char *argv[])
     program_name = p ? p + 1 : argv[0];
   }
 
+#ifdef __riscos
   atexit (shutdown);
 
   switch (setjmp (jump))
@@ -1033,6 +1034,7 @@ main (int argc, char *argv[])
   setsignal (sighandler);
 
 //  init_task ("Png2Spr backend", argv[0]);
+#endif
 
   y = 0;
   while (++y < argc)
@@ -1181,7 +1183,9 @@ main (int argc, char *argv[])
   if (bgnd != -2)
     alpha.reduce = alpha.separate = 0;
 
+#ifdef __riscos
   _swi (Hourglass_On, _IN (0), 0);
+#endif
 
   fp = fopen (from, "rb");
   if (!fp)

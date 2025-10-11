@@ -198,8 +198,8 @@ modevar (unsigned int mode, int var)
 
 static void
 getsprinfo (const spritearea_t * sprites, sprite_t * spr,
-            long *w, long *h, long *xres, long *yres, unsigned int *m,
-            unsigned int *flags)
+            int32_t *w, int32_t *h, unsigned int *xres, unsigned int *yres,
+            unsigned int *m, unsigned int *flags)
             /* writes to all regardless */
 {
   const unsigned int mode = *m = spr->mode;
@@ -1139,7 +1139,8 @@ main (int argc, const char *const argv[])
   FILE *fp = 0, *ifp = 0;
   png_infop info_ptr;
   size_t size;
-  long x, y, xres, yres;
+  long x, y;
+  unsigned int xres, yres;
   int lnbpp, masklnbpp;
   long maskcolour;              /* png_color & rgb_t fit in a word */
   unsigned int m, modeflags;
@@ -1821,14 +1822,15 @@ main (int argc, const char *const argv[])
 
     if (maskspr)
     {
-      long xr, yr;
+      int32_t xw, yh;
+      unsigned int xr, yr;
       unsigned int mf;
-      getsprinfo (sprites, maskspr, &x, &y, &xr, &yr, &m, &mf);
+      getsprinfo (sprites, maskspr, &xw, &yh, &xr, &yr, &m, &mf);
       checkspr (maskspr);
       masklnbpp = bpp (m);
       if (masklnbpp > 3 || !checkgrey (maskspr, 0))
         fail (fail_BAD_IMAGE, "mask sprite must have a greyscale palette");
-      if (x != width || y != height)
+      if (xw != width || yh != height)
         fail (fail_BAD_IMAGE, "sprite sizes do not match");
       if (xr != xres || yr != yres)
         fail (fail_BAD_IMAGE, "sprite resolutions do not match");

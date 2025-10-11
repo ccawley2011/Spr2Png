@@ -1,4 +1,3 @@
-#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,23 +5,27 @@
 #include <errno.h>
 #include <ctype.h>
 #include <math.h>
+#ifdef __riscos
+#include <signal.h>
 #include "swis.h"
 #include "kernel.h"
+#endif
 #include "types.h"
 #include "s2p_lib.h"
 
-long width, height;
+int32_t width, height;
 
 spritearea_t *sprites;          /* == unsigned char */
-
-wksp_t wksp;
-
-int no_press_space;
 
 const char *program_name;
 const char *caller_name;
 const char *caller_sprite;
 
+#ifdef __riscos
+
+wksp_t wksp;
+
+int no_press_space;
 
 void
 setsignal (void (*handler) (int))
@@ -46,6 +49,36 @@ err_report (void)
 }
 
 
+#ifdef __GNUC__
+static _kernel_oserror *
+commandwindow (const char *title)
+{
+  return _swix (Wimp_CommandWindow, _IN (0), title);
+}
+#else
+__swi (XOS_Bit | Wimp_CommandWindow)
+     _kernel_oserror *commandwindow (const char *title);
+#endif
+
+
+static void
+kill_commandwindow (void)
+{
+  commandwindow ((const char *) (no_press_space ? -1 : 0));
+}
+
+
+int
+init_task (const char *task, const char *title)
+{
+  int istask = !_swix (Wimp_Initialise, _INR (0, 3), 310, 0x4B534154, task, 0);
+  if (istask && !commandwindow (title))
+    atexit (kill_commandwindow);
+  return istask;
+}
+
+#endif
+
 void
 fail (int ret, const char *msg, ...)
 {
@@ -64,6 +97,7 @@ fail (int ret, const char *msg, ...)
  */
   if (msg)
     {
+#ifdef __riscos
       if (caller_name)
         {
           va_start (args, msg);
@@ -74,6 +108,7 @@ fail (int ret, const char *msg, ...)
           err_report ();
         }
       else
+#endif
         {
           fprintf (stderr, "%s: ", program_name);
           va_start (args, msg);
@@ -84,6 +119,7 @@ fail (int ret, const char *msg, ...)
     }
   else
     {
+#ifdef __riscos
       _kernel_oserror *x = _kernel_last_oserror ();
       if (x)
         {
@@ -101,6 +137,7 @@ fail (int ret, const char *msg, ...)
           err_report ();
         }
       else
+#endif
         perror (0);
     }
   if (ret == fail_BAD_ARGUMENT && !caller_name)
@@ -112,16 +149,26 @@ fail (int ret, const char *msg, ...)
 int
 readtype (const char *file)     /* -2 if not found, -1 if untyped */
 {
+#ifdef __riscos
   int found, type;
   onerr (_swix (OS_File, _INR (0, 1) | _OUT (0) | _OUT (6), 23, file, &found, &type));
   return found ? type : -2;
+#else
+  (void)file;
+  return -1;
+#endif
 }
 
 
 void
 settype (const char *file, int type)
 {
+#ifdef __riscos
   onerr (_swix (OS_File, _INR(0, 2), 18, file, type));
+#else
+  (void)file;
+  (void)type;
+#endif
 }
 
 
@@ -177,35 +224,6 @@ readfloat (const char **p)
     }
   *p = pp - 1;
   return (dot < 0) ? value : (value / pow (10, dot));
-}
-
-
-#ifdef __GNUC__
-static _kernel_oserror *
-commandwindow (const char *title)
-{
-  return _swix (Wimp_CommandWindow, _IN (0), title);
-}
-#else
-__swi (XOS_Bit | Wimp_CommandWindow)
-     _kernel_oserror *commandwindow (const char *title);
-#endif
-
-
-static void
-kill_commandwindow (void)
-{
-  commandwindow ((const char *) (no_press_space ? -1 : 0));
-}
-
-
-int
-init_task (const char *task, const char *title)
-{
-  int istask = !_swix (Wimp_Initialise, _INR (0, 3), 310, 0x4B534154, task, 0);
-  if (istask && !commandwindow (title))
-    atexit (kill_commandwindow);
-  return istask;
 }
 
 

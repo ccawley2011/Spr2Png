@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #define fail_BAD_ARGUMENT       1
 #define fail_OS_ERROR           2
@@ -18,7 +19,7 @@
 #define fail_NO_24BPP           255
 
 typedef struct { // 32-bit ints required
-  long size;
+  uint32_t size;
   char name[12];
   int width, height;
   int dummy1, dummy2;
@@ -30,27 +31,27 @@ typedef struct { // 32-bit ints required
 } sprite_t;
 
 typedef struct {
-  long size;
+  uint32_t size;
   int sprites;
   int first;
   int free;
 } spritearea_t;
 
 typedef struct {
-  char r, g, b, alpha;
+  uint8_t r, g, b, alpha;
 } rgb_t;
 
 typedef struct {
-  char c, m, y, k;
+  uint8_t c, m, y, k;
 } cmyk_t;
 
 typedef struct {
-  char grey, alpha;
+  uint8_t grey, alpha;
 } grey_t;
 
 typedef struct {
-  char *trans;
-  long first, last;
+  uint8_t *trans;
+  int32_t first, last;
 } colour8_t;
 
 typedef enum {
@@ -61,13 +62,13 @@ typedef enum {
 } mask_t;
 
 typedef struct {
-  signed long matrix[4];
-  signed long x, y;
+  int32_t matrix[4];
+  int32_t x, y;
 } draw_matrix;
 
 typedef struct {
-  struct { signed long x, y; } min;
-  struct { signed long x, y; } max;
+  struct { int32_t x, y; } min;
+  struct { int32_t x, y; } max;
 } draw_bounds;
 
 #endif

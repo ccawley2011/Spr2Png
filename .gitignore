@@ -1,4 +1,6 @@
+build-*/
 *.o
 *.o,ffd
 *,ff8
 *,ffb
+.DS_Store
