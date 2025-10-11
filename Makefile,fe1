@@ -45,6 +45,7 @@ All:    !Spr2Png.spr2png !Spr2Png.draw2spr !Spr2Png.png2spr !Spr2Png.!RunImage #
         tokenize bas.!RunImage -out $@
 
 clean:
+        remove !Spr2Png.!RunImage
         remove !Spr2Png.spr2png
         remove !Spr2Png.draw2spr
         remove !Spr2Png.png2spr

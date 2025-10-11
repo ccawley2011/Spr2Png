@@ -75,7 +75,7 @@ LOCAL ERROR
 ON ERROR LOCAL RESTORE ERROR:SYS "XWimp_CloseTemplate":SYS "XWimp_CloseDown":ERROR EXT ERR,REPORT$
 PROCwipedir
 SYS "OS_ReadModeVariable",-1,5 TO ,,A%:a$="":IF A%<2 THEN a$="22"
-SYS "OS_Byte",129,,255 TO ,A%:IF A%>=&A8 THEN a$="8"+a$
+SYS "OS_Byte",129,,255 TO ,osver%:IF osver%>=&A8 THEN a$="8"+a$
 SYS "OS_File",5,"<Spr2Png$Dir>.Sprites"+a$ TO ,,,,L%:DIM icn% L%+4:!icn%=L%+4
 icn%!8=16:SYS "OS_SpriteOp",256+9,icn%
 SYS "OS_SpriteOp",256+10,icn%,"<Spr2Png$Dir>.Sprites"+a$
@@ -582,7 +582,7 @@ ENDCASE
 ENDPROC
 
 DEF PROCdatasave
-IF q%!12<>myref% OR q%!40<>&FF9 AND q%!40<>&B60 AND ((q%!40<>&AFF AND q%!40<>&D94) OR INKEY-129<&A5) THEN myref%=0:ENDPROC
+IF q%!12<>myref% OR q%!40<>&FF9 AND q%!40<>&B60 AND ((q%!40<>&AFF AND q%!40<>&D94) OR osver%<&A5) THEN myref%=0:ENDPROC
 SYS "OS_File",8,"<Wimp$ScrapDir>.Spr2Png":q%!12=q%!8:q%!16=2:q%!36=-1
 $(q%+44)="<Wimp$ScrapDir>.Spr2Png."+FN0(q%+44)+CHR$ 0
 !q%=43+LEN $(q%+40) AND -4:SYS "Wimp_SendMessage",17,q%,q%!4:myref%=q%!8
@@ -594,7 +594,7 @@ LOCAL @%:@%="+G8.5":LOCAL ERROR
 ON ERROR LOCAL PROCtellthemoff(REPORT$):ENDPROC
 in$=FN0(q%+44):SYS "XOS_File",5,in$ TO F%,,T%;A%
 IF (A% AND 1) OR F%<>1 THEN ENDPROC
-A%=T%>>8:IF A%<>&FFFFFFF9 AND A%<>&FFFFFB60 AND ((A%<>&FFFFFAFF AND A%<>&FFFFFD94) OR INKEY-129<&A5) THEN ENDPROC
+A%=T%>>8:IF A%<>&FFFFFFF9 AND A%<>&FFFFFB60 AND ((A%<>&FFFFFAFF AND A%<>&FFFFFD94) OR osver%<&A5) THEN ENDPROC
 q%!12=savew%:SYS "Wimp_CloseWindow",,q%+12
 q%!12=savesprw%:SYS "Wimp_CloseWindow",,q%+12
 vectorfile%=(q%!40=&AFF)+2*(q%!40=&D94):scrap%=FALSE
