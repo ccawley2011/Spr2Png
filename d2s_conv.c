@@ -82,12 +82,12 @@ typedef struct FONTNAME_T {
   char name[1];                 /* placeholder */
 } fontname_t;
 
+static fontname_t *namelist = 0;
 
 /* For Draw files */
 static int
 check_font (const char *font)
 {
-  static fontname_t *namelist;
   static int warned = 0;
   const fontname_t *ptr;
 
@@ -98,8 +98,9 @@ check_font (const char *font)
     do {
       if (!_swix (Font_ListFonts, _INR (1, 5) | _OUT (2),
                   buffer, fn, 256, 0, 0,  &fn)) {
-        fontname_t *name = spr_malloc (5 + strlen (buffer),
-                                       "Font name list");
+        fontname_t *name = malloc (5 + strlen (buffer));
+        if (!name)
+          fail (fail_NO_MEM, "Out of memory (%s)", buffer);
         name->next = namelist;
         namelist = name;
         strcpy (name->name, buffer);
@@ -122,6 +123,20 @@ check_font (const char *font)
   }
   printf (" - %s\n", font);
   return 1;
+}
+
+
+static void
+free_fonts (void)
+{
+  fontname_t *ptr, *next;
+
+  ptr = namelist;
+  while (ptr) {
+    next = ptr->next;
+    free (ptr);
+    ptr = next;
+  }
 }
 
 
@@ -523,6 +538,7 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
         check_font (cdata + ++i);
         while (cdata[i++]);
       }
+      free_fonts ();
     }
   }
 
