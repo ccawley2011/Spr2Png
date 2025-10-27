@@ -199,7 +199,7 @@ modevar (unsigned int mode, int var)
 static void
 getsprinfo (const spritearea_t * sprites, sprite_t * spr,
             int32_t *w, int32_t *h, unsigned int *xres, unsigned int *yres,
-            unsigned int *m, unsigned int *flags)
+            unsigned int *type, unsigned int *m, unsigned int *flags)
             /* writes to all regardless */
 {
   const unsigned int mode = *m = spr->mode;
@@ -209,14 +209,17 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
   if (*m < 256) {
     *xres = 180 >> modevar (*m, 4);
     *yres = 180 >> modevar (*m, 5);
+    *type = modevar(*m, 9) + 1;
     *flags = modevar(*m, 0);
   } else if ((*m & 0x780F000F) == 0x78000001) {
     *xres = 180 >> ((*m >> 4) & 3);
     *yres = 180 >> ((*m >> 6) & 3);
+    *type = (*m >> 20) & 127;
     *flags = *m & 0xFF00;
   } else {
     *xres = (*m >> 1) & 8191;
     *yres = (*m >> 14) & 8191;
+    *type = (*m >> 27) & 15;
     *flags = 0;
   }
 }
@@ -227,27 +230,6 @@ remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 {
   if (~spr->mode & 1 << 31)
     _swi (OS_SpriteOp, _INR (0, 2), 0x236, sprites, spr);
-}
-
-
-static int
-bpp (unsigned int mode)
-{
-  if ((mode & 0x780F000F) == 0x78000001)
-    return ((mode >> 20) - 1) & 127;
-  else if (mode > 255)
-    return ((mode >> 27) - 1) & 15;
-  switch (modevar (mode, 3))
-  {
-  case 1:
-    return 0;
-  case 3:
-    return 1;
-  case 15:
-    return 2;
-  default:
-    return 3;
-  }
 }
 
 
@@ -292,10 +274,10 @@ list_used (const char *im, const char *imask, int lnbpp)
 
 
 static int
-checkgrey (const sprite_t * spr, const char *used)
+checkgrey (const sprite_t * spr, const char *used, int lnbpp)
 {
   unsigned long x, *p;
-  const unsigned int m = bpp (spr->mode);
+  const unsigned int m = lnbpp;
   static const unsigned long count[] = { 2, 4, 16, 256 };
   static const unsigned long mul[] = { 0xFFFFFF, 0x555555, 0x111111, 0x10101 };
   debug_puts ("Checking for greyscale palette...");
@@ -852,7 +834,8 @@ find_used_24 (const long *image, const char *mask, long b)
 
 static long
 apply_mask_24 (long *image, const char *mask,
-               const png_color_16 * bkgd, int lnbpp)
+               const png_color_16 * bkgd,
+               unsigned int type)
 {
   long *i;                      /* rgb_t */
   const char *m;
@@ -888,9 +871,21 @@ apply_mask_24 (long *image, const char *mask,
 
   if (colour == -1)
   {
-    if (bkgd && lnbpp == 4)
+    if (bkgd && type == 5)
     {
       colour = bgnd & 0xF8F8F8;
+      if ((colour & 0xFF) == 0)
+        colour++;
+    }
+    else if (bkgd && type == 10)
+    {
+      colour = bgnd & 0xF8FCF8;
+      if ((colour & 0xFF) == 0)
+        colour++;
+    }
+    else if (bkgd && type == 16)
+    {
+      colour = bgnd & 0xF0F0F0;
       if ((colour & 0xFF) == 0)
         colour++;
     }
@@ -1143,7 +1138,7 @@ main (int argc, const char *const argv[])
   unsigned int xres, yres;
   int lnbpp, masklnbpp;
   long maskcolour;              /* png_color & rgb_t fit in a word */
-  unsigned int m, modeflags;
+  unsigned int type, m, modeflags;
   sprite_t *imagespr, *maskspr;
   void *image, *image8 = 0;
   char *mask = 0, *palmask = 0;
@@ -1750,7 +1745,7 @@ main (int argc, const char *const argv[])
   imagespr = (sprite_t *) (sprites->first + (char *) sprites);
   checkspr (imagespr);
   remove_wastage (sprites, imagespr);
-  getsprinfo (sprites, imagespr, &width, &height, &xres, &yres, &m, &modeflags);
+  getsprinfo (sprites, imagespr, &width, &height, &xres, &yres, &type, &m, &modeflags);
   /* override the sprite's settings */
   if (dpix)
   {
@@ -1759,7 +1754,6 @@ main (int argc, const char *const argv[])
   }
   if (!pixel_size && (xres < 1 || xres != yres))
     fail (fail_BAD_IMAGE, "the image sprite must have square pixels");
-  lnbpp = bpp (m);
 
   if (m & 1 << 31)
   {
@@ -1774,7 +1768,7 @@ main (int argc, const char *const argv[])
     rgba = 1;
   }
 
-  if (lnbpp == 5 && rgba)
+  if (type == 6 && rgba)
   {
     alpha = 1;
     masklnbpp = 3;
@@ -1782,30 +1776,41 @@ main (int argc, const char *const argv[])
   }
   else
   {
-    if (lnbpp > 5)
-      switch (lnbpp)
-      {
-      case 6:
-      case 9:
-        alpha = 0;
-        break;
-      case 7:
-        fail (fail_UNSUPPORTED, "%s format is not supported",
-              "24bpp packed");
-        break;
-      case 8:
-        fail (fail_UNSUPPORTED, "%s format is not supported", "JPEG");
-        break;
-      case 15:
-        break;
-      case 16:
-      case 17:
-        fail (fail_UNSUPPORTED, "%s format is not supported", "YCbCr");
-        break;
-      default:
-        fail (fail_UNSUPPORTED, "sprite format %i is not recognised",
-              lnbpp + 1);
-      }
+    switch (type)
+    {
+    case 1: /* 1bpp palletised */
+    case 2: /* 2bpp palletised */
+    case 3: /* 4bpp palletised */
+    case 4: /* 8bpp palletised */
+    case 5: /* 16bpp 1:5:5:5 */
+    case 6: /* 32bpp 8:8:8:8 */
+      lnbpp = type - 1;
+      break;
+    case 7: /* 32bpp CMYK */
+      lnbpp = 5;
+      break;
+    case 10: /* 16bpp 5:6:5 */
+      lnbpp = 4;
+      alpha = 0;
+      break;
+    case 16: /* 16bpp 4:4:4:4 */
+      lnbpp = 4;
+      break;
+
+    case 8: /* 24bpp */
+      fail (fail_UNSUPPORTED, "%s format is not supported",
+            "24bpp packed");
+      break;
+    case 9: /* JPEG data */
+      fail (fail_UNSUPPORTED, "%s format is not supported", "JPEG");
+      break;
+    case 17: /* 4:2:0 YCbCr */
+    case 18: /* 4:2:2 YCbCr */
+      fail (fail_UNSUPPORTED, "%s format is not supported", "YCbCr");
+      break;
+    default:
+      fail (fail_UNSUPPORTED, "sprite format %i is not recognised", type);
+    }
 
     rgba = 0;
 
@@ -1824,11 +1829,11 @@ main (int argc, const char *const argv[])
     {
       int32_t xw, yh;
       unsigned int xr, yr;
-      unsigned int mf;
-      getsprinfo (sprites, maskspr, &xw, &yh, &xr, &yr, &m, &mf);
+      unsigned int mtype, mf;
+      getsprinfo (sprites, maskspr, &xw, &yh, &xr, &yr, &mtype, &m, &mf);
       checkspr (maskspr);
-      masklnbpp = bpp (m);
-      if (masklnbpp > 3 || !checkgrey (maskspr, 0))
+      masklnbpp = mtype - 1;
+      if (mtype < 1 || mtype > 4 || !checkgrey (maskspr, 0, masklnbpp))
         fail (fail_BAD_IMAGE, "mask sprite must have a greyscale palette");
       if (xw != width || yh != height)
         fail (fail_BAD_IMAGE, "sprite sizes do not match");
@@ -1875,21 +1880,21 @@ main (int argc, const char *const argv[])
     }
   }
 
-  switch (lnbpp)
+  switch (type)
   {
-  case 4:
+  case 5: /* 16bpp 1:5:5:5 */
     image = expand15to24 (image);
     lnbpp = 5;
     break;
-  case 6:
+  case 7: /* 32bpp CMYK */
     cmyk_to_rgb (image);
     lnbpp = 5;
     break;
-  case 9:
+  case 10: /* 16bpp 5:6:5 */
     image = expand16to24 (image);
     lnbpp = 5;
-    break;           
-  case 15:
+    break;
+  case 16: /* 16bpp 4:4:4:4 */
     image = expand12to24 (image);
     lnbpp = 5;
     break;
@@ -1953,7 +1958,7 @@ main (int argc, const char *const argv[])
   if (lnbpp < 4)
     used = list_used (image, mask, lnbpp);
 
-  if (lnbpp == 3 && checkgrey (imagespr, used))
+  if (lnbpp == 3 && checkgrey (imagespr, used, lnbpp))
   {
     grey = 1;
     palette = 0;
@@ -2130,7 +2135,7 @@ main (int argc, const char *const argv[])
     else
     {
       maskcolour = masked
-                   ? apply_mask_24 (image, mask, background ? &bkgd : 0, lnbpp)
+                   ? apply_mask_24 (image, mask, background ? &bkgd : 0, type)
                    : 1 << 24;
       if (maskcolour >= 1 << 24)
       {
