@@ -10,9 +10,9 @@ files to sprite or PNG, and the conversion of PNG files to sprites.
 
 See the end of this file for distribution conditions, credits and copyrights.
 
-These programs require RISC OS 3.50 or later (or at least support for deep
-sprites), enough memory to store the image being processed in 32-bit RGB
-colour.
+spr2png and png2spr require RISC OS 3.10 or later, with enough memory to store
+the image being processed in 32-bit RGB colour. draw2spr requires RISC OS 3.50
+or later.
 
 If you plan to use this program to convert Artworks files, you should ensure
 that you have the current release of AWViewer. This is available from

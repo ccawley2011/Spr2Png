@@ -197,15 +197,21 @@ modevar (unsigned int mode, int var)
 
 
 static void
+getsprsize (const spritearea_t * sprites, sprite_t * spr,
+            int32_t *w, int32_t *h, unsigned int lnbpp)
+{
+  *w = (spr->width * 32 + spr->rightbit - spr->leftbit + 1) >> lnbpp;
+  *h = spr->height + 1;
+}
+
+
+static void
 getsprinfo (const spritearea_t * sprites, sprite_t * spr,
-            int32_t *w, int32_t *h, unsigned int *xres, unsigned int *yres,
+            unsigned int *xres, unsigned int *yres,
             unsigned int *type, unsigned int *m, unsigned int *flags)
             /* writes to all regardless */
 {
-  const unsigned int mode = *m = spr->mode;
-  spr->mode &= ~(1 << 31);
-  _swi (OS_SpriteOp, _INR (0, 2) | _OUTR (3, 4), 0x228, sprites, spr, w, h);
-  spr->mode = mode;
+  *m = spr->mode;
   if (*m < 256) {
     *xres = 180 >> modevar (*m, 4);
     *yres = 180 >> modevar (*m, 5);
@@ -228,7 +234,7 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
 static void
 remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 {
-  if (~spr->mode & 1 << 31)
+  if (spr->leftbit > 0 && spr->mode < 256)
     _swi (OS_SpriteOp, _INR (0, 2), 0x236, sprites, spr);
 }
 
@@ -306,16 +312,17 @@ checkgrey (const sprite_t * spr, const char *used, int lnbpp)
 
 
 static void
-readpalette (const spritearea_t * area, sprite_t * spr, rgb_t * palette)
+readpalette (const spritearea_t * area, sprite_t * spr, rgb_t * palette, int palsize)
 {
   unsigned int *p, q;
-  unsigned long mode = spr->mode;
-  spr->mode &= ~(1 << 31);
-  _swi (ColourTrans_ReadPalette, _INR (0, 4), area, &spr->name, palette, 1024, 0);
-  spr->mode = mode;
+  unsigned int *s;
+
   p = (unsigned int *) palette;
-  for (q = 256; q; --q)
-    *p++ >>= 8;
+  s = (unsigned int *) (spr + 1);
+  for (q = palsize; q; --q) {
+    *p++ = *s >> 8;
+    s += 2;
+  }
 }
 
 
@@ -1745,7 +1752,7 @@ main (int argc, const char *const argv[])
   imagespr = (sprite_t *) (sprites->first + (char *) sprites);
   checkspr (imagespr);
   remove_wastage (sprites, imagespr);
-  getsprinfo (sprites, imagespr, &width, &height, &xres, &yres, &type, &m, &modeflags);
+  getsprinfo (sprites, imagespr, &xres, &yres, &type, &m, &modeflags);
   /* override the sprite's settings */
   if (dpix)
   {
@@ -1771,8 +1778,11 @@ main (int argc, const char *const argv[])
   if (type == 6 && rgba)
   {
     alpha = 1;
+    lnbpp = 5;
     masklnbpp = 3;
     maskspr = imagespr;
+
+    getsprsize (sprites, imagespr, &width, &height, lnbpp);
   }
   else
   {
@@ -1814,6 +1824,8 @@ main (int argc, const char *const argv[])
 
     rgba = 0;
 
+    getsprsize (sprites, imagespr, &width, &height, lnbpp);
+
     /* In case we're using the first sprite's own mask */
     if (m & 1 << 31)
       masklnbpp = 3;            /* 8-bit alpha (Select) */
@@ -1830,9 +1842,10 @@ main (int argc, const char *const argv[])
       int32_t xw, yh;
       unsigned int xr, yr;
       unsigned int mtype, mf;
-      getsprinfo (sprites, maskspr, &xw, &yh, &xr, &yr, &mtype, &m, &mf);
+      getsprinfo (sprites, maskspr, &xr, &yr, &mtype, &m, &mf);
       checkspr (maskspr);
       masklnbpp = mtype - 1;
+      getsprsize (sprites, maskspr, &xw, &yh, masklnbpp);
       if (mtype < 1 || mtype > 4 || !checkgrey (maskspr, 0, masklnbpp))
         fail (fail_BAD_IMAGE, "mask sprite must have a greyscale palette");
       if (xw != width || yh != height)
@@ -1858,7 +1871,7 @@ main (int argc, const char *const argv[])
   {
     debug_puts ("Palette initialisation...");
     if (imagespr->image > 44)
-      readpalette (sprites, imagespr, palette);
+      readpalette (sprites, imagespr, palette, palsize[lnbpp]);
     else
     {
       memset (palette, 0, 256 * sizeof (rgb_t));

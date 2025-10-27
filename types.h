@@ -22,7 +22,7 @@ typedef struct { // 32-bit ints required
   uint32_t size;
   char name[12];
   int width, height;
-  int dummy1, dummy2;
+  int leftbit, rightbit;
   int image, mask; // offsets
   unsigned int mode;
   // palette (if image!=0x2c)

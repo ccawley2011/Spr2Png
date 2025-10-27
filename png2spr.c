@@ -180,8 +180,8 @@ create_sprite (spritearea_t *const area, const char *name, uint32_t width, uint3
   rename_sprite (area, spr, name);
   spr->width     = (pitch >> 2) - 1;
   spr->height    = height - 1;
-  spr->dummy1    = 0;
-  spr->dummy2    = ((width * bit_depth) - 1) & 31;
+  spr->leftbit   = 0;
+  spr->rightbit  = ((width * bit_depth) - 1) & 31;
   spr->image     = 0x2c + (palsize * 8);
   spr->mask      = 0x2c + (palsize * 8);
   spr->mode      = mode;
