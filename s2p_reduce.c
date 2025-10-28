@@ -4,22 +4,15 @@
 #include "png.h"
 #include "s2p_lib.h"
 
-typedef union
-{
-  long i;
-  rgb_t p;
-}
-rgb_t_int;
-
 #define WITH_BGND
 #include "s2p_redinc.c"
 #define WITH_ALPHA
 #include "s2p_redinc.c"
 
 int
-reducetogrey (long *image, char *mask, int rgba)
+reducetogrey (uint32_t *image, char *mask, int rgba)
 {
-  long x, y;
+  int32_t x, y;
   rgb_t *im = (rgb_t *) image;
   char *imret;
 
@@ -114,9 +107,9 @@ reducetogrey (long *image, char *mask, int rgba)
 }
 
 
-png_color_8 significantbits (long *image)
+png_color_8 significantbits (uint32_t *image)
 {
-  long y;
+  int32_t y;
   rgb_t *im = (rgb_t *) image;
   png_color_8 ret = { 8, 8, 8, 8, 8 };
   rgb_t test = { 0x7F, 0x7F, 0x7F };

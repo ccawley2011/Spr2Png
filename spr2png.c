@@ -269,8 +269,8 @@ list_used (const char *im, const char *imask, int lnbpp)
           b += bpp;
         } while (++x < 0 && b < 8);
     } while (x < 0);
-    im = (const char *) (3L + (long) im & -4L);
-    imask = (const char *) (3L + (long) imask & -4L);
+    im = (const char *) (3 + (uintptr_t) im & -4);
+    imask = (const char *) (3 + (uintptr_t) imask & -4);
   } while (--y);
 #ifdef DEBUG
   _swi (OS_File, _INR (0, 5), 10, "<Wimp$ScrapDir>.used", 0xFFD, 0, used, used + 256);
@@ -282,14 +282,14 @@ list_used (const char *im, const char *imask, int lnbpp)
 static int
 checkgrey (const sprite_t * spr, const char *used, int lnbpp)
 {
-  unsigned long x, *p;
+  uint32_t x, *p;
   const unsigned int m = lnbpp;
-  static const unsigned long count[] = { 2, 4, 16, 256 };
-  static const unsigned long mul[] = { 0xFFFFFF, 0x555555, 0x111111, 0x10101 };
+  static const uint32_t count[] = { 2, 4, 16, 256 };
+  static const uint32_t mul[] = { 0xFFFFFF, 0x555555, 0x111111, 0x10101 };
   debug_puts ("Checking for greyscale palette...");
   if (m > 3 || spr->image != 44 + count[m] * 8)
     return 0;
-  p = (unsigned long *) (spr + 1);
+  p = (uint32_t *) (spr + 1);
   if (used)
     for (x = 0; x < count[m]; x++)
     {
@@ -351,24 +351,24 @@ cmyk_to_rgb (const void *image)
 static rgb_t *
 expand12to24 (const void *image)
 {
-  long y = height;
+  int32_t y = height;
   const short *im12 = image;
-  long *im24;
+  uint32_t *im24;
   rgb_t *imret;
 
   if (verbose > 1)
     printf ("Expanding image from %ibit to %ibit\n", 12, 24);
   imret = spr_malloc (width * height * sizeof (rgb_t), "24bpp image");
-  im24 = (long *) imret;        /* sizeof(long)==sizeof(rgb_t) */
+  im24 = (uint32_t *) imret;        /* sizeof(uint32_t)==sizeof(rgb_t) */
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
-      *im24++ = ((*im12 & 15L) * 17L) |
-                (((long) (*im12 >> 4) & 15L) * 17L) << 8 |
-                (((long) (*im12 >> 8) & 15L) * 17L) << 16 |
-                (((long) (*im12 >> 12) & 15L) * 17L) << 24;
+      *im24++ = ((*im12 & 15) * 17) |
+                (((uint32_t) (*im12 >> 4) & 15) * 17) << 8 |
+                (((uint32_t) (*im12 >> 8) & 15) * 17) << 16 |
+                (((uint32_t) (*im12 >> 12) & 15) * 17) << 24;
       im12++;
     } while (--x);
     if (width & 1)
@@ -381,23 +381,23 @@ expand12to24 (const void *image)
 static rgb_t *
 expand15to24 (const void *image)
 {
-  long y = height;
+  int32_t y = height;
   const short *im15 = image;
-  long *im24;
+  uint32_t *im24;
   rgb_t *imret;
 
   if (verbose > 1)
     printf ("Expanding image from %ibit to %ibit\n", 15, 24);
   imret = spr_malloc (width * height * sizeof (rgb_t), "24bpp image");
-  im24 = (long *) imret;        /* sizeof(long)==sizeof(rgb_t) */
+  im24 = (uint32_t *) imret;        /* sizeof(uint32_t)==sizeof(rgb_t) */
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
-      *im24++ = ((*im15 & 31L) * 33L) >> 2 |
-                ((((long) (*im15 >> 5) & 31L) * 33L) >> 2) << 8 |
-                ((((long) (*im15 >> 10) & 31L) * 33L) >> 2) << 16 |
+      *im24++ = ((*im15 & 31) * 33) >> 2 |
+                ((((uint32_t) (*im15 >> 5) & 31) * 33) >> 2) << 8 |
+                ((((uint32_t) (*im15 >> 10) & 31) * 33) >> 2) << 16 |
                 ((*im15 & (1 << 15)) ? 0xFF000000 : 0);
       im15++;
     } while (--x);
@@ -411,23 +411,23 @@ expand15to24 (const void *image)
 static rgb_t *
 expand16to24 (const void *image)
 {
-  long y = height;
+  int32_t y = height;
   const short *im16 = image;
-  long *im24;
+  uint32_t *im24;
   rgb_t *imret;
 
   if (verbose > 1)
     printf ("Expanding image from %ibit to %ibit\n", 16, 24);
   imret = spr_malloc (width * height * sizeof (rgb_t), "24bpp image");
-  im24 = (long *) imret;        /* sizeof(long)==sizeof(rgb_t) */
+  im24 = (uint32_t *) imret;        /* sizeof(uint32_t)==sizeof(rgb_t) */
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
-      *im24++ = ((*im16 & 31L) * 33L) >> 2 |
-                ((((long) (*im16 >> 5) & 63L) * 16L) >> 2) << 8 |
-                ((((long) (*im16 >> 11) & 31L) * 33L) >> 2) << 16;
+      *im24++ = ((*im16 & 31) * 33) >> 2 |
+                ((((uint32_t) (*im16 >> 5) & 63) * 16) >> 2) << 8 |
+                ((((uint32_t) (*im16 >> 11) & 31) * 33) >> 2) << 16;
       im16++;
     } while (--x);
     if (width & 1)
@@ -440,26 +440,26 @@ expand16to24 (const void *image)
 static grey_t *
 expand8to8alpha (const char *image, const char *mask)   /* grey */
 {
-  long y = height;
+  int32_t y = height;
   const char *im8 = image;
   const char *ma8 = mask;
-  long *im16;                   /* read 4, write 2+2 pixels */
+  uint32_t *im16;                   /* read 4, write 2+2 pixels */
   grey_t *imret;
 
   if (verbose > 1)
     puts ("Expanding image from 8bit to 8bit plus alpha");
-  imret = spr_malloc (height * (width + 3 & ~3) * 2L, "8bpp+alpha image");
-  im16 = (long *) imret;
+  imret = spr_malloc (height * (width + 3 & ~3) * 2, "8bpp+alpha image");
+  im16 = (uint32_t *) imret;
   if (ma8)
     do
     {
-      long x = width + 1 & -2;
+      int32_t x = width + 1 & -2;
       do
       {
-        long w = *im8++ | *ma8++ << 8;
-        *im16++ = w | (long) (*im8++) << 16 | (long) (*ma8++) << 24;
+        uint32_t w = *im8++ | *ma8++ << 8;
+        *im16++ = w | (uint32_t) (*im8++) << 16 | (uint32_t) (*ma8++) << 24;
       } while (x -= 2);
-      if ((long) im8 & 2)
+      if ((uintptr_t) im8 & 2)
       {
         im8 += 2;
         ma8 += 2;
@@ -468,13 +468,13 @@ expand8to8alpha (const char *image, const char *mask)   /* grey */
   else
     do
     {
-      long x = width + 1 & -2;
+      int32_t x = width + 1 & -2;
       do
       {
-        long w = *im8++;
-        *im16++ = w | (long) (*im8++) << 16;
+        uint32_t w = *im8++;
+        *im16++ = w | (uint32_t) (*im8++) << 16;
       } while (x -= 2);
-      if ((long) im8 & 2)
+      if ((uintptr_t) im8 & 2)
         im8 += 2;
     } while (--y);
   return imret;
@@ -484,7 +484,7 @@ expand8to8alpha (const char *image, const char *mask)   /* grey */
 static char *
 expandto8 (const void *image, int lnbpp)
 {
-  long y = height;
+  int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
   const char *imx = image;
@@ -495,7 +495,7 @@ expandto8 (const void *image, int lnbpp)
   im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp image");
   do
   {
-    long x = -width;
+    int32_t x = -width;
     int b;
     do
     {
@@ -507,8 +507,8 @@ expandto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3L + (long) im8 & -4L);
-    imx = (char *) (3L + (long) imx & -4L);
+    im8 = (char *) (3 + (uintptr_t) im8 & -4);
+    imx = (char *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
@@ -518,7 +518,7 @@ static char *
 expandtogrey (char *image, const char *used, int lnbpp, const rgb_t * pal)
 {
   int i;
-  long y;
+  int32_t y;
   const int mask = (1 << (1 << lnbpp)) - 1;
 
   debug_puts ("Checking the palette for other than standard 8bpp grey");
@@ -543,7 +543,7 @@ expandtogrey (char *image, const char *used, int lnbpp, const rgb_t * pal)
 static char *
 expandmaskto8 (const void *image, int lnbpp)
 {
-  long y = height;
+  int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
   const char *imx = image;
@@ -554,7 +554,7 @@ expandmaskto8 (const void *image, int lnbpp)
   im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp mask");
   do
   {
-    long x = -width;
+    int32_t x = -width;
     int b;
     do
     {
@@ -566,8 +566,8 @@ expandmaskto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3L + (long) im8 & -4L);
-    imx = (char *) (3L + (long) imx & -4L);
+    im8 = (char *) (3 + (uintptr_t) im8 & -4);
+    imx = (char *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
@@ -576,7 +576,7 @@ expandmaskto8 (const void *image, int lnbpp)
 static char *
 expandalphato8 (const void *image, int lnbpp)
 {
-  long y = height;
+  int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
   const char *imx = image;
@@ -588,7 +588,7 @@ expandalphato8 (const void *image, int lnbpp)
   im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp alpha");
   do
   {
-    long x = -width;
+    int32_t x = -width;
     int b;
     do
     {
@@ -600,8 +600,8 @@ expandalphato8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3L + (long) im8 & -4L);
-    imx = (char *) (3L + (long) imx & -4L);
+    im8 = (char *) (3 + (uintptr_t) im8 & -4);
+    imx = (char *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
@@ -610,7 +610,7 @@ expandalphato8 (const void *image, int lnbpp)
 static void *
 expandto24 (const void *image, int lnbpp, const rgb_t * palette)
 {
-  long y = height;
+  int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
   const char *imx = image;
@@ -626,7 +626,7 @@ expandto24 (const void *image, int lnbpp, const rgb_t * palette)
   do
   {
     int b = 0;
-    long x = width;
+    int32_t x = width;
     do
     {
       im24->r = palette[*imx >> b & mask].r;
@@ -640,7 +640,7 @@ expandto24 (const void *image, int lnbpp, const rgb_t * palette)
         imx++;
       }
     } while (--x);
-    imx = (char *) (3L + (b > 0) + (long) imx & -4L);
+    imx = (char *) (3 + (b > 0) + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
@@ -689,13 +689,13 @@ reduce8alphato8 (char *image, char *image8, char **mask)
 static mask_t
 rgba_stdmask (const rgb_t * image)
 {
-  long y = height;
+  int32_t y = height;
   const rgb_t *i = image;
   int all0 = 1, all255 = 1;
 
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
       char c = i[--x].alpha;
@@ -719,14 +719,14 @@ rgba_stdmask (const rgb_t * image)
 static mask_t
 stdmask (const char *image, int greya)
 {
-  long y = height;
+  int32_t y = height;
   int step = greya ? 2 : 1;
   const char *i = image;
   int all0 = 1, all255 = 1;
 
   do
   {
-    long x = width * step - 1;
+    int32_t x = width * step - 1;
     do
     {
       char c = i[x];
@@ -750,13 +750,13 @@ stdmask (const char *image, int greya)
 static void
 find_used (const char *image, const char *mask)
 {
-  long y = height;
+  int32_t y = height;
   const char *i = image, *m = mask;
 
   memset (wksp.used, 0, sizeof (wksp.used));
   do
   {                             /* which logical colours? */
-    long x = width;
+    int32_t x = width;
     do
     {
       if (m[--x])
@@ -765,17 +765,17 @@ find_used (const char *image, const char *mask)
     i += width + 3 & -4;
     m += width + 3 & -4;
   }
-  while (--y != 0L);
+  while (--y != 0);
 }
 
 
-static int
+static uint32_t
 apply_mask (char *image, const char *mask)
 {
   char *i = image;
   const char *m = mask;
   int colour = 0, applied = 0;
-  long y = height;
+  int32_t y = height;
 
   if (verbose > 1)
     puts ("Applying mask");
@@ -786,7 +786,7 @@ apply_mask (char *image, const char *mask)
     return 260;                 /* >256 is sufficient */
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
       if (m[--x] == 0)
@@ -802,25 +802,25 @@ apply_mask (char *image, const char *mask)
 }
 
 
-static long
-find_used_24 (const long *image, const char *mask, long b)
+static uint32_t
+find_used_24 (const uint32_t *image, const char *mask, unsigned int b)
 {
-  long y = height;
-  const long *i = image;
+  int32_t y = height;
+  const uint32_t *i = image;
   const char *m = mask;
-  unsigned long j;
+  uint32_t j;
 
   memset (wksp.unused, 0, sizeof (wksp.unused));
 
   do
   {                             /* which logical colours? */
-    long x = width;
+    int32_t x = width;
     do
     {
       if (m[--x] && (i[x] & 0xFF0000) == b << 16)
       {
-        j = (long) i[x] & 0xFFFF;
-        wksp.unused[j >> 5] |= 1L << (j & 31);
+        j = i[x] & 0xFFFF;
+        wksp.unused[j >> 5] |= UINT32_C(1) << (j & 31);
       }
     } while (x);
     i += width;
@@ -829,29 +829,29 @@ find_used_24 (const long *image, const char *mask, long b)
 
   for (j = 0; j < 65536 / 32; ++j)
   {
-    long i = ~wksp.unused[j];
-    long k;
+    uint32_t i = ~wksp.unused[j];
+    int k;
     for (k = 0; k < 32; ++k)
-      if (i & 1L << k)
+      if (i & UINT32_C(1) << k)
         return b << 16 | j << 5 | k;
   }
-  return -1;
+  return UINT32_MAX;
 }
 
 
-static long
-apply_mask_24 (long *image, const char *mask,
+static uint32_t
+apply_mask_24 (uint32_t *image, const char *mask,
                const png_color_16 * bkgd,
                unsigned int type)
 {
-  long *i;                      /* rgb_t */
+  uint32_t *i;                      /* rgb_t */
   const char *m;
   int applied = 0, b;
-  long y;
-  long colour = -1;
-  long bgnd = bkgd
-    ? (long) bkgd->red | (long) bkgd->green << 8 | (long) bkgd->blue << 16
-    : -1;
+  int32_t y;
+  uint32_t colour = UINT32_MAX;
+  const uint32_t bgnd = bkgd
+    ? (uint32_t) bkgd->red | (uint32_t) bkgd->green << 8 | (uint32_t) bkgd->blue << 16
+    : UINT32_MAX;
 
   if (verbose > 1)
     puts ("Applying mask");
@@ -863,7 +863,7 @@ apply_mask_24 (long *image, const char *mask,
     m = mask;
     do
     {
-      long x = width;
+      int32_t x = width;
       do
       {
         if (m[--x] && ((i[x] ^ bgnd) & 0xFFFFFF) == 0)
@@ -876,7 +876,7 @@ apply_mask_24 (long *image, const char *mask,
     bgnd_used:/**/;
   }
 
-  if (colour == -1)
+  if (colour == UINT32_MAX)
   {
     if (bkgd && type == 5)
     {
@@ -898,9 +898,9 @@ apply_mask_24 (long *image, const char *mask,
     }
     else
     {
-      for (b = 0; b < 256 && colour == -1; ++b)
+      for (b = 0; b < 256 && colour == UINT32_MAX; ++b)
         colour = find_used_24 (image, mask, b);
-      if (colour == -1)
+      if (colour == UINT32_MAX)
         return 1 << 25;
     }
   }
@@ -910,7 +910,7 @@ apply_mask_24 (long *image, const char *mask,
   y = height;
   do
   {
-    long x = width;
+    int32_t x = width;
     do
     {
       if (m[--x] == 0)
@@ -929,27 +929,27 @@ apply_mask_24 (long *image, const char *mask,
 static void
 find_used_p (const char *image)
 {
-  long y = height;
+  int32_t y = height;
   const char *i = image;
 
   memset (wksp.used, 0, sizeof (wksp.used));
   do
   {                             /* which logical colours? */
-    long x = width;
+    int32_t x = width;
     do
     {
       wksp.used[i[--x]] = 1;
     } while (x);
     i += width + 3 & -4;
-  } while (--y != 0L);
+  } while (--y != 0);
 }
 
 
 static int
-pack_palette (char *image, rgb_t * palette, long mask, char *masked_p)
+pack_palette (char *image, rgb_t * palette, uint32_t mask, char *masked_p)
 {                               /* palette has 256 entries; returns number used */
   char *i;
-  long y = height;
+  int32_t y = height;
   int colours, masked = mask < 256;
 
   if (verbose > 1)
@@ -971,7 +971,7 @@ pack_palette (char *image, rgb_t * palette, long mask, char *masked_p)
       if (colours > masked)
       {
         int x = masked;
-        long py = ((long *) (palette))[y];
+        uint32_t py = ((uint32_t *) (palette))[y];
         while (x < colours && wksp.p.p[x] != py)
           x++;
         if (x < colours)
@@ -981,7 +981,7 @@ pack_palette (char *image, rgb_t * palette, long mask, char *masked_p)
         }
       }
       wksp.used[y] = colours;
-      wksp.p.p[colours] = ((long *) (palette))[y];
+      wksp.p.p[colours] = ((uint32_t *) (palette))[y];
       colours++;
     }
   } while (++y < 256);
@@ -989,7 +989,7 @@ pack_palette (char *image, rgb_t * palette, long mask, char *masked_p)
   i = image;
   do
   {                             /* modify image to reflect above changes */
-    long x = width;
+    int32_t x = width;
     do
     {
       --x;
@@ -1007,14 +1007,14 @@ pack_palette (char *image, rgb_t * palette, long mask, char *masked_p)
 static void
 make_rgba (void *image, char *mask, int lnbpp)
 {
-  long y = height;
+  int32_t y = height;
   char *m = mask;
   if (lnbpp == 3)
   {
     char *i = image;
     do
     {
-      long x = width;
+      int32_t x = width;
       do
       {
         --x;
@@ -1029,7 +1029,7 @@ make_rgba (void *image, char *mask, int lnbpp)
     rgb_t *i = image;
     do
     {
-      long x = width;
+      int32_t x = width;
       do
       {
         --x;
@@ -1141,17 +1141,17 @@ main (int argc, const char *const argv[])
   FILE *fp = 0, *ifp = 0;
   png_infop info_ptr;
   size_t size;
-  long x, y;
+  int32_t x, y;
   unsigned int xres, yres;
   int lnbpp, masklnbpp;
-  long maskcolour;              /* png_color & rgb_t fit in a word */
+  uint32_t maskcolour;              /* png_color & rgb_t fit in a word */
   unsigned int type, m, modeflags;
   sprite_t *imagespr, *maskspr;
   void *image, *image8 = 0;
   char *mask = 0, *palmask = 0;
   rgb_t *palette = 0;
   png_color_16 bkgd = { 0, 0, 0, 0, 0 };
-  long bgnd = 0;
+  uint32_t bgnd = 0;
   int pal_entries, mask_entries = 0;
   int num_passes;
   int dpix = 0, dpiy = 0;
@@ -1632,7 +1632,7 @@ main (int argc, const char *const argv[])
                out, from, fromtemp);
       args = cmd + strlen (cmd);
       if (background)
-        sprintf (args, " -b%06lX", bgnd);
+        sprintf (args, " -b%06"PRIX32, bgnd);
       if (trim)
         strcat (args, " -t");
       switch (simple_mask)
@@ -1762,7 +1762,7 @@ main (int argc, const char *const argv[])
   if (!pixel_size && (xres < 1 || xres != yres))
     fail (fail_BAD_IMAGE, "the image sprite must have square pixels");
 
-  if (m & 1 << 31)
+  if (m & 1u << 31)
   {
     /* Alpha-masked sprite (RO Select) */
     rgba = 0;
@@ -1827,7 +1827,7 @@ main (int argc, const char *const argv[])
     getsprsize (sprites, imagespr, &width, &height, lnbpp);
 
     /* In case we're using the first sprite's own mask */
-    if (m & 1 << 31)
+    if (m & 1u << 31)
       masklnbpp = 3;            /* 8-bit alpha (Select) */
     else
       masklnbpp = m > 255 ? 0 : lnbpp;  /* 1-bit mask if new fmt */
@@ -1854,7 +1854,7 @@ main (int argc, const char *const argv[])
         fail (fail_BAD_IMAGE, "sprite resolutions do not match");
       remove_wastage (sprites, imagespr);
       alpha = 1;
-      m &= ~(1 << 31);  /* clear the Select alpha bit */
+      m &= ~(1u << 31);  /* clear the Select alpha bit */
     }
 
     if (lnbpp < 4)
@@ -1883,7 +1883,7 @@ main (int argc, const char *const argv[])
   if (maskspr)
   {
     debug_puts ("Mask initialisation and expansion...");
-    mask = ((alpha && !(m & 1 << 31)) ? maskspr->image : maskspr->mask) +
+    mask = ((alpha && !(m & 1u << 31)) ? maskspr->image : maskspr->mask) +
            (char *) maskspr;
     if (masklnbpp < 3)
     {
@@ -1913,7 +1913,7 @@ main (int argc, const char *const argv[])
     break;
   }
 
-  if (alpha && !(m & 1 << 31) && inverse)
+  if (alpha && !(m & 1u << 31) && inverse)
   {
     debug_puts ("Inverting the mask...");
     if (rgba)
@@ -1924,8 +1924,8 @@ main (int argc, const char *const argv[])
     }
     else
     {
-      long *i = (long *) mask;
-      for (y = (width + 3 & -4) * height / 4; y; i[--y] ^= -1)
+      uint32_t *i = (uint32_t *) mask;
+      for (y = (width + 3 & -4) * height / 4; y; i[--y] ^= UINT32_MAX)
         ;
     }
   }
@@ -2110,7 +2110,7 @@ main (int argc, const char *const argv[])
     if (lnbpp < 4)
     {
       maskcolour = masked ? apply_mask (image, mask) : 256;
-      debug_printf ("Initial mask colour = %*lX\n", lnbpp < 4 ? 2 : 6, maskcolour);
+      debug_printf ("Initial mask colour = %*"PRIX32"\n", lnbpp < 4 ? 2 : 6, maskcolour);
       if (maskcolour > 256)
       {
         if (grey)
@@ -2158,12 +2158,12 @@ main (int argc, const char *const argv[])
       }
     }
     if (masked)
-      debug_printf ("Using mask colour %*lX\n", lnbpp < 4 ? 2 : 6, maskcolour);
+      debug_printf ("Using mask colour %*"PRIX32"\n", lnbpp < 4 ? 2 : 6, maskcolour);
   }
 
   debug_printf ("reduce = %i, lnbpp = %i, alpha = %i%s, masked = %i\n"
                 "imagespr = %p, image = %p; maskspr = %p, mask = %p\n",
-                reduce, lnbpp, alpha, (m & 1 << 31) ? " (Select)" : "", masked,
+                reduce, lnbpp, alpha, (m & 1u << 31) ? " (Select)" : "", masked,
                 imagespr, image, maskspr, mask);
 
   if (reduce && lnbpp > 3)
@@ -2179,9 +2179,9 @@ main (int argc, const char *const argv[])
     }
     else if (masked)
     {
-      long *im = image;
+      uint32_t *im = image;
       char *m = mask;
-      long w;
+      uint32_t w;
       debug_puts ("- applying mask colour -> RGBA");
       y = height;
       do
@@ -2223,7 +2223,7 @@ main (int argc, const char *const argv[])
               : reduceto8 (image, &maskcolour, &palette, &pal_entries,
                            (background && (masked || alpha)) ? &bkgd : 0);
     if (masked && !rgba)
-      debug_printf ("Confirming mask colour %*lX\n", lnbpp < 4 ? 2 : 6, maskcolour);
+      debug_printf ("Confirming mask colour %*"PRIX32"\n", lnbpp < 4 ? 2 : 6, maskcolour);
     if (im)
     {
       if (lnbpp == 4)
@@ -2420,10 +2420,10 @@ main (int argc, const char *const argv[])
       else
       {
         /* maskcolour *should* be 0, for paletted images */
-        png_byte *mask = spr_malloc (maskcolour + 1L, "8bpp mask");
+        png_byte *mask = spr_malloc (maskcolour + 1, "8bpp mask");
         memset (mask, (int) maskcolour + 1, (size_t) maskcolour);
         mask[maskcolour] = 0;
-        debug_printf ("Mask colour number = %li\n", maskcolour);
+        debug_printf ("Mask colour number = %"PRIi32"\n", maskcolour);
         png_set_tRNS (png_ptr, info_ptr, mask, (int) maskcolour + 1, 0);
       }
     case 4:
@@ -2440,7 +2440,7 @@ main (int argc, const char *const argv[])
           maskrgb.green = (png_uint_16) (maskcolour >> 8 & 0xFF);
           maskrgb.blue = (png_uint_16) (maskcolour >> 16 & 0xFF);
         }
-        debug_printf ("Mask colour number = &%6lX\n", maskrgb);
+        debug_printf ("Mask colour number = &%6"PRIX32"\n", maskrgb);
         png_set_tRNS (png_ptr, info_ptr, 0, 0, &maskrgb);
       }
     }
@@ -2454,19 +2454,19 @@ main (int argc, const char *const argv[])
   if (lnbpp > 3 && !alpha)
   {
     /*png_set_filler(png_ptr,0,PNG_FILLER_AFTER); */
-    long y = height;
+    int32_t y = height;
     void *i = image;
     do
     {                   /* libpng handles RGBX, but more generically... */
       char *p = i, *q = i;
-      long j;
+      int32_t j;
       for (j = width - 1; j; j--)
       {
         (p += 3)[0] = (q += 4)[0];
         p[1] = q[1];
         p[2] = q[2];
       }
-      i = (void *) ((long *) i + width);
+      i = (void *) ((uint32_t *) i + width);
     } while (--y);
   }
 
@@ -2521,7 +2521,7 @@ main (int argc, const char *const argv[])
   m = 0;                        /* hourglass */
   do
   {
-    long y = height;
+    int32_t y = height;
     void *i = image;
     do
     {
@@ -2532,7 +2532,7 @@ main (int argc, const char *const argv[])
       else if (lnbpp < 4)
         i = (void *) ((char *) i + (width + 3 & ~3));
       else
-        i = (void *) ((long *) i + width);
+        i = (void *) ((uint32_t *) i + width);
     } while (--y);
   } while (--num_passes);
   _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);    /* LED 2 off */

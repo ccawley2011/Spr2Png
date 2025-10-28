@@ -30,14 +30,14 @@
   };
   static void (*const print_fn_name)(void) = (void (*)()) print_fn_name_code;
 #endif
-  long x, y, trimleft;
+  int32_t x, y, trimleft;
   PIXEL *ptr, *img = image;
-  long rwidth = width + ROUNDING & ~ROUNDING;
+  int32_t rwidth = width + ROUNDING & ~ROUNDING;
 #ifndef ALPHA
   char *mptr, *mask = alpha;
-  long mwidth = width + 3 & ~3;
+  int32_t mwidth = width + 3 & ~3;
 # if SIZE == 4
-  union { long l; rgb_t p; } Trans;
+  union { uint32_t l; rgb_t p; } Trans;
   PIXEL *tmp;
 
   Trans.l = trans; /* happens to be in right order */
@@ -95,7 +95,7 @@ do_lower_trim:
   if (y)
     height -= y;
   if (verbose > 2)
-    printf ("%li row(s) removed from bottom\n", y);
+    printf ("%"PRIi32" row(s) removed from bottom\n", y);
 
   /* Trim blank rows from top */
   y = 0;
@@ -136,7 +136,7 @@ do_upper_trim:
 #endif
 
   if (verbose > 2)
-    printf ("%li row(s) removed from top\n", y);
+    printf ("%"PRIi32" row(s) removed from top\n", y);
 
   /* Trim blank columns from left */
   trimleft = width;
@@ -169,7 +169,7 @@ do_upper_trim:
 #endif
   } while (--y);
   if (verbose > 2)
-    printf ("%li column(s) removed from left\n", trimleft);
+    printf ("%"PRIi32" column(s) removed from left\n", trimleft);
 
   /* Trim blank columns from right */
   x = width;
@@ -179,7 +179,7 @@ do_upper_trim:
   mptr = mask;
 #endif
   do {
-    long xx = width;
+    int32_t xx = width;
 #ifdef ALPHA
     while (--xx >= 0 && INDEX (ptr, xx).alpha == 0)
       ;
@@ -203,14 +203,14 @@ do_upper_trim:
 #endif
   } while (--y);
   if (verbose > 2)
-    printf ("%li column(s) removed from right\n", x);
+    printf ("%"PRIi32" column(s) removed from right\n", x);
 
   x += trimleft;
   if (x) {
-    long nwidth = (width -= x) + ROUNDING & ~ROUNDING;
+    int32_t nwidth = (width -= x) + ROUNDING & ~ROUNDING;
     PIXEL *dest = image; /* do the deferred upper trim */
 #ifndef ALPHA
-    long nmwidth;
+    int32_t nmwidth;
     char *mdest;
 #endif
     ptr = ADD (img, trimleft);

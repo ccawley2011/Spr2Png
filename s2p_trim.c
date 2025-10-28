@@ -38,5 +38,5 @@ int trim_mask_24a (rgb_t *const image)
 
 #undef ALPHA
 
-int trim_mask_24 (rgb_t *const image, char *const alpha, long trans)
+int trim_mask_24 (rgb_t *const image, char *const alpha, uint32_t trans)
 #include "c.s2p_triinc"

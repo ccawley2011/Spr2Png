@@ -54,7 +54,7 @@ typedef union {
   char _msg[2048];
   char used[256];
   uint32_t unused[65536/32];
-  struct { char u[256]; int32_t p[256]; } p;
+  struct { char u[256]; uint32_t p[256]; } p;
 } wksp_t;
 
 extern wksp_t wksp;

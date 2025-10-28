@@ -9,7 +9,7 @@
 void frequency_sort(char *const image, rgb_t *const palette,
   char *const alpha, int simplemask, png_color_16 *const bkgd)
 {
-  long x, y;
+  int32_t x, y;
   int count[256] = {0};
   char sort[256];
   char map[256];

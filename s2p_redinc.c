@@ -13,36 +13,36 @@
 #ifdef WITH_ALPHA
 static int getcolours_alpha(
 # ifndef WITH_BGND
-  const void *const image, rgb_t_int *const palette,
+  const void *const image, uint32_t *const palette,
   char *const mask)
 # else /* WITH_BGND */
   const void *const image, int *const colourp,
-  rgb_t_int *const palette, char *const mask, const long bgnd)
+  uint32_t *const palette, char *const mask, const uint32_t bgnd)
 # endif /* WITH_BGND */
 #else
 static int getcolours(
 # ifndef WITH_BGND
-  const void *const image, rgb_t_int *const palette)
+  const void *const image, uint32_t *const palette)
 # else /* WITH_BGND */
   const void *const image, int *const colourp,
-  rgb_t_int *const palette, const long bgnd)
+  uint32_t *const palette, const uint32_t bgnd)
 # endif /* WITH_BGND */
 #endif
 {
-  long y;
-  const unsigned long *im;
+  int32_t y;
+  const uint32_t *im;
   int colour=0;
 #ifdef WITH_BGND
-  int bgndindex = /*(bgnd == -1) ? 0 :*/ -1;
+  int bgndindex = /*(bgnd == UINT32_MAX) ? 0 :*/ -1;
 #endif /* WITH_BGND */
 
   debug_puts("finding colours...");
   y=height;
   im=image;
   do { /* find ranges for allocation */
-    long i=width;
+    int32_t i=width;
     do {
-      long j = im[--i] & COLOURMASK;
+      uint32_t j = im[--i] & COLOURMASK;
 #ifdef WITH_ALPHA
       /* throw the pixel away if it's completely masked out */
       if ((j & 0xFF000000) == 0) j = 0;
@@ -52,9 +52,9 @@ static int getcolours(
         int p=colour, m=0, b=0;
         while (p) {
           m = b + p/2;
-          if (j == palette[m].i)
+          if (j == palette[m])
             goto result;
-          if (j > palette[m].i) {
+          if (j > palette[m]) {
             b = m + 1;
             p -= (p>>1) + 1;
           } else {
@@ -62,19 +62,19 @@ static int getcolours(
           }
         }
         /* make sure we're pointing at a larger value */
-        if (j > palette[m].i)
+        if (j > palette[m])
           m++;
         if (colour == 256)
           goto failed;
         /* shuffle the 'higher' colour values up */
         p = colour;
         while (p > m) {
-          palette[p].i = palette[p-1].i;
+          palette[p] = palette[p-1];
           p--;
         }
-        palette[m].i = j;
+        palette[m] = j;
       } else {
-        palette[0].i = j;
+        palette[0] = j;
       }
       colour++;
 result:;
@@ -91,11 +91,11 @@ result:;
   for (y = 0; y < colour; ++y)
 # ifdef WITH_ALPHA
     if (bgndindex == -1
-        && ((palette[y].i & 0xFFFFFF) == bgnd || palette[y].i == 0)) {
+        && ((palette[y] & 0xFFFFFF) == bgnd || palette[y] == 0)) {
       bgndindex = y; break;
     }
 # else
-    if (bgndindex == -1 && palette[y].i == bgnd) {
+    if (bgndindex == -1 && palette[y] == bgnd) {
       bgndindex = y; break;
     }
 # endif
@@ -104,7 +104,7 @@ result:;
 #ifdef WITH_ALPHA
   debug_puts("filling in mask data...");
   for (y=0; y<colour; ++y)
-    mask[y] = (char)(palette[y].i >> 24);
+    mask[y] = (char)(palette[y] >> 24);
 #endif
 #ifndef WITH_BGND
   return colour;
@@ -125,36 +125,32 @@ failed:
 
 #ifdef WITH_ALPHA
 #ifndef WITH_BGND
-char *reduceto8_alpha(long *image, char **imask, long **ipalette,
+char *reduceto8_alpha(uint32_t *image, char **imask, rgb_t **ipalette,
   int *entries)
 #else /* WITH_BGND */
-char *reduceto8_alpha(long *image, char **imask,
+char *reduceto8_alpha(uint32_t *image, char **imask,
   rgb_t **ipalette, int *entries, png_color_16 *bkgd)
 #endif /* WITH_BGND */
 #else
 #ifndef WITH_BGND
-char *reduceto8(long *image, long **ipalette, int *entries)
+char *reduceto8(uint32_t *image, rgb_t **ipalette, int *entries)
 #else /* WITH_BGND */
-char *reduceto8(long *image, long *mask,
+char *reduceto8(uint32_t *image, uint32_t *mask,
   rgb_t **ipalette, int *entries, png_color_16 *bkgd)
 #endif /* WITH_BGND */
 #endif
 {
   int colour=0, LEDs=0;
-  long x, y;
-  long *im;
+  int32_t x, y;
+  uint32_t *im;
 #ifdef WITH_BGND
-  long bgnd=bkgd
-    ? (long)bkgd->red | (long)bkgd->green<<8 | (long)bkgd->blue<<16
-    : -1;
+  const uint32_t bgnd=bkgd
+    ? (uint32_t)bkgd->red | (uint32_t)bkgd->green<<8 | (uint32_t)bkgd->blue<<16
+    : UINT32_MAX;
   int bgndindex;
 #endif /* WITH_BGND */
   char *im2;
-#ifndef WITH_BGND
-  long *palette = heap_malloc(256*sizeof(long));
-#else /* WITH_BGND */
-  rgb_t_int *palette = heap_malloc(256*sizeof(rgb_t_int));
-#endif /* WITH_BGND */
+  uint32_t *palette = heap_malloc(256*sizeof(uint32_t));
 #ifdef WITH_ALPHA
   char *mask = heap_malloc(256);
   if (!palette || !mask)
@@ -162,7 +158,7 @@ char *reduceto8(long *image, long *mask,
       !palette ? "palette" : "mask");
 #else
 # ifdef WITH_BGND
-  long maskcolour = *mask;
+  uint32_t maskcolour = *mask;
 # endif /* WITH_BGND */
   if (!palette)
     fail(fail_NO_MEM,"out of memory (reduction to 8bpp) (%s)", "palette");
@@ -173,7 +169,7 @@ char *reduceto8(long *image, long *mask,
 
   debug_puts("Finding which colours are used...");
   LEDs = _swi (Hourglass_LEDs, _INR (0, 1),  1, 0); /* hourglass LED 1 on */
-  memset(palette,0,256*sizeof(rgb_t_int));
+  memset(palette,0,256*sizeof(uint32_t));
 #ifdef WITH_ALPHA
   memset(mask,255,256);
 # ifndef WITH_BGND
@@ -191,36 +187,36 @@ char *reduceto8(long *image, long *mask,
 #ifndef WITH_BGND
   if (colour > 256)
 #else /* WITH_BGND */
-  if (colour > (bgnd == -1 ? 255 : 256))
+  if (colour > (bgnd == UINT32_MAX ? 255 : 256))
 #endif /* WITH_BGND */
     goto failed;
 #if defined WITH_BGND && !defined WITH_ALPHA
-  debug_printf("maskcolour = %06lX\n",maskcolour);
-  if (maskcolour != -1) {
+  debug_printf("maskcolour = %06"PRIX32"\n",maskcolour);
+  if (maskcolour != UINT32_MAX) {
     y=0;
-    while (y<colour && maskcolour!=palette[y].i) ++y;
-    *mask = maskcolour = (int)y;
-    debug_printf("Mask colour is now %li\n", maskcolour);
+    while (y<colour && maskcolour!=palette[y]) ++y;
+    *mask = maskcolour = y;
+    debug_printf("Mask colour is now %"PRIi32"\n", maskcolour);
   }
 #endif /* WITH_BGND && !WITH_ALPHA */
   /* convert the image to 8bpp paletted */
-  im=(long*)image;
+  im=image;
   im2=(char*)image;
   for (y=height; y; --y) {
     x=0;
     do {
       /* bsearch: &(MM)BBGGRR -> index */
       int p=colour, m=0, b=0;
-      long j = im[x] & COLOURMASK;
+      uint32_t j = im[x] & COLOURMASK;
 #ifdef WITH_ALPHA
       /* throw the pixel away if it's completely masked out */
       if ((j & 0xFF000000) == 0) j = 0;
 #endif
       while (p) {
         m = b + p/2;
-        if (j == palette[m].i)
+        if (j == palette[m])
           goto result;
-        if (j > palette[m].i) {
+        if (j > palette[m]) {
           b = m + 1;
           p -= (p>>1) + 1;
         } else {
@@ -240,11 +236,11 @@ result:
   if (bkgd) {
     if (bgndindex != -1) {
       debug_printf("Background is at palette entry %i\n", bgndindex);
-      palette[bgndindex].i = bgnd;
+      palette[bgndindex] = bgnd;
       bkgd->index = bgndindex;
     } else {
       debug_puts("Background occupies an extra palette entry");
-      palette[colour].i = bgnd;
+      palette[colour] = bgnd;
       bkgd->index = colour++;
     }
 #endif /* WITH_BGND */
