@@ -150,18 +150,13 @@ char *reduceto8(uint32_t *image, uint32_t *mask,
   int bgndindex;
 #endif /* WITH_BGND */
   char *im2;
-  uint32_t *palette = heap_malloc(256*sizeof(uint32_t));
+  uint32_t *palette = spr_malloc(256*sizeof(uint32_t), "reduction to 8bpp (palette)");
 #ifdef WITH_ALPHA
-  char *mask = heap_malloc(256);
-  if (!palette || !mask)
-    fail(fail_NO_MEM,"out of memory (reduction to 8bpp) (%s)",
-      !palette ? "palette" : "mask");
+  char *mask = spr_malloc(256, "reduction to 8bpp (mask)");
 #else
 # ifdef WITH_BGND
   uint32_t maskcolour = *mask;
 # endif /* WITH_BGND */
-  if (!palette)
-    fail(fail_NO_MEM,"out of memory (reduction to 8bpp) (%s)", "palette");
 #endif
 
   if (verbose > 1)
@@ -256,6 +251,9 @@ result:
   return (char *)image;
 
 failed:
+#ifdef WITH_ALPHA
+  if (mask) heap_free (mask);
+#endif
   if (palette) heap_free (palette);
   if (verbose)
     puts("Image cannot be reduced to 8bit");

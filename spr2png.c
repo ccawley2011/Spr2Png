@@ -170,10 +170,21 @@ help (void)
 }
 
 
-static char *
-local_strdup (const char *s)
+static void *
+local_malloc (size_t l, const char *const msg)
 {
-  char *d = spr_malloc (strlen (s) + 1, "strdup");
+  void *v = malloc (l);
+  debug_printf ("Claimed %li bytes for %s\n", l, msg);
+  if (v == 0)
+    fail (fail_NO_MEM, "Out of memory (%s)", msg);
+  return v;
+}
+
+
+static char *
+local_strdup (const char *s, const char *const msg)
+{
+  char *d = local_malloc (strlen (s) + 1, msg);
   strcpy (d, s);
   return d;
 }
@@ -1181,7 +1192,8 @@ main (int argc, const char *const argv[])
   char *scale = 0;
   char *renderlevel = 0;
 
-  const char *from = 0, *fromtemp = 0, *to = 0, *used = 0;
+  const char *from = 0, *to = 0, *used = 0;
+  char *fromtemp = 0;
 
   {
     char *p = strrchr (argv[0], '.');
@@ -1436,7 +1448,7 @@ main (int argc, const char *const argv[])
           /**/ get_render:
           m = strlen (p);
           free (renderlevel);
-          renderlevel = local_strdup (p);
+          renderlevel = local_strdup (p, "renderlevel");
           p = "x";
           break;
         case 'S':
@@ -1444,7 +1456,7 @@ main (int argc, const char *const argv[])
           /**/ get_scale:
           m = strlen (p);
           free (scale);
-          scale = local_strdup (p);
+          scale = local_strdup (p, "scale");
           p = "x";
           break;
         case 'X':
@@ -1616,7 +1628,6 @@ main (int argc, const char *const argv[])
           "too few filenames (need both input and output)");
 
   m = readtype (from);
-  fromtemp = from;
 
   switch (m)
   {
@@ -1625,9 +1636,9 @@ main (int argc, const char *const argv[])
   case 0xAFF:           /* Draw */
   case 0xD94:           /* Artworks */
     {
-      char *cmd = spr_malloc (1024, "draw2spr command"), *args;
-      char *out = local_strdup (tmpnam (0));    /* output */
-      fromtemp = local_strdup (tmpnam (0));     /* image */
+      char *cmd = local_malloc (1024, "draw2spr command"), *args;
+      char *out = local_strdup (tmpnam (0), "out");      /* output */
+      fromtemp = local_strdup (tmpnam (0), "fromtemp");  /* image */
       sprintf (cmd, "<Spr2Png$Dir>.draw2spr >%s 2>&1 %s %s -#",
                out, from, fromtemp);
       args = cmd + strlen (cmd);
@@ -1690,7 +1701,8 @@ main (int argc, const char *const argv[])
         fclose (ifp);
         ifp = 0;
       }
-      from = "(scrap file)";
+      free (out);
+      from = fromtemp;
       rgba = checkmask = 1 && (simple_mask & 2) == 0;
       /*trim = */ inverse = 0;
       if (readtype (fromtemp) == 0xFF9)
@@ -1701,6 +1713,9 @@ main (int argc, const char *const argv[])
   default:
     fail (fail_BAD_DATA, "%s: not a sprite, Draw or Artworks file", from);
   }
+
+  free (renderlevel);
+  free (scale);
 
   heap_init ("Spr2Png workspace");
 
@@ -1726,14 +1741,15 @@ main (int argc, const char *const argv[])
 
   _swi (Hourglass_On, _IN (0), 0);
 
-  ifp = fopen (fromtemp, "rb");
+  ifp = fopen (from, "rb");
   if (ifp == NULL)
     fail (fail_OS_ERROR, 0);
-  if (fromtemp != from)
+  if (fromtemp)
   {
     /* We have a temp file; do magic to cause its deletion on close */
     ifp->__flag |= 0xAD800001;
     sscanf (fromtemp + strlen (fromtemp) - 8, "%X", &ifp->__signature);
+    free (fromtemp);
   }
   fseek (ifp, 0, SEEK_END);
   size = (size_t) ftell (ifp);
@@ -1859,9 +1875,7 @@ main (int argc, const char *const argv[])
 
     if (lnbpp < 4)
     {
-      palette = heap_malloc (256 * sizeof (rgb_t));
-      if (!palette)
-        fail (fail_NO_MEM, "out of memory (%s)", "palette");
+      palette = spr_malloc (256 * sizeof (rgb_t), "palette");
     }
     if (!maskspr && imagespr->mask > imagespr->image)
       maskspr = (sprite_t *) (sprites->first + (char *) sprites);
