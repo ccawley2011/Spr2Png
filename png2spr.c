@@ -102,6 +102,7 @@ sighandler (int sig)
   exit (fail_OS_ERROR);
 }
 
+#endif
 
 static void
 shutdown (void)
@@ -117,11 +118,12 @@ shutdown (void)
     case 2: png_destroy_read_struct (&png_ptr, &info_ptr, 0); break;
     }
   png_init = 0;
+#ifdef __riscos
   _swi (Hourglass_Off, 0);
+#endif
   debug_puts ("Done.");
 }
 
-#endif
 
 typedef enum
   {
@@ -988,9 +990,9 @@ main (int argc, char *argv[])
     program_name = p ? p + 1 : argv[0];
   }
 
-#ifdef __riscos
   atexit (shutdown);
 
+#ifdef __riscos
   switch (setjmp (jump))
     {
     case 0:
