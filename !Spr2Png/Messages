@@ -103,7 +103,10 @@ WSaveSpr.11:Enter the display gamma value here (>0, <=10).|MThe default is 2.2.
 WSaveSpr.12:Tick this option to cause any transparency information to be completely ignored.
 WSaveSpr.13:Tick this option to create a separate mask (except where the mask is simple).
 WSaveSpr.14:Tick this option if you want to reduce the alpha channel (if present) to a simple mask.
-WSaveSpr.15:¤WOpt2.1
+WSaveSpr.15:Tick this option to invert the values used for the alpha component.
+WSaveSpr.16:Tick this option if the output sprite is to have a 1bpp mask.
+WSaveSpr.17:Tick this option if the output sprite is to have a wide mask.
+WSaveSpr.18:¤WOpt2.1
 
 IM-1:\TSpr2Png main menu.
 IM0:\Rsee information about Spr2Png.
