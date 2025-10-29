@@ -58,14 +58,13 @@ clean:
 
 .c.o:;  cc $(CCflags) $(CCopt) $<
 .s.o:;  objasm $(ObjAsmflags) $<
-#.s.o:; IDEFS::Shearer.$.Programmer.Proto.as.as $(ObjAsmflags) $<
 
 # Static dependencies:
 o.spr2png:      c.spr2png
 o.s2p_const:    c.s2p_const
 o.s2p_frqsrt:   c.s2p_frqsrt
 o.s2p_reduce:   c.s2p_reduce c.s2p_redinc
-o.s2p_trim:     c.s2p_trim
+o.s2p_trim:     c.s2p_trim c.s2p_triinc
 o.s2p_ver:      c.s2p_ver
 
 o.draw2spr:     c.draw2spr
