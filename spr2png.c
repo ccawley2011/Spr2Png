@@ -355,7 +355,7 @@ readpalette (const spritearea_t * area, sprite_t * spr, rgb_t * palette, int pal
 
   p = (unsigned int *) palette;
   s = (unsigned int *) (spr + 1);
-  for (q = palsize; q; --q) {
+  for (q = 0; q < palsize; q += sizeof(rgb_t)) {
     *p++ = *s >> 8;
     s += 2;
   }
@@ -2028,11 +2028,14 @@ main (int argc, const char *const argv[])
   if (lnbpp == 3 && checkgrey (imagespr, used, lnbpp))
   {
     grey = true;
-    palette = 0;
   }
 
   if (grey && alpha)
+  {
     image = expand8to8alpha (image8 = image, mask);
+    heap_free (palette);
+    palette = 0;
+  }
   else if (lnbpp <= 3)
   {
     if (alpha)
