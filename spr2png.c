@@ -223,21 +223,26 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
             /* writes to all regardless */
 {
   *m = spr->mode;
-  if (*m < 256) {
-    *xres = 180 >> modevar (*m, 4);
-    *yres = 180 >> modevar (*m, 5);
-    *type = modevar(*m, 9) + 1;
-    *flags = modevar(*m, 0);
-  } else if ((*m & 0x780F000F) == 0x78000001) {
+  if ((*m & 0x780F000F) == 0x78000001) {
     *xres = 180 >> ((*m >> 4) & 3);
     *yres = 180 >> ((*m >> 6) & 3);
     *type = (*m >> 20) & 127;
     *flags = *m & 0xFF00;
-  } else {
+  } else if (*m > 255) {
     *xres = (*m >> 1) & 8191;
     *yres = (*m >> 14) & 8191;
     *type = (*m >> 27) & 15;
     *flags = 0;
+  } else if (*m < 50) {
+    *xres = 180 >> modevars[*m][0];
+    *yres = 180 >> modevars[*m][1];
+    *type = modevars[*m][2] + 1;
+    *flags = 0;
+  } else {
+    *xres = 180 >> modevar (*m, 4);
+    *yres = 180 >> modevar (*m, 5);
+    *type = modevar(*m, 9) + 1;
+    *flags = modevar(*m, 0);
   }
 }
 

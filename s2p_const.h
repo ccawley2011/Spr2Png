@@ -12,4 +12,7 @@ extern const rgb_t *const palinfo[];
 extern const int palsize[];
   // palette sizes
 
+extern const uint8_t modevars[50][3];
+  // mode variables (xeig, yeig, lnbpp)
+
 #endif
