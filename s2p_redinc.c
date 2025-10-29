@@ -14,10 +14,10 @@
 static int getcolours_alpha(
 # ifndef WITH_BGND
   const void *const image, uint32_t *const palette,
-  char *const mask)
+  uint8_t *const mask)
 # else /* WITH_BGND */
   const void *const image, int *const colourp,
-  uint32_t *const palette, char *const mask, const uint32_t bgnd)
+  uint32_t *const palette, uint8_t *const mask, const uint32_t bgnd)
 # endif /* WITH_BGND */
 #else
 static int getcolours(
@@ -104,7 +104,7 @@ result:;
 #ifdef WITH_ALPHA
   debug_puts("filling in mask data...");
   for (y=0; y<colour; ++y)
-    mask[y] = (char)(palette[y] >> 24);
+    mask[y] = (uint8_t)(palette[y] >> 24);
 #endif
 #ifndef WITH_BGND
   return colour;
@@ -125,17 +125,17 @@ failed:
 
 #ifdef WITH_ALPHA
 #ifndef WITH_BGND
-char *reduceto8_alpha(uint32_t *image, char **imask, rgb_t **ipalette,
+uint8_t *reduceto8_alpha(uint32_t *image, uint8_t **imask, rgb_t **ipalette,
   int *entries)
 #else /* WITH_BGND */
-char *reduceto8_alpha(uint32_t *image, char **imask,
+uint8_t *reduceto8_alpha(uint32_t *image, uint8_t **imask,
   rgb_t **ipalette, int *entries, png_color_16 *bkgd)
 #endif /* WITH_BGND */
 #else
 #ifndef WITH_BGND
-char *reduceto8(uint32_t *image, rgb_t **ipalette, int *entries)
+uint8_t *reduceto8(uint32_t *image, rgb_t **ipalette, int *entries)
 #else /* WITH_BGND */
-char *reduceto8(uint32_t *image, uint32_t *mask,
+uint8_t *reduceto8(uint32_t *image, uint32_t *mask,
   rgb_t **ipalette, int *entries, png_color_16 *bkgd)
 #endif /* WITH_BGND */
 #endif
@@ -149,10 +149,10 @@ char *reduceto8(uint32_t *image, uint32_t *mask,
     : UINT32_MAX;
   int bgndindex;
 #endif /* WITH_BGND */
-  char *im2;
+  uint8_t *im2;
   uint32_t *palette = spr_malloc(256*sizeof(uint32_t), "reduction to 8bpp (palette)");
 #ifdef WITH_ALPHA
-  char *mask = spr_malloc(256, "reduction to 8bpp (mask)");
+  uint8_t *mask = spr_malloc(256, "reduction to 8bpp (mask)");
 #else
 # ifdef WITH_BGND
   uint32_t maskcolour = *mask;
@@ -196,7 +196,7 @@ char *reduceto8(uint32_t *image, uint32_t *mask,
 #endif /* WITH_BGND && !WITH_ALPHA */
   /* convert the image to 8bpp paletted */
   im=image;
-  im2=(char*)image;
+  im2=(uint8_t*)image;
   for (y=height; y; --y) {
     x=0;
     do {
@@ -248,7 +248,7 @@ result:
   *entries = colour;
   if (verbose)
     puts("Image successfully reduced to 8bit");
-  return (char *)image;
+  return (uint8_t *)image;
 
 failed:
 #ifdef WITH_ALPHA

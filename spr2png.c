@@ -255,10 +255,10 @@ remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 }
 
 
-static const char *
-list_used (const char *im, const char *imask, int lnbpp)
+static uint8_t *
+list_used (const uint8_t *im, const uint8_t *imask, int lnbpp)
 {
-  char *used = spr_malloc (256, "used palette entries");
+  uint8_t *used = spr_malloc (256, "used palette entries");
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
   int y = height;
@@ -269,7 +269,7 @@ list_used (const char *im, const char *imask, int lnbpp)
     int b;
     do
     {
-      char pixels = *im++;
+      uint8_t pixels = *im++;
       b = 0;
       if (imask)
         do
@@ -285,8 +285,8 @@ list_used (const char *im, const char *imask, int lnbpp)
           b += bpp;
         } while (++x < 0 && b < 8);
     } while (x < 0);
-    im = (const char *) (3 + (uintptr_t) im & -4);
-    imask = (const char *) (3 + (uintptr_t) imask & -4);
+    im = (const uint8_t *) (3 + (uintptr_t) im & -4);
+    imask = (const uint8_t *) (3 + (uintptr_t) imask & -4);
   } while (--y);
 #ifdef DEBUG
   _swi (OS_File, _INR (0, 5), 10, "<Wimp$ScrapDir>.used", 0xFFD, 0, used, used + 256);
@@ -296,7 +296,7 @@ list_used (const char *im, const char *imask, int lnbpp)
 
 
 static int
-checkgrey (const sprite_t * spr, const char *used, int lnbpp)
+checkgrey (const sprite_t * spr, const uint8_t *used, int lnbpp)
 {
   uint32_t x, *p;
   const unsigned int m = lnbpp;
@@ -454,11 +454,11 @@ expand16to24 (const void *image)
 
 
 static grey_t *
-expand8to8alpha (const char *image, const char *mask)   /* grey */
+expand8to8alpha (const uint8_t *image, const uint8_t *mask)   /* grey */
 {
   int32_t y = height;
-  const char *im8 = image;
-  const char *ma8 = mask;
+  const uint8_t *im8 = image;
+  const uint8_t *ma8 = mask;
   uint32_t *im16;                   /* read 4, write 2+2 pixels */
   grey_t *imret;
 
@@ -497,14 +497,14 @@ expand8to8alpha (const char *image, const char *mask)   /* grey */
 }
 
 
-static char *
+static uint8_t *
 expandto8 (const void *image, int lnbpp)
 {
   int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
-  const char *imx = image;
-  char *im8, *imret;
+  const uint8_t *imx = image;
+  uint8_t *im8, *imret;
 
   if (verbose > 1)
     printf ("Expanding image from %ibit to %ibit\n", 1 << lnbpp, 8);
@@ -515,7 +515,7 @@ expandto8 (const void *image, int lnbpp)
     int b;
     do
     {
-      char pixels = *imx++;
+      uint8_t pixels = *imx++;
       b = 0;
       do
       {
@@ -523,15 +523,15 @@ expandto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3 + (uintptr_t) im8 & -4);
-    imx = (char *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
+    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
 
 
-static char *
-expandtogrey (char *image, const char *used, int lnbpp, const rgb_t * pal)
+static uint8_t *
+expandtogrey (uint8_t *image, const uint8_t *used, int lnbpp, const rgb_t * pal)
 {
   int i;
   int32_t y;
@@ -556,14 +556,14 @@ expandtogrey (char *image, const char *used, int lnbpp, const rgb_t * pal)
 }
 
 
-static char *
+static uint8_t *
 expandmaskto8 (const void *image, int lnbpp)
 {
   int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
-  const char *imx = image;
-  char *im8, *imret;
+  const uint8_t *imx = image;
+  uint8_t *im8, *imret;
 
   if (verbose > 1)
     printf ("Expanding mask from %ibit to 8bit\n", 1 << lnbpp);
@@ -574,7 +574,7 @@ expandmaskto8 (const void *image, int lnbpp)
     int b;
     do
     {
-      char pixels = *imx++;
+      uint8_t pixels = *imx++;
       b = 0;
       do
       {
@@ -582,22 +582,22 @@ expandmaskto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3 + (uintptr_t) im8 & -4);
-    imx = (char *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
+    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
 
 
-static char *
+static uint8_t *
 expandalphato8 (const void *image, int lnbpp)
 {
   int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
-  const char *imx = image;
-  char *im8, *imret;
-  const char mul = 255 / mask;
+  const uint8_t *imx = image;
+  uint8_t *im8, *imret;
+  const uint8_t mul = 255 / mask;
 
   if (verbose > 1)
     printf ("Expanding alpha from %ibit to 8bit\n", 1 << lnbpp);
@@ -608,7 +608,7 @@ expandalphato8 (const void *image, int lnbpp)
     int b;
     do
     {
-      char pixels = *imx++;
+      uint8_t pixels = *imx++;
       b = 0;
       do
       {
@@ -616,8 +616,8 @@ expandalphato8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (char *) (3 + (uintptr_t) im8 & -4);
-    imx = (char *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
+    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
@@ -629,7 +629,7 @@ expandto24 (const void *image, int lnbpp, const rgb_t * palette)
   int32_t y = height;
   int bpp = 1 << lnbpp;
   int mask = (1 << bpp) - 1;
-  const char *imx = image;
+  const uint8_t *imx = image;
   rgb_t *im24, *imret;
   /* due to alignment, this maps nicely onto png_color
    * (unless using ROLtd's PNG module) */
@@ -656,17 +656,17 @@ expandto24 (const void *image, int lnbpp, const rgb_t * palette)
         imx++;
       }
     } while (--x);
-    imx = (char *) (3 + (b > 0) + (uintptr_t) imx & -4);
+    imx = (uint8_t *) (3 + (b > 0) + (uintptr_t) imx & -4);
   } while (--y);
   return imret;
 }
 
 
-static char *
-reduce8alphato8 (char *image, char *image8, char **mask)
+static uint8_t *
+reduce8alphato8 (uint8_t *image, uint8_t *image8, uint8_t **mask)
 {
   int y, m;
-  char *im, *imsrc, *msk;
+  uint8_t *im, *imsrc, *msk;
   if (image8)
   {
     debug_puts ("8bpp version exists - using it");
@@ -688,9 +688,9 @@ reduce8alphato8 (char *image, char *image8, char **mask)
       *im++ = *imsrc++;
       *msk++ = *imsrc++;
     } while (--x);
-    im = (char *) ((uintptr_t) im + 3 & ~3);
-    imsrc = (char *) ((uintptr_t) imsrc + 3 & ~3);
-    msk = (char *) ((uintptr_t) msk + 3 & ~3);
+    im = (uint8_t *) ((uintptr_t) im + 3 & ~3);
+    imsrc = (uint8_t *) ((uintptr_t) imsrc + 3 & ~3);
+    msk = (uint8_t *) ((uintptr_t) msk + 3 & ~3);
   } while (--y);
   if (m)
   {
@@ -714,7 +714,7 @@ rgba_stdmask (const rgb_t * image)
     int32_t x = width;
     do
     {
-      char c = i[--x].alpha;
+      uint8_t c = i[--x].alpha;
       if (c != 0 && c != 255)
         return MASK_ALPHA;      /* needs alpha channel */
       if (c)
@@ -733,11 +733,11 @@ rgba_stdmask (const rgb_t * image)
 
 
 static mask_t
-stdmask (const char *image, bool greya)
+stdmask (const uint8_t *image, bool greya)
 {
   int32_t y = height;
   int step = greya ? 2 : 1;
-  const char *i = image;
+  const uint8_t *i = image;
   int all0 = true, all255 = true;
 
   do
@@ -745,7 +745,7 @@ stdmask (const char *image, bool greya)
     int32_t x = width * step - 1;
     do
     {
-      char c = i[x];
+      uint8_t c = i[x];
       if (c != 0 && c != 255)
         return MASK_ALPHA;      /* needs alpha channel */
       if (c)
@@ -764,10 +764,10 @@ stdmask (const char *image, bool greya)
 
 
 static void
-find_used (const char *image, const char *mask)
+find_used (const uint8_t *image, const uint8_t *mask)
 {
   int32_t y = height;
-  const char *i = image, *m = mask;
+  const uint8_t *i = image, *m = mask;
 
   memset (wksp.used, 0, sizeof (wksp.used));
   do
@@ -786,10 +786,10 @@ find_used (const char *image, const char *mask)
 
 
 static uint32_t
-apply_mask (char *image, const char *mask)
+apply_mask (uint8_t *image, const uint8_t *mask)
 {
-  char *i = image;
-  const char *m = mask;
+  uint8_t *i = image;
+  const uint8_t *m = mask;
   int colour = 0;
   bool applied = false;
   int32_t y = height;
@@ -820,11 +820,11 @@ apply_mask (char *image, const char *mask)
 
 
 static uint32_t
-find_used_24 (const uint32_t *image, const char *mask, unsigned int b)
+find_used_24 (const uint32_t *image, const uint8_t *mask, unsigned int b)
 {
   int32_t y = height;
   const uint32_t *i = image;
-  const char *m = mask;
+  const uint8_t *m = mask;
   uint32_t j;
 
   memset (wksp.unused, 0, sizeof (wksp.unused));
@@ -857,12 +857,12 @@ find_used_24 (const uint32_t *image, const char *mask, unsigned int b)
 
 
 static uint32_t
-apply_mask_24 (uint32_t *image, const char *mask,
+apply_mask_24 (uint32_t *image, const uint8_t *mask,
                const png_color_16 * bkgd,
                unsigned int type)
 {
   uint32_t *i;                      /* rgb_t */
-  const char *m;
+  const uint8_t *m;
   bool applied = false;
   int b;
   int32_t y;
@@ -945,10 +945,10 @@ apply_mask_24 (uint32_t *image, const char *mask,
 
 
 static void
-find_used_p (const char *image)
+find_used_p (const uint8_t *image)
 {
   int32_t y = height;
-  const char *i = image;
+  const uint8_t *i = image;
 
   memset (wksp.used, 0, sizeof (wksp.used));
   do
@@ -964,9 +964,9 @@ find_used_p (const char *image)
 
 
 static int
-pack_palette (char *image, rgb_t * palette, uint32_t mask, bool *masked_p)
+pack_palette (uint8_t *image, rgb_t * palette, uint32_t mask, bool *masked_p)
 {                               /* palette has 256 entries; returns number used */
-  char *i;
+  uint8_t *i;
   int32_t y = height;
   int colours, masked = mask < 256;
 
@@ -1023,13 +1023,13 @@ pack_palette (char *image, rgb_t * palette, uint32_t mask, bool *masked_p)
 
 
 static void
-make_rgba (void *image, char *mask, int lnbpp)
+make_rgba (void *image, uint8_t *mask, int lnbpp)
 {
   int32_t y = height;
-  char *m = mask;
+  uint8_t *m = mask;
   if (lnbpp == 3)
   {
-    char *i = image;
+    uint8_t *i = image;
     do
     {
       int32_t x = width;
@@ -1061,10 +1061,10 @@ make_rgba (void *image, char *mask, int lnbpp)
 
 
 static int
-packgrey (const char *image)
+packgrey (const uint8_t *image)
 {
   int bits = 7, x, y;
-  const char *im = image;
+  const uint8_t *im = image;
 
   debug_puts ("Checking for reduced greyscale...");
 
@@ -1072,7 +1072,7 @@ packgrey (const char *image)
   {
     for (x = width; x; --x)
     {
-      char b = *im++;
+      uint8_t b = *im++;
       if ((b ^ (b >> 4)) & 15)
         return 8;
       if (bits & 2)
@@ -1084,7 +1084,7 @@ packgrey (const char *image)
       if (bits == 0)
         return 8;
     }
-    im = (const char *) ((uintptr_t) im + 3 & ~3);
+    im = (const uint8_t *) ((uintptr_t) im + 3 & ~3);
   }
   return (bits & 1) ? 1 : (bits & 2) ? 2 : 4;
 }
@@ -1166,14 +1166,14 @@ main (int argc, const char *const argv[])
   unsigned int type, m, modeflags;
   sprite_t *imagespr, *maskspr;
   void *image, *image8 = 0;
-  char *mask = 0, *palmask = 0;
+  uint8_t *mask = 0, *palmask = 0;
   rgb_t *palette = 0;
   png_color_16 bkgd = { 0, 0, 0, 0, 0 };
   uint32_t bgnd = 0;
   int pal_entries, mask_entries = 0;
   int num_passes;
   int dpix = 0, dpiy = 0;
-  char
+  uint8_t
     simple_mask = 0,
     pixel_size = 0;
   bool
@@ -1192,16 +1192,17 @@ main (int argc, const char *const argv[])
     packbits = false,
     testsigbits = false,
     have_chroma = false;
-  struct { char filter, strategy, bits, level; } compress = { 0 };
-  struct { char intent; bool force; } srgb = { 0 };
+  struct { uint8_t filter, strategy, bits, level; } compress = { 0 };
+  struct { uint8_t intent; bool force; } srgb = { 0 };
   double chroma[4][2], gamma = 0;
   png_color_8 sigbit = { 8, 8, 8, 8, 8 };
 
   char *scale = 0;
   char *renderlevel = 0;
 
-  const char *from = 0, *to = 0, *used = 0;
+  const char *from = 0, *to = 0;
   char *fromtemp = 0;
+  uint8_t *used = 0;
 
   {
     char *p = strrchr (argv[0], '.');
@@ -1597,7 +1598,7 @@ main (int argc, const char *const argv[])
           m = strtol (p, (char **) &p, 10);
           if (errno || *p-- || m < 9 || m > 15)
             fail (fail_BAD_ARGUMENT, "bad window value");
-          compress.bits = (char) m;
+          compress.bits = (uint8_t) m;
           break;
         case 'x':
           pixel_size |= 1;
@@ -1764,7 +1765,7 @@ main (int argc, const char *const argv[])
   size = (size_t) ftell (ifp);
   fseek (ifp, 0, SEEK_SET);
   sprites = spr_malloc (size + 4, "input file");
-  if (fread ((char *) (sprites) + 4, size, 1, ifp) != 1)
+  if (fread ((uint8_t *) (sprites) + 4, size, 1, ifp) != 1)
     fail (fail_OS_ERROR, "couldn't load file");
   if (fclose (ifp))
     fail (fail_OS_ERROR, 0);
@@ -1774,7 +1775,7 @@ main (int argc, const char *const argv[])
     fail (fail_BAD_DATA, "invalid sprite file");
   if (sprites->sprites < 1)
     fail (fail_BAD_DATA, "there must be at least one sprite");
-  imagespr = (sprite_t *) (sprites->first + (char *) sprites);
+  imagespr = (sprite_t *) (sprites->first + (uint8_t *) sprites);
   checkspr (imagespr);
   remove_wastage (sprites, imagespr);
   getsprinfo (sprites, imagespr, &xres, &yres, &type, &m, &modeflags);
@@ -1859,7 +1860,7 @@ main (int argc, const char *const argv[])
 
     /* Check for a separate mask sprite */
     maskspr = (sprite_t *) (imagespr->size + (uintptr_t) imagespr);
-    if (maskspr >= (sprite_t *) (sprites->free + (char *) sprites))
+    if (maskspr >= (sprite_t *) (sprites->free + (uint8_t *) sprites))
       maskspr = 0;
 
     if (maskspr)
@@ -1887,7 +1888,7 @@ main (int argc, const char *const argv[])
       palette = spr_malloc (256 * sizeof (rgb_t), "palette");
     }
     if (!maskspr && imagespr->mask > imagespr->image)
-      maskspr = (sprite_t *) (sprites->first + (char *) sprites);
+      maskspr = (sprite_t *) (sprites->first + (uint8_t *) sprites);
   }
 
   if (palette)
@@ -1902,12 +1903,12 @@ main (int argc, const char *const argv[])
     }
   }
 
-  image = (void *) (imagespr->image + (char *) imagespr);
+  image = (void *) (imagespr->image + (uint8_t *) imagespr);
   if (maskspr)
   {
     debug_puts ("Mask initialisation and expansion...");
     mask = ((alpha && !(m & 1u << 31)) ? maskspr->image : maskspr->mask) +
-           (char *) maskspr;
+           (uint8_t *) maskspr;
     if (masklnbpp < 3)
     {
       mask = alpha ? expandalphato8 (mask, masklnbpp)
@@ -1953,7 +1954,7 @@ main (int argc, const char *const argv[])
     }
   }
 
-  if (mask && (imagespr != maskspr) /*||  mask != (char *) maskspr + maskspr->mask) */ )
+  if (mask && (imagespr != maskspr) /*||  mask != (uint8_t *) maskspr + maskspr->mask) */ )
   {
     debug_printf ("Mask type checking... (imagespr=%p, maskspr=%p)\n",
                   imagespr, maskspr);
@@ -2192,7 +2193,7 @@ main (int argc, const char *const argv[])
 
   if (reduce && lnbpp > 3)
   {
-    char *im;
+    uint8_t *im;
     mask_t masktype = checkmask ? MASK_SIMPLE : MASK_ALPHA;
     debug_puts ("Palette reduction tests...");
     if (alpha && !rgba)
@@ -2204,7 +2205,7 @@ main (int argc, const char *const argv[])
     else if (masked)
     {
       uint32_t *im = image;
-      char *m = mask;
+      uint8_t *m = mask;
       uint32_t w;
       debug_puts ("- applying mask colour -> RGBA");
       y = height;
@@ -2482,7 +2483,7 @@ main (int argc, const char *const argv[])
     void *i = image;
     do
     {                   /* libpng handles RGBX, but more generically... */
-      char *p = i, *q = i;
+      uint8_t *p = i, *q = i;
       int32_t j;
       for (j = width - 1; j; j--)
       {
@@ -2552,9 +2553,9 @@ main (int argc, const char *const argv[])
       _swi (Hourglass_Percentage, _IN (0), m++ * 100 / (int) x);
       png_write_row (png_ptr, i);
       if (lnbpp == 3 && alpha)
-        i = (void *) ((char *) i + 2 * (width + 1 & ~1));       /* avoid grey_t alignment */
+        i = (void *) ((uint8_t *) i + 2 * (width + 1 & ~1));       /* avoid grey_t alignment */
       else if (lnbpp < 4)
-        i = (void *) ((char *) i + (width + 3 & ~3));
+        i = (void *) ((uint8_t *) i + (width + 3 & ~3));
       else
         i = (void *) ((uint32_t *) i + width);
     } while (--y);

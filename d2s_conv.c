@@ -69,7 +69,7 @@ rmversion (const char *module)
   const char *ver;
   if (_swix (OS_Module, _INR (0, 1) | _OUT (3), 18, module, &mod))
     return 0;
-  ver = (char *) mod + mod[5];  /* module help text & version */
+  ver = (const char *) mod + mod[5];  /* module help text & version */
   while (*ver && !isdigit (*ver))
     ver++;
   return readfloat (&ver) * 100;
@@ -148,7 +148,7 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
   uint8_t m[4] = { 0, 0, 0, 0 };
   uint8_t t;
 
-  static const char mconv[] =
+  static const uint8_t mconv[] =
     { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
   debug_printf ("Antialiasing...\nSrc =%p\nMask=%p\nDest=%p\nw   =%li\nh   =%li\n",
@@ -234,7 +234,7 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
 
 
 static void *
-do_render (const void *data, size_t nSize, int simplemask, bool invert,
+do_render (const void *data, size_t nSize, uint8_t simplemask, bool invert,
            double scale_x, double scale_y, int type, long background,
            bool trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
@@ -283,8 +283,8 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
       _swi (OS_SpriteOp, _INR (0, 6), 256+15, pixels, sprname, 0, width, height, 0x301680B5);
     }
 
-  pSprite = (sprite_t *) ((char *) pixels + 16);
-  oSprite = (rgb_t *) ((char *) pSprite + pSprite->image);
+  pSprite = (sprite_t *) ((uint8_t *) pixels + 16);
+  oSprite = (rgb_t *) ((uint8_t *) pSprite + pSprite->image);
 
   if (verbose > 1)
     printf ("Rendering %s file\n", filetype);
@@ -325,7 +325,7 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
   }
   _swi (OS_SpriteOp, _INR (0, 2), 256+29, area, sprname); /* OS_SpriteOp add mask */
 
-  pSprite = (sprite_t *) ((char *) area + 16);
+  pSprite = (sprite_t *) ((uint8_t *) area + 16);
 
   if (type) {                   /* Artworks */
     infoblock[0] = 0;
@@ -366,7 +366,7 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
     /* render onto "transparent", find opaque */
     {
       int i = (pSprite->size - pSprite->image) / sizeof (long);
-      long *ptr = (long *) ((char *) pSprite + pSprite->image);
+      long *ptr = (long *) ((uint8_t *) pSprite + pSprite->image);
       do {
         ptr[--i] = background | 0xFF000000;
       } while (i);
@@ -375,24 +375,24 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
     {
       int xoff, i = 0;
       int xl = infoblock[2], xr = infoblock[4];
-      char clip[9];
+      uint8_t clip[9];
       clip[0] = 24;
       clip[4] = clip[3] = clip[1] = 0;
       clip[5] = 255;
-      clip[7] = (char) (spritey * 2 - 1);
-      clip[8] = (char) ((spritey * 2 - 1) >> 8);
+      clip[7] = (uint8_t) (spritey * 2 - 1);
+      clip[8] = (uint8_t) ((spritey * 2 - 1) >> 8);
 #define AW_WIDTH_STEP (1024 * 256 * 8 / scale_x / mul)
       for (xoff = 0; xoff < spritex; xoff += 1024)
       {
         infoblock[4] = xl + ++i * AW_WIDTH_STEP - 1;
         if (infoblock[4] > xr)
           infoblock[4] = xr;
-        clip[2] = (char) (xoff >> 7);
+        clip[2] = (uint8_t) (xoff >> 7);
         clip[6] = clip[2] + 7;
         if (clip[5] + clip[6] * 256 >= spritex * 2)
         {
-          clip[5] = (char) (spritex * 2 - 1);
-          clip[6] = (char) ((spritex * 2 - 1) >> 8);
+          clip[5] = (uint8_t) (spritex * 2 - 1);
+          clip[6] = (uint8_t) ((spritex * 2 - 1) >> 8);
         }
         err = render (area, data, nSize, &tm, type, simplemask & simplemask_NO_BLEND,
                       clip, sizeof (clip));
@@ -412,7 +412,7 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
 #endif
 
     if ((simplemask & simplemask_NO_BLEND) == 0)
-      antialias ((rgb_t *) ((char *) pSprite + pSprite->image),
+      antialias ((rgb_t *) ((uint8_t *) pSprite + pSprite->image),
                  (uint8_t *) pSprite + pSprite->mask,
                  oSprite + offset * width, background, width, thisy,
                  !!(simplemask & simplemask_NO_MASK));
@@ -457,7 +457,7 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
 
         _swi (OS_SpriteOp, _INR (0, 2), 256+29, pixels, sprname); /* OS_SpriteOp add mask */
 
-        pSprite = (sprite_t *) ((char *) pixels + 16);
+        pSprite = (sprite_t *) ((uint8_t *) pixels + 16);
         spr_base = (uint8_t *) pSprite + pSprite->image;
         mask_base = (uint8_t *) pSprite + pSprite->mask;
         spr_base -= 1;
@@ -479,14 +479,14 @@ do_render (const void *data, size_t nSize, int simplemask, bool invert,
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, pixels, sprname); /* OS_SpriteOp remove mask */
 
   if (trim)
-    trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), false);
+    trim_mask_24 (pixels, (sprite_t*)((uint8_t*)pixels + 16), false);
 
   return pixels;
 }
 
 
 void *
-convertdraw (const void *data, size_t nSize, int simplemask, bool invert,
+convertdraw (const void *data, size_t nSize, uint8_t simplemask, bool invert,
              double scale_x, double scale_y, long background, bool trim,
              void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
@@ -547,7 +547,7 @@ convertdraw (const void *data, size_t nSize, int simplemask, bool invert,
 
 
 void *
-convertartworks (const void *data, size_t nSize, int simplemask,
+convertartworks (const void *data, size_t nSize, uint8_t simplemask,
                  bool invert, double scale_x, double scale_y,
                  int renderlevel, long background, bool trim,
                  void (*std_sighandler) (int), jmp_buf main_j)

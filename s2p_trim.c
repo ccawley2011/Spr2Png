@@ -5,11 +5,11 @@
 
 #undef ALPHA
 
-#define ADD(x,y) ((PIXEL*)((char*)(x) + (y) * SIZE))
-#define INDEX(x,y) (*(PIXEL*)((char*)(x) + (y) * SIZE))
+#define ADD(x,y) ((PIXEL*)((uint8_t*)(x) + (y) * SIZE))
+#define INDEX(x,y) (*(PIXEL*)((uint8_t*)(x) + (y) * SIZE))
 
-int trim_mask_8 (char *const image, char *const alpha, int trans)
-#define PIXEL char
+int trim_mask_8 (uint8_t *const image, uint8_t *const alpha, int trans)
+#define PIXEL uint8_t
 #define ROUNDING 3
 #define SIZE 1
 #include "c.s2p_triinc"
@@ -38,5 +38,5 @@ int trim_mask_24a (rgb_t *const image)
 
 #undef ALPHA
 
-int trim_mask_24 (rgb_t *const image, char *const alpha, uint32_t trans)
+int trim_mask_24 (rgb_t *const image, uint8_t *const alpha, uint32_t trans)
 #include "c.s2p_triinc"

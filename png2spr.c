@@ -32,7 +32,7 @@ static struct
     bool use;
     bool reduce;
     bool separate;
-    char tRNS;
+    uint8_t tRNS;
     bool inverse;
     bool wide;
   } alpha = { true };
@@ -169,7 +169,7 @@ static sprite_t *
 create_sprite (spritearea_t *const area, const char *name, uint32_t width, uint32_t height,
                unsigned int mode, int bit_depth, unsigned int palsize)
 {
-  sprite_t *spr = (sprite_t *)((char*)area + area->free);
+  sprite_t *spr = (sprite_t *)((uint8_t *)area + area->free);
   uint32_t pitch = (((width * bit_depth) + 31) & ~31) >> 3;
   uint32_t size = 0x2c + (palsize * 8) + (pitch * height);
 
@@ -219,7 +219,7 @@ create_mask (spritearea_t *const area, sprite_t *const spr)
 static void
 write_sprite (FILE *fp, spritearea_t *const area)
 {
-  const char *carea = (const char *)area;
+  const uint8_t *carea = (const uint8_t *)area;
   if (fwrite(carea + 4, area->free - 4, 1, fp) != 1)
     fail(fail_IO_ERROR, "could not write sprite area to file");
 }
@@ -667,7 +667,7 @@ read_png(FILE *fp)
 
     debug_printf ("Creating sprite (area size = %X)...\n", size);
     spr_area = malloc (size);
-    row_ptrs = calloc (height, sizeof(char *));
+    row_ptrs = calloc (height, sizeof(png_bytep));
     if (!spr_area || !row_ptrs)
       fail (fail_NO_MEM, "out of memory");
     spr_area->size = size;

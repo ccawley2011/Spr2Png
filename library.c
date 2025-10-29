@@ -15,7 +15,7 @@
 
 int32_t width, height;
 
-spritearea_t *sprites;          /* == unsigned char */
+spritearea_t *sprites;
 
 const char *program_name;
 const char *caller_name;

@@ -10,12 +10,12 @@
 #define simplemask_NO_MASK  (1 << 1)
 #define simplemask_WIDE     (1 << 2)
 
-extern void *convertdraw (const void *data, size_t nSize, int simplemask,
+extern void *convertdraw (const void *data, size_t nSize, uint8_t simplemask,
                           bool invert, double scale_x, double scale_y,
                           long background, bool trim,
                           void (*std_sighandler) (int), jmp_buf main_j);
 
-extern void *convertartworks (const void *data, size_t nSize, int simplemask,
+extern void *convertartworks (const void *data, size_t nSize, uint8_t simplemask,
                               bool invert, double scale_x, double scale_y,
                               int renderlevel, long background, bool trim,
                               void (*std_sighandler) (int), jmp_buf main_j);
@@ -33,7 +33,7 @@ extern _kernel_oserror *aw_fileinit (const void *file, size_t * size);
 
 extern _kernel_oserror *render (const void *area, const void *file,
                                 size_t size, const draw_matrix * matrix,
-                                int type, int thicken, const char *vdu,
+                                int type, int thicken, const uint8_t *vdu,
                                 size_t vdusize);
 
 extern void makemask (sprite_t * sprite, long width, long height);

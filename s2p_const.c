@@ -4,7 +4,7 @@
 #include "s2p_lib.h"
 #include "s2p_const.h"
 
-const char imagetype[2 /*alpha */ ][2 /*grey */ ][6 /*bpp */ ] =
+const uint8_t imagetype[2 /*alpha */ ][2 /*grey */ ][6 /*bpp */ ] =
 {
   { {3, 3, 3, 3, 2, 2},         /* no alpha, no grey */
     {0, 0, 0, 0, 2, 2} },       /* no alpha, grey */

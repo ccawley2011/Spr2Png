@@ -9,8 +9,8 @@ void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
   int x, y;
   rgb_t *ptr;
   int clear = inverse ? 255 : 0;
-  rgb_t *image = (rgb_t*)((char*)sprite + sprite->image);
-  char *mask;
+  rgb_t *image = (rgb_t*)((uint8_t*)sprite + sprite->image);
+  uint8_t *mask;
   int simple = sprite->image != sprite->mask;
   int mwidth = (width + 31 & ~31) / 8;
 
@@ -20,7 +20,7 @@ void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
   /* Trim blank rows from bottom */
   y = 0;
   ptr = image + height * width;
-  mask = (char*)sprite + sprite->mask + height * mwidth;
+  mask = (uint8_t*)sprite + sprite->mask + height * mwidth;
   do {
     ptr -= width;
     mask -= mwidth;
@@ -49,7 +49,7 @@ do_lower_trim:
   /* Trim blank rows from top */
   y = 0;
   ptr = image;
-  mask = (char*)sprite + sprite->mask;
+  mask = (uint8_t*)sprite + sprite->mask;
   for (;;) {
     x = width;
     if (simple) {
@@ -78,7 +78,7 @@ do_upper_trim:
   x = width;
   y = height;
   ptr = image;
-  mask = (char*)sprite + sprite->mask;
+  mask = (uint8_t*)sprite + sprite->mask;
   do {
     int xx = 0;
     if (simple)
@@ -107,7 +107,7 @@ do_upper_trim:
   x = width - 1;
   y = height;
   ptr = image;
-  mask = (char*)sprite + sprite->mask;
+  mask = (uint8_t*)sprite + sprite->mask;
   do {
     int xx = width;
     if (simple)

@@ -102,7 +102,7 @@ main (int argc, const char *const argv[])
   size_t size;
   long y;
   void *drawfile, *image;
-  char wimpstate, simplemask = 0;
+  uint8_t wimpstate, simplemask = 0;
   bool inverse = false, trim = false;
   double scale_x = 1, scale_y = 1;
   int renderlevel = 110;

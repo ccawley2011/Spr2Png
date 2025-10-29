@@ -10,11 +10,11 @@
 #include "s2p_redinc.c"
 
 bool
-reducetogrey (uint32_t *image, char *mask, bool rgba)
+reducetogrey (uint32_t *image, uint8_t *mask, bool rgba)
 {
   int32_t x, y;
   rgb_t *im = (rgb_t *) image;
-  char *imret;
+  uint8_t *imret;
 
   if (verbose > 1)
     puts ("Attempting to losslessly reduce the image to greyscale");
@@ -33,7 +33,7 @@ reducetogrey (uint32_t *image, char *mask, bool rgba)
   else if (mask)
   {
     const rgb_t *i = im;
-    const char *m = mask;
+    const uint8_t *m = mask;
     debug_printf ("(alpha; image at %p, mask at %p)\n", im, mask);
     for (y = height; y; --y)
     {
@@ -47,7 +47,7 @@ reducetogrey (uint32_t *image, char *mask, bool rgba)
         }
         i++;
       }
-      m = (char *) (((uintptr_t) m + 3) & ~3);
+      m = (uint8_t *) (((uintptr_t) m + 3) & ~3);
     }
   }
   else
@@ -62,7 +62,7 @@ reducetogrey (uint32_t *image, char *mask, bool rgba)
       }
   }
 
-  imret = (char *) im;
+  imret = (uint8_t *) im;
   if (rgba)
     for (y = height; y; --y)
     {
@@ -88,7 +88,7 @@ reducetogrey (uint32_t *image, char *mask, bool rgba)
       }
       if ((uintptr_t) imret & 2)
         imret += 2;
-      mask = (char *) (((uintptr_t) mask + 3) & ~3);
+      mask = (uint8_t *) (((uintptr_t) mask + 3) & ~3);
     }
   else
     for (y = height; y; --y)
@@ -99,7 +99,7 @@ reducetogrey (uint32_t *image, char *mask, bool rgba)
         im += 1;
       }
       if ((uintptr_t) imret & 3)
-        imret = (char *)((uintptr_t) imret + 3 & ~3);
+        imret = (uint8_t *)((uintptr_t) imret + 3 & ~3);
     }
   if (verbose)
     puts ("Image successfully reduced to greyscale");

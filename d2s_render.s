@@ -91,7 +91,7 @@ aw_init_fail
 
 ; _kernel_oserror *render(void *area, void *drawfile, size_t size,
 ;                         draw_matrix *matrix, int type, int thicken,
-;                         const char *vdu, size_t vdusize)
+;                         const uint8_t *vdu, size_t vdusize)
         EXPORT  render
 render  ROUT
         MOV     r12,r13

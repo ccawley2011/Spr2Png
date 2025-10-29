@@ -11,7 +11,7 @@
 
 extern int32_t width, height;
 
-extern spritearea_t *sprites; /* == unsigned char */
+extern spritearea_t *sprites;
 
 typedef struct
 {
@@ -52,9 +52,9 @@ int argmatch (const optslist *args, const char *arg, const char **param);
 
 typedef union {
   char _msg[2048];
-  char used[256];
+  uint8_t used[256];
   uint32_t unused[65536/32];
-  struct { char u[256]; uint32_t p[256]; } p;
+  struct { uint8_t u[256]; uint32_t p[256]; } p;
 } wksp_t;
 
 extern wksp_t wksp;
