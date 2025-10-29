@@ -4,7 +4,7 @@
 #include "d2s_lib.h"
 
 void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
-                   int inverse)
+                   bool inverse)
 {
   int x, y;
   rgb_t *ptr;

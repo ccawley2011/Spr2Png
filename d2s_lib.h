@@ -11,13 +11,13 @@
 #define simplemask_WIDE     (1 << 2)
 
 extern void *convertdraw (const void *data, size_t nSize, int simplemask,
-                          int invert, double scale_x, double scale_y,
-                          long background, int trim,
+                          bool invert, double scale_x, double scale_y,
+                          long background, bool trim,
                           void (*std_sighandler) (int), jmp_buf main_j);
 
 extern void *convertartworks (const void *data, size_t nSize, int simplemask,
-                              int invert, double scale_x, double scale_y,
-                              int renderlevel, long background, int trim,
+                              bool invert, double scale_x, double scale_y,
+                              int renderlevel, long background, bool trim,
                               void (*std_sighandler) (int), jmp_buf main_j);
 
 /* In s.d2s_render: */
@@ -42,6 +42,6 @@ extern void render_shutdown (void);
 
 /* In c.d2s_trim: */
 
-extern void trim_mask_24 (spritearea_t *, sprite_t *, int inverse);
+extern void trim_mask_24 (spritearea_t *, sprite_t *, bool inverse);
 
 #endif

@@ -32,10 +32,10 @@ sighandler (int sig)
 static void
 shutdown (void)
 {
-  static int recur = 0;
+  static bool recur = false;
   if (recur)
     return;
-  recur = 1;
+  recur = true;
   render_shutdown ();
   _swi (Hourglass_Off, 0);
 }
@@ -102,8 +102,8 @@ main (int argc, const char *const argv[])
   size_t size;
   long y;
   void *drawfile, *image;
-  char simplemask = 0, inverse = 0, trim = 0;
-  char wimpstate;
+  char wimpstate, simplemask = 0;
+  bool inverse = false, trim = false;
   double scale_x = 1, scale_y = 1;
   int renderlevel = 110;
   long background = 0xFFFFFF;
@@ -203,7 +203,7 @@ main (int argc, const char *const argv[])
               simplemask |= simplemask_WIDE;
               break;
             case 'n':
-              inverse = 1;
+              inverse = true;
               break;
             case 'r':
               p = arg;
@@ -212,7 +212,7 @@ main (int argc, const char *const argv[])
               p = arg;
               goto get_scale;
             case 't':
-              trim = 1;
+              trim = true;
               break;
             case 'v':
               verbose++;
@@ -228,7 +228,7 @@ main (int argc, const char *const argv[])
               switch (*p)
                 {
                 case '#':
-                  no_press_space = 1;
+                  no_press_space = true;
                   break;
                 case 'M':
                   simplemask |= simplemask_NO_BLEND;
@@ -254,7 +254,7 @@ main (int argc, const char *const argv[])
                   simplemask |= simplemask_WIDE;
                   break;
                 case 'n':
-                  inverse = 1;
+                  inverse = true;
                   break;
                 case 'r':
                   if (p[1])
@@ -320,7 +320,7 @@ main (int argc, const char *const argv[])
                   }
                   break;
                 case 't':
-                  trim = 1;
+                  trim = true;
                   break;
                 case 'v':
                   verbose++;

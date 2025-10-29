@@ -9,8 +9,8 @@
 #define WITH_ALPHA
 #include "s2p_redinc.c"
 
-int
-reducetogrey (uint32_t *image, char *mask, int rgba)
+bool
+reducetogrey (uint32_t *image, char *mask, bool rgba)
 {
   int32_t x, y;
   rgb_t *im = (rgb_t *) image;
@@ -27,7 +27,7 @@ reducetogrey (uint32_t *image, char *mask, int rgba)
       {
         if (verbose)
           puts ("Image cannot be reduced to greyscale");
-        return 0;
+        return false;
       }
   }
   else if (mask)
@@ -43,7 +43,7 @@ reducetogrey (uint32_t *image, char *mask, int rgba)
         {
           if (verbose)
             puts ("Image cannot be reduced to greyscale");
-          return 0;
+          return false;
         }
         i++;
       }
@@ -58,7 +58,7 @@ reducetogrey (uint32_t *image, char *mask, int rgba)
       {
         if (verbose)
           puts ("Image cannot be reduced to greyscale");
-        return 0;
+        return false;
       }
   }
 
@@ -103,7 +103,7 @@ reducetogrey (uint32_t *image, char *mask, int rgba)
     }
   if (verbose)
     puts ("Image successfully reduced to greyscale");
-  return 1;
+  return true;
 }
 
 

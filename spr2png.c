@@ -37,11 +37,11 @@ sighandler (int sig)
 static void
 shutdown (void)
 {
-  static int recur = 0;
+  static bool recur = false;
   if (recur)
     return;
   debug_puts ("Shutting down...");
-  recur = 1;
+  recur = true;
   if (png_init)
     png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
   png_init = 0;
@@ -707,7 +707,7 @@ rgba_stdmask (const rgb_t * image)
 {
   int32_t y = height;
   const rgb_t *i = image;
-  int all0 = 1, all255 = 1;
+  bool all0 = true, all255 = true;
 
   do
   {
@@ -718,9 +718,9 @@ rgba_stdmask (const rgb_t * image)
       if (c != 0 && c != 255)
         return MASK_ALPHA;      /* needs alpha channel */
       if (c)
-        all0 = 0;
+        all0 = false;
       if (c != 255)
-        all255 = 0;
+        all255 = false;
     } while (x);
     i += width;
   } while (--y);
@@ -733,12 +733,12 @@ rgba_stdmask (const rgb_t * image)
 
 
 static mask_t
-stdmask (const char *image, int greya)
+stdmask (const char *image, bool greya)
 {
   int32_t y = height;
   int step = greya ? 2 : 1;
   const char *i = image;
-  int all0 = 1, all255 = 1;
+  int all0 = true, all255 = true;
 
   do
   {
@@ -749,9 +749,9 @@ stdmask (const char *image, int greya)
       if (c != 0 && c != 255)
         return MASK_ALPHA;      /* needs alpha channel */
       if (c)
-        all0 = 0;
+        all0 = false;
       if (c != 255)
-        all255 = 0;
+        all255 = false;
     } while ((x -= step) >= 0);
     i += (width * step) + 3 & -4;
   } while (--y);
@@ -790,7 +790,8 @@ apply_mask (char *image, const char *mask)
 {
   char *i = image;
   const char *m = mask;
-  int colour = 0, applied = 0;
+  int colour = 0;
+  bool applied = false;
   int32_t y = height;
 
   if (verbose > 1)
@@ -808,7 +809,7 @@ apply_mask (char *image, const char *mask)
       if (m[--x] == 0)
       {
         i[x] = colour;
-        applied = 1;
+        applied = true;
       }
     } while (x);
     i += width + 3 & ~3;
@@ -862,7 +863,8 @@ apply_mask_24 (uint32_t *image, const char *mask,
 {
   uint32_t *i;                      /* rgb_t */
   const char *m;
-  int applied = 0, b;
+  bool applied = false;
+  int b;
   int32_t y;
   uint32_t colour = UINT32_MAX;
   const uint32_t bgnd = bkgd
@@ -932,7 +934,7 @@ apply_mask_24 (uint32_t *image, const char *mask,
       if (m[--x] == 0)
       {
         i[x] = colour;
-        applied = 1;
+        applied = true;
       }
     } while (x);
     i += width;
@@ -962,7 +964,7 @@ find_used_p (const char *image)
 
 
 static int
-pack_palette (char *image, rgb_t * palette, uint32_t mask, char *masked_p)
+pack_palette (char *image, rgb_t * palette, uint32_t mask, bool *masked_p)
 {                               /* palette has 256 entries; returns number used */
   char *i;
   int32_t y = height;
@@ -1014,7 +1016,7 @@ pack_palette (char *image, rgb_t * palette, uint32_t mask, char *masked_p)
     i += width + 3 & -4;
   } while (--y);
   if (!masked)
-    *masked_p = 0;
+    *masked_p = false;
   memcpy (palette, wksp.p.p, sizeof (wksp.p.p));
   return colours;
 }
@@ -1172,25 +1174,26 @@ main (int argc, const char *const argv[])
   int num_passes;
   int dpix = 0, dpiy = 0;
   char
-    grey = 0,
-    alpha = 0,
-    masked = 0,
-    checkmask = 0,
     simple_mask = 0,
-    rgba = 0,
-    background = 0,
-    inverse = 0,
-    interlace = 0,
-    reducegrey = 0,
-    reduce = 0,
-    trim = 0,
-    pixel_size = 0,
-    freqsort = 0,
-    packbits = 0,
-    testsigbits = 0,
-    have_chroma = 0;
+    pixel_size = 0;
+  bool
+    grey = false,
+    alpha = false,
+    masked = false,
+    checkmask = false,
+    rgba = false,
+    background = false,
+    inverse = false,
+    interlace = false,
+    reducegrey = false,
+    reduce = false,
+    trim = false,
+    freqsort = false,
+    packbits = false,
+    testsigbits = false,
+    have_chroma = false;
   struct { char filter, strategy, bits, level; } compress = { 0 };
-  struct { char intent, force; } srgb = { 0 };
+  struct { char intent; bool force; } srgb = { 0 };
   double chroma[4][2], gamma = 0;
   png_color_8 sigbit = { 8, 8, 8, 8, 8 };
 
@@ -1294,13 +1297,13 @@ main (int argc, const char *const argv[])
         compress.level = 9;
         break;
       case 'B':
-        testsigbits = 1;
+        testsigbits = true;
         break;
       case 'C':
         p = arg;
         goto get_chroma;
       case 'G':
-        reducegrey = 1;
+        reducegrey = true;
         break;
       case 'I':
         p = arg;
@@ -1318,13 +1321,13 @@ main (int argc, const char *const argv[])
         pixel_size |= 2;
         break;
       case 'a':
-        rgba = 1;
+        rgba = true;
         break;
       case 'b':
         p = arg;
         goto get_background;
       case 'c':
-        checkmask = 1;
+        checkmask = true;
         break;
       case 'd':
         if (!pixel_size)
@@ -1340,25 +1343,25 @@ main (int argc, const char *const argv[])
         gamma = 1 / 2.2;
         break;
       case 'i':
-        interlace = 1;
+        interlace = true;
         break;
       case 'm':
         simple_mask |= 2;
         break;
       case 'n':
-        inverse = 1;
+        inverse = true;
         break;
       case 'p':
-        packbits = 1;
+        packbits = true;
         /*break;*/
       case 'r':
-        reduce = 1;
+        reduce = true;
         break;
       case 's':
-        freqsort = 1;
+        freqsort = true;
         break;
       case 't':
-        trim = 1;
+        trim = true;
         break;
       case 'v':
         verbose++;
@@ -1395,12 +1398,12 @@ main (int argc, const char *const argv[])
           compress.level = *p - '0';
           break;
         case 'B':
-          testsigbits = 1;
+          testsigbits = true;
           break;
         case 'C':
           CHECKARG ("chromaticity");
           /**/ get_chroma:
-          have_chroma = 1;
+          have_chroma = true;
           {
             int l;
             for (l = 0; l < 4; ++l)
@@ -1429,7 +1432,7 @@ main (int argc, const char *const argv[])
           }
           break;
         case 'G':
-          reducegrey = 1;
+          reducegrey = true;
           break;
         case 'I':
           CHECKARG ("intent");
@@ -1439,7 +1442,8 @@ main (int argc, const char *const argv[])
               "\004none", "\012perceptual", "\010relative",
               "\012saturation", "\010absolute", ""
             };
-            if ((srgb.force = (*p == '+')) != 0)
+            srgb.force = (*p == '+');
+            if (srgb.force)
               ++p;
             srgb.intent = get_named_arg (p, f, "rendering intent");
             p = strchr (p, 0) - 1;
@@ -1468,13 +1472,13 @@ main (int argc, const char *const argv[])
           pixel_size |= 2;
           break;
         case 'a':
-          rgba = 1;
+          rgba = true;
           break;
         case 'b':
           CHECKARG ("background");
           /**/ get_background:
           errno = 0;
-          background = 1;
+          background = true;
           bgnd = strtol (p, (char **) &p, 16) & 0xFFFFFF;
           if (errno || *p--)
             fail (fail_BAD_ARGUMENT, "bad background colour value");
@@ -1487,7 +1491,7 @@ main (int argc, const char *const argv[])
           bkgd.index = 0;
           break;
         case 'c':
-          checkmask = 1;
+          checkmask = true;
           break;
         case 'd':
           CHECKARG ("set-dpi");
@@ -1563,25 +1567,25 @@ main (int argc, const char *const argv[])
             fail (fail_BAD_ARGUMENT, "bad gamma value");
           break;
         case 'i':
-          interlace = 1;
+          interlace = true;
           break;
         case 'm':
           simple_mask |= 2;
           break;
         case 'n':
-          inverse = 1;
+          inverse = true;
           break;
         case 'p':
-          packbits = 1;
+          packbits = true;
           /*break;*/
         case 'r':
-          reduce = 1;
+          reduce = true;
           break;
         case 's':
-          freqsort = 1;
+          freqsort = true;
           break;
         case 't':
-          trim = 1;
+          trim = true;
           break;
         case 'v':
           verbose++;
@@ -1708,8 +1712,8 @@ main (int argc, const char *const argv[])
       }
       free (out);
       from = fromtemp;
-      rgba = checkmask = 1 && (simple_mask & 2) == 0;
-      /*trim = */ inverse = 0;
+      rgba = checkmask = true && (simple_mask & 2) == 0;
+      /*trim = */ inverse = false;
       if (readtype (fromtemp) == 0xFF9)
         break;
     }                           /* fall through */
@@ -1786,19 +1790,19 @@ main (int argc, const char *const argv[])
   if (m & 1u << 31)
   {
     /* Alpha-masked sprite (RO Select) */
-    rgba = 0;
-    alpha = 1;
+    rgba = false;
+    alpha = true;
   }
 
   if (modeflags & (1 << 15))
   {
     /* RGBA sprite (RO 5) */
-    rgba = 1;
+    rgba = true;
   }
 
   if (type == 6 && rgba)
   {
-    alpha = 1;
+    alpha = true;
     lnbpp = 5;
     masklnbpp = 3;
     maskspr = imagespr;
@@ -1822,7 +1826,7 @@ main (int argc, const char *const argv[])
       break;
     case 10: /* 16bpp 5:6:5 */
       lnbpp = 4;
-      alpha = 0;
+      alpha = false;
       break;
     case 16: /* 16bpp 4:4:4:4 */
       lnbpp = 4;
@@ -1843,7 +1847,7 @@ main (int argc, const char *const argv[])
       fail (fail_UNSUPPORTED, "sprite format %i is not recognised", type);
     }
 
-    rgba = 0;
+    rgba = false;
 
     getsprsize (sprites, imagespr, &width, &height, lnbpp);
 
@@ -1874,7 +1878,7 @@ main (int argc, const char *const argv[])
       if (xr != xres || yr != yres)
         fail (fail_BAD_IMAGE, "sprite resolutions do not match");
       remove_wastage (sprites, imagespr);
-      alpha = 1;
+      alpha = true;
       m &= ~(1u << 31);  /* clear the Select alpha bit */
     }
 
@@ -1953,7 +1957,7 @@ main (int argc, const char *const argv[])
   {
     debug_printf ("Mask type checking... (imagespr=%p, maskspr=%p)\n",
                   imagespr, maskspr);
-    switch (stdmask (mask, 0))
+    switch (stdmask (mask, false))
     {
     case MASK_ALL:              /* nothing but mask */
       debug_puts ("-- blank");
@@ -1963,7 +1967,7 @@ main (int argc, const char *const argv[])
                 (size_t) (lnbpp < 4 ? height * (width + 3 & -4)
                                     : height * width * 4));
         lnbpp = 0;
-        alpha = 0;      /* image wiped; no point in keeping it */
+        alpha = false;      /* image wiped; no point in keeping it */
       }
       break;
     case MASK_NONE:     /* has a mask, but it's unused */
@@ -1973,13 +1977,13 @@ main (int argc, const char *const argv[])
         if (masklnbpp != 3 && !rgba)
           heap_free (mask);
         mask = 0;
-        alpha = 0;
-        rgba = 0;               /* ... so lose it */
+        alpha = false;
+        rgba = false;               /* ... so lose it */
       }
       break;
     case MASK_SIMPLE:
       debug_puts ("-- simple");
-      alpha = 0;
+      alpha = false;
       break;            /* no point in using alpha */
     case MASK_ALPHA:
       debug_puts ("-- alpha");
@@ -1992,7 +1996,7 @@ main (int argc, const char *const argv[])
 
   if (lnbpp == 3 && checkgrey (imagespr, used, lnbpp))
   {
-    grey = 1;
+    grey = true;
     palette = 0;
   }
 
@@ -2018,7 +2022,7 @@ main (int argc, const char *const argv[])
         {
           heap_free (palette);
           palette = 0;
-          grey = 1;
+          grey = true;
           image = im;
         }
         else
@@ -2033,7 +2037,7 @@ main (int argc, const char *const argv[])
       {
         heap_free (palette);
         palette = 0;
-        grey = 1;
+        grey = true;
         image = im;
       }
     }
@@ -2041,22 +2045,23 @@ main (int argc, const char *const argv[])
   else if (reducegrey && reducetogrey (image, mask, rgba))
   {
     alpha = rgba || mask != 0;
-    rgba = 0;
-    grey = 1;
+    rgba = false;
+    grey = true;
     lnbpp = 3;
   }
 
   if (grey && alpha)
   {
     debug_puts ("Mask type checking... (grey + alpha)");
-    switch (stdmask (image, 1))
+    switch (stdmask (image, true))
     {
     case MASK_ALL:              /* nothing but mask */
       debug_puts ("-- blank");
       if (checkmask)
       {
         memset (image, 0, ((width * 2 + 2) & ~3) * height);
-        lnbpp = alpha = 0;      /* image wiped; no point in keeping it */
+        lnbpp = 0;      /* image wiped; no point in keeping it */
+        alpha = false;
       }
       break;
     case MASK_NONE:     /* has a mask, but it's unused */
@@ -2064,7 +2069,7 @@ main (int argc, const char *const argv[])
       if (checkmask)
       {
         image = reduce8alphato8 (image, image8, &mask);
-        alpha = masked = 0;     /* ... so lose it */
+        alpha = masked = false;     /* ... so lose it */
       }
       break;
     case MASK_SIMPLE:
@@ -2072,12 +2077,12 @@ main (int argc, const char *const argv[])
       if (checkmask)
       {
         image = reduce8alphato8 (image, image8, &mask);
-        alpha = 0;
+        alpha = false;
       }
       break;            /* no point in using alpha */
     case MASK_ALPHA:
       debug_puts ("-- alpha");
-      break;            /* if this returned, alpha==1 anyway */
+      break;            /* if this returned, alpha==true anyway */
     }
   }
 
@@ -2085,7 +2090,7 @@ main (int argc, const char *const argv[])
   if (trim)
   {
     m = 0;
-    switch (imagetype[alpha][grey][lnbpp])
+    switch (imagetype[alpha?1:0][grey?1:0][lnbpp])
     {
     case 0:             /* 8bpp grey, no alpha */
       if (background)
@@ -2144,13 +2149,13 @@ main (int argc, const char *const argv[])
           lnbpp = 5;
           image = x;
         }
-        masked = 0;
-        alpha = 1;
+        masked = false;
+        alpha = true;
       }
       else
       {
         if (maskcolour == 256)
-          masked = 0;
+          masked = false;
         if (!grey)
         {
           pal_entries = pack_palette (image, palette, maskcolour, &masked);
@@ -2171,9 +2176,9 @@ main (int argc, const char *const argv[])
                    : 1 << 24;
       if (maskcolour >= 1 << 24)
       {
-        masked = 0;
+        masked = false;
         if (maskcolour > 1 << 24)
-          alpha = 1;
+          alpha = true;
       }
     }
     if (masked)
@@ -2194,7 +2199,7 @@ main (int argc, const char *const argv[])
     {
       debug_puts ("- applying alpha channel -> RGBA");
       make_rgba (image, mask, lnbpp);
-      rgba = 1;
+      rgba = true;
     }
     else if (masked)
     {
@@ -2215,7 +2220,7 @@ main (int argc, const char *const argv[])
         m += width + 3 & -4;
       } while (--y);
       /*maskcolour = 1 << 24; */
-      rgba = 1;
+      rgba = true;
     }
     if (rgba && checkmask)
       switch (masktype = rgba_stdmask (image))
@@ -2226,12 +2231,12 @@ main (int argc, const char *const argv[])
         break;
         case MASK_NONE: /* has a mask, but it's unused */
         debug_puts ("RGBA: mask is unused");
-        alpha = rgba = 0;
+        alpha = rgba = false;
         break;
       case MASK_SIMPLE:
         debug_puts ("RGBA: mask is simple");
-        alpha = 0;
-        masked = 1;
+        alpha = false;
+        masked = true;
         break;
       default:
         /* Otherwise it's full alpha, or simple; treat as full alpha */
@@ -2260,7 +2265,7 @@ main (int argc, const char *const argv[])
         palmask = 0;
       }
       if (palmask)
-        masked = 1;
+        masked = true;
       else if (masked && maskcolour)
       {
         debug_puts ("Shifting mask to colour 0...");
@@ -2294,7 +2299,7 @@ main (int argc, const char *const argv[])
       memset (image, 0, height * width * 4);
       break;
     case MASK_NONE:             /* has a mask, but it's unused */
-      alpha = rgba = 0;
+      alpha = rgba = false;
       break;
       /* Otherwise it's full alpha, or simple; treat as full alpha */
     }
@@ -2321,18 +2326,18 @@ main (int argc, const char *const argv[])
       debug_puts ("All mask entries trimmed!");
       heap_free (palmask);
       palmask = 0;
-      masked = alpha = 0;
+      masked = alpha = false;
     }
   }
 
   if (verbose)
   {
-    int o = 0;
+    bool o = false;
     puts ("The image:");
     if (grey)
     {
       puts (" - is greyscale");
-      o = 1;
+      o = true;
     }
     else if (palette)
     {
@@ -2340,7 +2345,7 @@ main (int argc, const char *const argv[])
         printf (" - has a%s with %i entries\n", " palette", pal_entries);
       else
         printf (" - has a%s\n", " palette");
-      o = 1;
+      o = true;
     }
     if (palmask || alpha)
     {
@@ -2349,12 +2354,12 @@ main (int argc, const char *const argv[])
                 mask_entries);
       else
         printf (" - has a%s\n", "n alpha channel");
-      o = 1;
+      o = true;
     }
     else if (masked)
     {
       puts (" - has a simple mask");
-      o = 1;
+      o = true;
     }
     if (!o)
       puts (" - is 24bit");
@@ -2385,7 +2390,7 @@ main (int argc, const char *const argv[])
   debug_printf ("Using %i bits per channel\n", (int) x);
 
   png_set_IHDR (png_ptr, info_ptr, width, height, (int) x,
-                imagetype[alpha][grey][lnbpp],
+                imagetype[alpha?1:0][grey?1:0][lnbpp],
                 interlace ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
   png_set_compression_level (png_ptr, compress.level);
@@ -2424,11 +2429,11 @@ main (int argc, const char *const argv[])
       png_set_bKGD (png_ptr, info_ptr, &bkgd);
   }
 
-  debug_printf ("Image type = %i\n", imagetype[alpha][grey][lnbpp]);
+  debug_printf ("Image type = %i\n", imagetype[alpha?1:0][grey?1:0][lnbpp]);
 
   if (masked)
   {
-    switch (imagetype[alpha][grey][lnbpp])
+    switch (imagetype[alpha?1:0][grey?1:0][lnbpp])
     {
     case 3:
       if (palmask)
@@ -2535,7 +2540,7 @@ main (int argc, const char *const argv[])
   _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);    /* LED 2 on */
   num_passes = interlace ? png_set_interlace_handling (png_ptr) : 1;
   if (palmask)
-    alpha = 0;
+    alpha = false;
   x = num_passes * height;
   m = 0;                        /* hourglass */
   do

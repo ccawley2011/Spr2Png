@@ -61,8 +61,8 @@ extern wksp_t wksp;
 
 void setsignal(void (*handler)(int));
 
-extern int no_press_space;
-int init_task (const char *task, const char *title);
+extern bool no_press_space;
+bool init_task (const char *task, const char *title);
 
 /* In s.heap: */
 

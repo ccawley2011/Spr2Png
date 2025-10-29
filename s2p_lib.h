@@ -15,7 +15,7 @@ char *reduceto8 (uint32_t *image, uint32_t *mask,
 char *reduceto8_alpha(uint32_t *image, char **mask,
   rgb_t **ipalette, int *entries, png_color_16 *bkgd);
 
-int reducetogrey (uint32_t *image, char *mask, int rgba);
+bool reducetogrey (uint32_t *image, char *mask, bool rgba);
 
 png_color_8 significantbits (uint32_t *image);
 

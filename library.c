@@ -25,7 +25,7 @@ const char *caller_sprite;
 
 wksp_t wksp;
 
-int no_press_space;
+bool no_press_space;
 
 void
 setsignal (void (*handler) (int))
@@ -68,10 +68,10 @@ kill_commandwindow (void)
 }
 
 
-int
+bool
 init_task (const char *task, const char *title)
 {
-  int istask = !_swix (Wimp_Initialise, _INR (0, 3), 310, 0x4B534154, task, 0);
+  bool istask = !_swix (Wimp_Initialise, _INR (0, 3), 310, 0x4B534154, task, 0);
   if (istask && !commandwindow (title))
     atexit (kill_commandwindow);
   return istask;

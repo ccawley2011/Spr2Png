@@ -26,16 +26,16 @@ static int png_init;
 static int32_t bgnd = -2;
 static double display_gamma = 2.2;
 static double image_gamma = 0;
-static char pack_mask = 0;
+static bool pack_mask = false;
 static struct
   {
-    char use;
-    char reduce;
-    char separate;
+    bool use;
+    bool reduce;
+    bool separate;
     char tRNS;
-    char inverse;
-    char wide;
-  } alpha = { 1 };
+    bool inverse;
+    bool wide;
+  } alpha = { true };
 
 static struct
   {
@@ -44,7 +44,7 @@ static struct
     int colour;
   } trns;
 
-static char free_dpi = 0;
+static bool free_dpi = false;
 
 static uint32_t row_width;
 
@@ -107,11 +107,11 @@ sighandler (int sig)
 static void
 shutdown (void)
 {
-  static int recur = 0;
+  static bool recur = false;
   if (recur)
     return;
   debug_puts ("Shutting down...");
-  recur = 1;
+  recur = true;
   switch (png_init)
     {
     case 1: png_destroy_read_struct (&png_ptr, 0, 0); break;
@@ -544,7 +544,7 @@ read_png(FILE *fp)
         }
       pngid = alpha.use ? "png_blend" : "png_unblend";
       colour_type &= ~PNG_COLOR_MASK_ALPHA;
-      alpha.use = 0;
+      alpha.use = false;
     }
   else if (!alpha.use && (colour_type && PNG_COLOR_MASK_ALPHA))
     pngid = "png_unmask";
@@ -576,13 +576,13 @@ read_png(FILE *fp)
   if ((colour_type & PNG_COLOR_MASK_ALPHA) == 0 && !alpha.tRNS)
     {
       debug_puts ("(no need for alpha)");
-      alpha.use = 0;
+      alpha.use = false;
     }
 
   if (alpha.wide && (!alpha.use || alpha.tRNS == 1 || alpha.separate))
     {
       debug_puts ("(no need for wide masks)");
-      alpha.wide = 0;
+      alpha.wide = false;
     }
 
   if (colour_type == PNG_COLOR_TYPE_RGB)
@@ -1060,16 +1060,16 @@ main (int argc, char *argv[])
               caller_sprite = arg;
               break;
             case 'M':
-              alpha.use = 0;
+              alpha.use = false;
               break;
             case 'p':
-              pack_mask = 1;
+              pack_mask = true;
               break;
             case 'r':
-              alpha.reduce = 1;
+              alpha.reduce = true;
               break;
             case 's':
-              alpha.separate = 1;
+              alpha.separate = true;
               break;
             case 'b':
               if ((p = arg) != 0)
@@ -1080,7 +1080,7 @@ main (int argc, char *argv[])
               p = arg;
               goto get_dgamma;
             case 'f':
-              free_dpi = 1;
+              free_dpi = true;
               break;
             case 'g':
               if ((p = arg) != 0)
@@ -1088,10 +1088,10 @@ main (int argc, char *argv[])
               image_gamma = -1;
               break;
             case 'n':
-              alpha.inverse = 1;
+              alpha.inverse = true;
               break;
             case 'w':
-              alpha.wide = 1;
+              alpha.wide = true;
             }
         }
       else if (p[0] == '-')
@@ -1103,16 +1103,16 @@ main (int argc, char *argv[])
               switch (*p)
                 {
                 case 'M':
-                  alpha.use = 0;
+                  alpha.use = false;
                   break;
                 case 'p':
-                  pack_mask = 1;
+                  pack_mask = true;
                   break;
                 case 'r':
-                  alpha.reduce = 1;
+                  alpha.reduce = true;
                   break;
                 case 's':
-                  alpha.separate = 1;
+                  alpha.separate = true;
                   break;
                 case 'b':
                   if (!p[1])
@@ -1142,7 +1142,7 @@ main (int argc, char *argv[])
                           display_gamma);
                   break;
                 case 'f':
-                  free_dpi = 0;
+                  free_dpi = false;
                   break;
                 case 'g':
                   if (!p[1])
@@ -1160,10 +1160,10 @@ main (int argc, char *argv[])
                           image_gamma);
                   break;
                 case 'n':
-                  alpha.inverse = 1;
+                  alpha.inverse = true;
                   break;
                 case 'w':
-                  alpha.wide = 1;
+                  alpha.wide = true;
                   break;
                 default:
                   fail (fail_BAD_ARGUMENT, "unknown option -%c\n", *p);
@@ -1183,7 +1183,7 @@ main (int argc, char *argv[])
           "too few filenames (need both input and output)");
 
   if (bgnd != -2)
-    alpha.reduce = alpha.separate = 0;
+    alpha.reduce = alpha.separate = false;
 
 #ifdef __riscos
   _swi (Hourglass_On, _IN (0), 0);

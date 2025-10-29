@@ -35,7 +35,7 @@ cache_fontmax (void)
 
 
 static void
-set_fontmax (int restore)
+set_fontmax (bool restore)
 {
   _swix (Font_SetFontMax, _INR (0, 5),
          fontmax[0], fontmax[1], restore ? fontmax[2] : 0,
@@ -48,7 +48,7 @@ static void
 sighandler (int signal)
 {
   render_shutdown ();
-  set_fontmax (1);
+  set_fontmax (true);
   longjmp (jump, signal);
   exit (fail_OS_ERROR);
 }
@@ -87,7 +87,7 @@ static fontname_t *namelist = 0;
 static int
 check_font (const char *font)
 {
-  static int warned = 0;
+  static bool warned = false;
   const fontname_t *ptr;
 
   debug_printf ("[checking font %s... ", font);
@@ -117,7 +117,7 @@ check_font (const char *font)
   }
   debug_puts ("not found]");
   if (!warned) {
-    warned = 1;
+    warned = true;
     puts ("Warning: the following font(s) are not available:");
   }
   printf (" - %s\n", font);
@@ -141,7 +141,7 @@ free_fonts (void)
 
 static void
 antialias (const rgb_t * srcBits, const uint8_t * maskBits,
-           rgb_t * destBits, long background, long w, long h, int nomask)
+           rgb_t * destBits, long background, long w, long h, bool nomask)
 {
   long x, y, i, j;
   long mw = (4 * w + 31 & ~31) / 8;
@@ -234,9 +234,9 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
 
 
 static void *
-do_render (const void *data, size_t nSize, int simplemask, int invert,
+do_render (const void *data, size_t nSize, int simplemask, bool invert,
            double scale_x, double scale_y, int type, long background,
-           int trim, void (*std_sighandler) (int), jmp_buf main_j)
+           bool trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
   _kernel_oserror *err = NULL;
   long spritex, spritey;
@@ -350,7 +350,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
   cache_fontmax ();
   setsignal (sighandler);
   if ((simplemask & simplemask_NO_BLEND) == 0)
-    set_fontmax (0);
+    set_fontmax (false);
 
   for (pass = 0; pass < passes; pass++) {
     long thisy = sectiony / mul;
@@ -415,7 +415,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
       antialias ((rgb_t *) ((char *) pSprite + pSprite->image),
                  (uint8_t *) pSprite + pSprite->mask,
                  oSprite + offset * width, background, width, thisy,
-                 simplemask & simplemask_NO_MASK);
+                 !!(simplemask & simplemask_NO_MASK));
   }
 
   if (simplemask & simplemask_NO_BLEND)
@@ -424,7 +424,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     debug_printf ("Slice is at %p, image is at %p\n", area, pixels);
 
   /* Dangerous bit finished :-) */
-  set_fontmax (1);
+  set_fontmax (true);
   setsignal (std_sighandler);
 
   if (err)
@@ -479,15 +479,15 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, pixels, sprname); /* OS_SpriteOp remove mask */
 
   if (trim)
-    trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), 0);
+    trim_mask_24 (pixels, (sprite_t*)((char*)pixels + 16), false);
 
   return pixels;
 }
 
 
 void *
-convertdraw (const void *data, size_t nSize, int simplemask, int invert,
-             double scale_x, double scale_y, long background, int trim,
+convertdraw (const void *data, size_t nSize, int simplemask, bool invert,
+             double scale_x, double scale_y, long background, bool trim,
              void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
   memcpy (main_jump, main_j, sizeof (jmp_buf));
@@ -548,8 +548,8 @@ convertdraw (const void *data, size_t nSize, int simplemask, int invert,
 
 void *
 convertartworks (const void *data, size_t nSize, int simplemask,
-                 int invert, double scale_x, double scale_y,
-                 int renderlevel, long background, int trim,
+                 bool invert, double scale_x, double scale_y,
+                 int renderlevel, long background, bool trim,
                  void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
   _kernel_oserror *err;

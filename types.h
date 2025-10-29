@@ -1,6 +1,7 @@
 #ifndef __spr2png_types_h
 #define __spr2png_types_h
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
