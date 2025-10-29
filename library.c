@@ -17,13 +17,13 @@ int32_t width, height;
 
 spritearea_t *sprites;
 
+wksp_t wksp;
+
 const char *program_name;
 const char *caller_name;
 const char *caller_sprite;
 
 #ifdef __riscos
-
-wksp_t wksp;
 
 bool no_press_space;
 

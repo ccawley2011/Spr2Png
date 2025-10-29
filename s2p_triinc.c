@@ -15,6 +15,7 @@
 
 {
 #ifdef DEBUG
+# ifdef __riscos
   static const int print_fn_name_code[] = {
     0xE92D4001, /*      STMFD   r13!,{r0,r14}           */
     0xE59BE000, /*      LDR     r14,[r11,#0]            */
@@ -29,6 +30,7 @@
     0xE8FD8001  /*      LDMFD   r13!,{r0,pc}^           */
   };
   static void (*const print_fn_name)(void) = (void (*)()) print_fn_name_code;
+# endif
 #endif
   int32_t x, y, trimleft;
   PIXEL *ptr, *img = image;
@@ -45,12 +47,14 @@
 #endif
 
 #ifdef DEBUG
+# ifdef __riscos
   print_fn_name ();
   _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Image", 0xFFD, image, ADD (image, height * rwidth));
-# ifndef ALPHA
+#  ifndef ALPHA
   if (alpha)
     _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Mask", 0xFFD, alpha, alpha + height * width);
   printf ("image = %p, mask = %p\n", image, alpha);
+#  endif
 # endif
 #endif
 
@@ -87,7 +91,9 @@
   } while (++y < height);
   /* we'll only reach this point if the image is completely masked out */
 #ifdef DEBUG
+# ifdef __riscos
   _swi (OS_File, _INR (0, 5), 10, "<Wimp$Scrap>", 0xFFD, 0, img, ADD (img, width * height));
+# endif
 #endif
   return 1;
 

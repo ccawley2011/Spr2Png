@@ -1,11 +1,13 @@
 #include <errno.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __riscos
+#include <setjmp.h>
 #include <signal.h>
 #include "swis.h"
 #include "kernel.h"
+#endif
 #include "zlib.h"
 #include "png.h"
 
@@ -16,14 +18,15 @@
 #include "s2p_const.h"
 
 
-static jmp_buf jump;
-static _kernel_oserror sigerr;
-
 int png_init = 0;
 png_structp png_ptr;
 
 int verbose;
 
+#ifdef __riscos
+
+static jmp_buf jump;
+static _kernel_oserror sigerr;
 
 static void
 sighandler (int sig)
@@ -33,6 +36,7 @@ sighandler (int sig)
   exit (fail_OS_ERROR);
 }
 
+#endif
 
 static void
 shutdown (void)
@@ -45,7 +49,9 @@ shutdown (void)
   if (png_init)
     png_destroy_write_struct (&png_ptr, (png_infopp) NULL);
   png_init = 0;
+#ifdef __riscos
   _swi (Hourglass_Off, 0);
+#endif
   debug_puts ("Done.");
 }
 
@@ -200,11 +206,13 @@ checkspr (const sprite_t * spr)
 }
 
 
+#ifdef __riscos
 static int
 modevar (unsigned int mode, int var)
 {
   return _swi (OS_ReadModeVariable, _INR (0, 1) | _RETURN (2), mode, var);
 }
+#endif
 
 
 static void
@@ -239,10 +247,14 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
     *type = modevars[*m][2] + 1;
     *flags = 0;
   } else {
+#ifdef __riscos
     *xres = 180 >> modevar (*m, 4);
     *yres = 180 >> modevar (*m, 5);
     *type = modevar(*m, 9) + 1;
     *flags = modevar(*m, 0);
+#else
+    fail(fail_UNSUPPORTED, "Unsupported mode for sprite (%d)", *m);
+#endif
   }
 }
 
@@ -250,8 +262,14 @@ getsprinfo (const spritearea_t * sprites, sprite_t * spr,
 static void
 remove_wastage (const spritearea_t * sprites, const sprite_t * spr)
 {
-  if (spr->leftbit > 0 && spr->mode < 256)
-    _swi (OS_SpriteOp, _INR (0, 2), 0x236, sprites, spr);
+  if (spr->leftbit == 0 || spr->mode > 255)
+    return;
+
+#ifdef __riscos
+  _swi (OS_SpriteOp, _INR (0, 2), 0x236, sprites, spr);
+#else
+  fail(fail_UNSUPPORTED, "Sprite contains lefthand wastage");
+#endif
 }
 
 
@@ -289,7 +307,9 @@ list_used (const uint8_t *im, const uint8_t *imask, int lnbpp)
     imask = (const uint8_t *) (3 + (uintptr_t) imask & -4);
   } while (--y);
 #ifdef DEBUG
+# ifdef __riscos
   _swi (OS_File, _INR (0, 5), 10, "<Wimp$ScrapDir>.used", 0xFFD, 0, used, used + 256);
+# endif
 #endif
   return used;
 }
@@ -1214,6 +1234,7 @@ main (int argc, const char *const argv[])
 
   atexit (shutdown);
 
+#ifdef __riscos
   switch (setjmp (jump))
     {
     case 0:
@@ -1257,6 +1278,7 @@ main (int argc, const char *const argv[])
   setsignal (sighandler);
 
   init_task ("Spr2Png backend", argv[0]);
+#endif
 
 #define CHECKARG(opt) \
   if (p[1]) p++; \
@@ -1637,6 +1659,7 @@ main (int argc, const char *const argv[])
     fail (fail_BAD_ARGUMENT,
           "too few filenames (need both input and output)");
 
+#ifdef __riscos
   m = readtype (from);
 
   switch (m)
@@ -1723,11 +1746,14 @@ main (int argc, const char *const argv[])
   default:
     fail (fail_BAD_DATA, "%s: not a sprite, Draw or Artworks file", from);
   }
+#endif
 
   free (renderlevel);
   free (scale);
 
+#ifdef __riscos
   heap_init ("Spr2Png workspace");
+#endif
 
   png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
   if (png_ptr == NULL)
@@ -1749,11 +1775,14 @@ main (int argc, const char *const argv[])
     fail (fail_LIBPNG_FAIL, 0);
   }
 
+#ifdef __riscos
   _swi (Hourglass_On, _IN (0), 0);
+#endif
 
   ifp = fopen (from, "rb");
   if (ifp == NULL)
     fail (fail_OS_ERROR, 0);
+#ifdef __riscos
   if (fromtemp)
   {
     /* We have a temp file; do magic to cause its deletion on close */
@@ -1761,6 +1790,7 @@ main (int argc, const char *const argv[])
     sscanf (fromtemp + strlen (fromtemp) - 8, "%X", &ifp->__signature);
     free (fromtemp);
   }
+#endif
   fseek (ifp, 0, SEEK_END);
   size = (size_t) ftell (ifp);
   fseek (ifp, 0, SEEK_SET);
@@ -2371,11 +2401,15 @@ main (int argc, const char *const argv[])
   fp = fopen (to, "wb");
   if (!fp)
     fail (fail_OS_ERROR, 0);
+
+#ifdef __riscos
   _kernel_last_oserror ();      /* discard */
 
   debug_puts ("Setting load/exec...");
   onerr (_swix (OS_File, _INR (0, 2), 2, to, 0xDEADDEAD));
   onerr (_swix (OS_File, _INR (0, 1) | _IN (3), 3, to, 0xDEADDEAD));
+#endif
+
   debug_puts ("Initialising PNG I/O...");
   png_init_io (png_ptr, fp);
 
@@ -2538,7 +2572,10 @@ main (int argc, const char *const argv[])
   if (lnbpp < 4 && packbits)
     png_set_packing (png_ptr);
 
+#ifdef __riscos
   _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);    /* LED 2 on */
+#endif
+
   num_passes = interlace ? png_set_interlace_handling (png_ptr) : 1;
   if (palmask)
     alpha = false;
@@ -2550,7 +2587,9 @@ main (int argc, const char *const argv[])
     void *i = image;
     do
     {
+#ifdef __riscos
       _swi (Hourglass_Percentage, _IN (0), m++ * 100 / (int) x);
+#endif
       png_write_row (png_ptr, i);
       if (lnbpp == 3 && alpha)
         i = (void *) ((uint8_t *) i + 2 * (width + 1 & ~1));       /* avoid grey_t alignment */
@@ -2560,7 +2599,9 @@ main (int argc, const char *const argv[])
         i = (void *) ((uint32_t *) i + width);
     } while (--y);
   } while (--num_passes);
+#ifdef __riscos
   _swi (Hourglass_LEDs, _INR (0, 1), 2, -1);    /* LED 2 off */
+#endif
 
   png_write_end (png_ptr, info_ptr);
   if (fclose (fp))

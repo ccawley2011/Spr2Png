@@ -13,6 +13,13 @@ extern int32_t width, height;
 
 extern spritearea_t *sprites;
 
+typedef union {
+  char _msg[2048];
+  uint8_t used[256];
+  uint32_t unused[65536/32];
+  struct { uint8_t u[256]; uint32_t p[256]; } p;
+} wksp_t;
+
 typedef struct
 {
   int id;
@@ -22,6 +29,9 @@ typedef struct
   param;
 }
 optslist;
+
+
+extern wksp_t wksp;
 
 extern int verbose;
 
@@ -50,15 +60,6 @@ int argmatch (const optslist *args, const char *arg, const char **param);
 #ifdef __riscos
 #include "kernel.h"
 
-typedef union {
-  char _msg[2048];
-  uint8_t used[256];
-  uint32_t unused[65536/32];
-  struct { uint8_t u[256]; uint32_t p[256]; } p;
-} wksp_t;
-
-extern wksp_t wksp;
-
 void setsignal(void (*handler)(int));
 
 extern bool no_press_space;
@@ -80,6 +81,7 @@ extern void (*heap_free) (const void *const);
   }
 
 #else
+#include <stdlib.h>
 
 #define heap_malloc malloc
 #define heap_realloc realloc

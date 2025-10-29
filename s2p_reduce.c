@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#ifdef __riscos
 #include "swis.h"
+#endif
 #include "png.h"
 #include "s2p_lib.h"
 

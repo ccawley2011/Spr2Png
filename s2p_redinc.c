@@ -83,8 +83,10 @@ result:;
   } while (--y);
 
 #ifdef DEBUG
+# ifdef __riscos
   _swi (OS_File, _INR (0, 5),10,"<Wimp$ScrapDir>.palette",0xFFD,0,palette,palette+256);
   printf ("number of palette entries: %i\n",colour);
+# endif
 #endif
 
 #ifdef WITH_BGND
@@ -140,7 +142,10 @@ uint8_t *reduceto8(uint32_t *image, uint32_t *mask,
 #endif /* WITH_BGND */
 #endif
 {
-  int colour=0, LEDs=0;
+#ifdef __riscos
+  int LEDs=0;
+#endif
+  int colour=0;
   int32_t x, y;
   uint32_t *im;
 #ifdef WITH_BGND
@@ -163,7 +168,9 @@ uint8_t *reduceto8(uint32_t *image, uint32_t *mask,
     puts("Attempting to losslessly reduce the image to 8bit");
 
   debug_puts("Finding which colours are used...");
+#ifdef __riscos
   LEDs = _swi (Hourglass_LEDs, _INR (0, 1),  1, 0); /* hourglass LED 1 on */
+#endif
   memset(palette,0,256*sizeof(uint32_t));
 #ifdef WITH_ALPHA
   memset(mask,255,256);
@@ -240,7 +247,9 @@ result:
     }
 #endif /* WITH_BGND */
   }
+#ifdef __riscos
   _swi (Hourglass_LEDs, _INR (0, 1),  LEDs, 0); /* hourglass LED 1 off */
+#endif
 #ifdef WITH_ALPHA
   *imask = mask;
 #endif
