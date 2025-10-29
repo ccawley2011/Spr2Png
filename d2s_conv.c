@@ -9,7 +9,6 @@
 #include <ctype.h>
 #include "swis.h"
 #include "kernel.h"
-#include "png.h"
 #include "d2s_lib.h"
 
 #ifndef DrawFile_BBox
@@ -141,13 +140,13 @@ free_fonts (void)
 
 
 static void
-antialias (const rgb_t * srcBits, const png_byte * maskBits,
+antialias (const rgb_t * srcBits, const uint8_t * maskBits,
            rgb_t * destBits, long background, long w, long h, int nomask)
 {
   long x, y, i, j;
   long mw = (4 * w + 31 & ~31) / 8;
-  png_byte m[4] = { 0, 0, 0, 0 };
-  png_byte t;
+  uint8_t m[4] = { 0, 0, 0, 0 };
+  uint8_t t;
 
   static const char mconv[] =
     { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
@@ -158,7 +157,7 @@ antialias (const rgb_t * srcBits, const png_byte * maskBits,
   for (y = h; y; --y) {
     for (x = 0; x < w; ++x) {
       const rgb_t *img = srcBits + x * 4;
-      const png_byte *mask = maskBits + x / 2;
+      const uint8_t *mask = maskBits + x / 2;
       if (x & 1) {
         m[0] = mask[0]   >>4; m[1] = mask[mw]>>4;
         m[2] = mask[2*mw]>>4; m[3] = mask[3*mw]>>4;
@@ -414,7 +413,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
 
     if ((simplemask & simplemask_NO_BLEND) == 0)
       antialias ((rgb_t *) ((char *) pSprite + pSprite->image),
-                 (png_byte *) pSprite + pSprite->mask,
+                 (uint8_t *) pSprite + pSprite->mask,
                  oSprite + offset * width, background, width, thisy,
                  simplemask & simplemask_NO_MASK);
   }
@@ -453,14 +452,14 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
       break;
     case simplemask_WIDE:
       {
-        png_bytep spr_base, mask_base;
+        uint8_t *spr_base, *mask_base;
         int x, y;
 
         _swi (OS_SpriteOp, _INR (0, 2), 256+29, pixels, sprname); /* OS_SpriteOp add mask */
 
         pSprite = (sprite_t *) ((char *) pixels + 16);
-        spr_base = (png_bytep) pSprite + pSprite->image;
-        mask_base = (png_bytep) pSprite + pSprite->mask;
+        spr_base = (uint8_t *) pSprite + pSprite->image;
+        mask_base = (uint8_t *) pSprite + pSprite->mask;
         spr_base -= 1;
 
         for (y = (int) height; y; --y)
@@ -470,7 +469,7 @@ do_render (const void *data, size_t nSize, int simplemask, int invert,
                 *mask_base++ = *(spr_base += 4);
                 *spr_base = 0;
               }
-            mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
+            mask_base = (uint8_t *) (((uintptr_t) mask_base + 3) & ~3);
           }
       }
       break;

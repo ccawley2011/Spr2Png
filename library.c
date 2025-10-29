@@ -11,7 +11,7 @@
 #include "kernel.h"
 #endif
 #include "types.h"
-#include "s2p_lib.h"
+#include "library.h"
 
 int32_t width, height;
 

@@ -7,7 +7,6 @@
 #include <ctype.h>
 #include "swis.h"
 #include "kernel.h"
-#include "png.h"
 
 /* This code is RISC OS specific. */
 /* It makes assumptions about the sizes of various types. */
