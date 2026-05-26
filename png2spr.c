@@ -834,6 +834,8 @@ read_png(FILE *fp)
                 break;
               case mask_OPAQUE:
                 debug_puts ("-> unnecessary");
+                if (alpha.wide)
+                  spr_ptr->mode &= ~(1 << 31);
                 goto lose_mask_grey;
               }
           }
@@ -940,6 +942,8 @@ read_png(FILE *fp)
             break;
           case mask_OPAQUE:
             debug_puts ("-> unnecessary");
+            if (alpha.wide)
+              spr_ptr->mode &= ~(1 << 31);
             spr_base -= 1;
             for (y = height; y; --y)
               for (x = width; x; --x)
