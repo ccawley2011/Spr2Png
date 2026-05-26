@@ -14,24 +14,6 @@
 #endif
 
 {
-#ifdef DEBUG
-# ifdef __riscos
-  static const int print_fn_name_code[] = {
-    0xE92D4001, /*      STMFD   r13!,{r0,r14}           */
-    0xE59BE000, /*      LDR     r14,[r11,#0]            */
-    0xE3CEE3FF, /*      BIC     r14,r14,#&FC000003      */
-    0xE53E0004, /* loop LDR     r0,[r14,#-4]!           */
-    0xE35004FF, /*      CMP     r0,#&FF000000           */
-    0x3AFFFFFC, /*      BCC     loop                    */
-    0xE3C004FF, /*      BIC     r0,r0,#&FF000000        */
-    0xE04E0000, /*      SUB     r0,r14,r0               */
-    0xEF000002, /*      SWI     OS_Write0               */
-    0xEF000003, /*      SWI     OS_NewLine              */
-    0xE8FD8001  /*      LDMFD   r13!,{r0,pc}^           */
-  };
-  static void (*const print_fn_name)(void) = (void (*)()) print_fn_name_code;
-# endif
-#endif
   int32_t x, y, trimleft;
   PIXEL *ptr, *img = image;
   int32_t rwidth = width + ROUNDING & ~ROUNDING;
@@ -46,14 +28,18 @@
 # endif
 #endif
 
+#ifndef ALPHA
+  debug_printf ("%s: image = %p, mask = %p\n", __func__, image, alpha);
+#else
+  debug_printf ("%s: image = %p, mask = %p\n", __func__, image);
+#endif
+
 #ifdef DEBUG
 # ifdef __riscos
-  print_fn_name ();
   _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Image", 0xFFD, image, ADD (image, height * rwidth));
 #  ifndef ALPHA
   if (alpha)
     _swi (OS_File, _INR (0, 2) | _INR (4, 5), 10, "<Wimp$ScrapDir>.Mask", 0xFFD, alpha, alpha + height * width);
-  printf ("image = %p, mask = %p\n", image, alpha);
 #  endif
 # endif
 #endif
