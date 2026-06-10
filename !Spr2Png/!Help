@@ -52,11 +52,6 @@ Conversion to PNG
         If the sprite is 32-bit RGB colour, assume that it contains an alpha
         channel in the unused bits.
 
-    è Alpha channel is inverse
-        Normally, the alpha channel scale ranges from 0 (transparent) to 255
-        (opaque). This option tells Spr2Png that the reverse is true, ie.
-        that 0 is opaque.
-
   è Draw/AW
       The Draw and Artworks source options.
 
@@ -305,11 +300,6 @@ Conversion from PNG
       normally used in RISC OS sprites), unless the above option is ticked.
       (Images with simple masks have this kind of mask anyway.)
 
-  è Alpha channel is inverse
-      Normally, the alpha channel scale ranges from 0 (transparent) to 255
-      (opaque). This option tells Spr2Png to create an inverse mask, ie.
-      using 0 as opaque.
-
   è Pack mask
       When ticked, masks will always be created with one bit per pixel instead
       of matching the bit depth of the image. Files created with this option
@@ -365,11 +355,6 @@ The back ends
     --alpha              an alpha channel in the unused bits.
                          (Overridden by the presence of a mask or a mask
                          sprite.)
-
-    -n,                  If an alpha channel is supplied, then it is assumed
-    --inverse-alpha      to be inverse, ie. 0 represents opaque rather than
-                         transparent.
-                         (Overridden by the presence of a Select alpha mask.)
 
   Draw and Artworks options (passed on to draw2spr):
 
@@ -513,9 +498,6 @@ The back ends
     --wide-mask          with this option are only supported with RISC OS
                          Select or 5.21 or later.
 
-    -n,                  If an alpha channel is created, then it is inverted,
-    --inverse-alpha      ie. 0 = opaque rather than transparent.
-
     -r,                  Artworks rendering control. The default is 11.0.
     --render=LEVEL       (See the rendering level option in the front end.)
 
@@ -558,10 +540,6 @@ The back ends
     --pack-mask          Files created with this option are only supported
                          with RISC OS 3.6 or later.
                          (Implied for true colour PNGs)
-
-    -n,                  If the PNG contains an alpha channel (and it isn't
-                         ignored or optimised out) then it is inverted, ie.
-    --inverse-alpha      ie. 0 = opaque rather than transparent.
 
     -w                   Generate an alpha transparent mask. Files created
     --wide-mask          with this option are only supported with RISC OS

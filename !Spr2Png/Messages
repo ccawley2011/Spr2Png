@@ -52,7 +52,6 @@ WSave.9:\Sdisplay the PNG palette & mask reduction options.
 WSave.10:\Sdisplay the compression control options.
 
 WOpt0.0:Tick this option if, if the sprite is 32bpp, it has a built-in alpha channel.
-WOpt0.1:Tick this option if the alpha channel is to be interpreted as inverse.
 
 WOpt1.2:Enter the X scaling here, or leave blank to default to the Y scaling or 1:1.
 WOpt1.4:Enter the Y scaling here, or leave blank to default to the X scaling or 1:1.
@@ -103,7 +102,6 @@ WSaveSpr.11:Enter the display gamma value here (>0, <=10).|MThe default is 2.2.
 WSaveSpr.12:Tick this option to cause any transparency information to be completely ignored.
 WSaveSpr.13:Tick this option to create a separate mask (except where the mask is simple).
 WSaveSpr.14:Tick this option if you want to reduce the alpha channel (if present) to a simple mask.
-WSaveSpr.15:Tick this option to invert the values used for the alpha component.
 WSaveSpr.16:Tick this option if the output sprite is to have a 1bpp mask.
 WSaveSpr.17:Tick this option if the output sprite is to have a wide mask.
 WSaveSpr.18:¤WOpt2.1

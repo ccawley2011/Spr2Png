@@ -3,12 +3,11 @@
 #include "library.h"
 #include "d2s_lib.h"
 
-void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite,
-                   bool inverse)
+void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite)
 {
   int x, y;
   rgb_t *ptr;
-  int clear = inverse ? 255 : 0;
+  int clear = 0;
   rgb_t *image = (rgb_t*)((uint8_t*)sprite + sprite->image);
   uint8_t *mask;
   int simple = sprite->image != sprite->mask;

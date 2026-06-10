@@ -131,7 +131,6 @@ help (void)
           "\n"
           "Sprite options:\n"
           "  -a, --alpha             treat 32bpp image as RGBA instead of RGBX\n"
-          "  -n, --inverse-alpha     alpha channel is inverse (ie. 0=solid)\n"
           "\n"
           "Draw and Artworks options:\n"
           "  -S, --scale=X[,Y]       set image scale (%%age, ratio, or value)\n"
@@ -1159,7 +1158,6 @@ static const optslist args[] = {
   {'g', "gamma", OPTIONAL_PARAM},
   {'i', "interlace", NO_PARAM},
   {'m', "no-mask", NO_PARAM},
-  {'n', "inverse-alpha", NO_PARAM},
   {'p', "pack-pixels", NO_PARAM},
   {'r', "reduce", NO_PARAM},
   {'s', "frequency-sort", NO_PARAM},
@@ -1203,7 +1201,6 @@ main (int argc, const char *const argv[])
     checkmask = false,
     rgba = false,
     background = false,
-    inverse = false,
     interlace = false,
     reducegrey = false,
     reduce = false,
@@ -1370,9 +1367,6 @@ main (int argc, const char *const argv[])
         break;
       case 'm':
         simple_mask |= 2;
-        break;
-      case 'n':
-        inverse = true;
         break;
       case 'p':
         packbits = true;
@@ -1595,9 +1589,6 @@ main (int argc, const char *const argv[])
         case 'm':
           simple_mask |= 2;
           break;
-        case 'n':
-          inverse = true;
-          break;
         case 'p':
           packbits = true;
           /*break;*/
@@ -1737,7 +1728,6 @@ main (int argc, const char *const argv[])
       free (out);
       from = fromtemp;
       rgba = checkmask = true && (simple_mask & 2) == 0;
-      /*trim = */ inverse = false;
       if (readtype (fromtemp) == 0xFF9)
         break;
     }                           /* fall through */
@@ -1965,23 +1955,6 @@ main (int argc, const char *const argv[])
     image = expand12to24 (image);
     lnbpp = 5;
     break;
-  }
-
-  if (alpha && !(m & 1u << 31) && inverse)
-  {
-    debug_puts ("Inverting the mask...");
-    if (rgba)
-    {
-      rgb_t *i = image;
-      for (y = width * height; y; i[--y].alpha ^= 255)
-        ;
-    }
-    else
-    {
-      uint32_t *i = (uint32_t *) mask;
-      for (y = (width + 3 & -4) * height / 4; y; i[--y] ^= UINT32_MAX)
-        ;
-    }
   }
 
   if (mask && (imagespr != maskspr) /*||  mask != (uint8_t *) maskspr + maskspr->mask) */ )

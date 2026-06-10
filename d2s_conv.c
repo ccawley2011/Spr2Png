@@ -234,7 +234,7 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
 
 
 static void *
-do_render (const void *data, size_t nSize, uint8_t simplemask, bool invert,
+do_render (const void *data, size_t nSize, uint8_t simplemask,
            double scale_x, double scale_y, int type, long background,
            bool trim, void (*std_sighandler) (int), jmp_buf main_j)
 {
@@ -435,12 +435,7 @@ do_render (const void *data, size_t nSize, uint8_t simplemask, bool invert,
 
   switch (simplemask) {
     case 0:
-      if (invert) {
-      int i = width * height;
-        do {
-          oSprite[--i].alpha ^= 255;
-        } while (i);
-      } break;
+      break;
     case simplemask_NO_MASK:
     case simplemask_NO_MASK|simplemask_WIDE:
       { /* kill the alpha channel */
@@ -479,14 +474,14 @@ do_render (const void *data, size_t nSize, uint8_t simplemask, bool invert,
     _swi (OS_SpriteOp, _INR (0, 2), 256+30, pixels, sprname); /* OS_SpriteOp remove mask */
 
   if (trim)
-    trim_mask_24 (pixels, (sprite_t*)((uint8_t*)pixels + 16), false);
+    trim_mask_24 (pixels, (sprite_t*)((uint8_t*)pixels + 16));
 
   return pixels;
 }
 
 
 void *
-convertdraw (const void *data, size_t nSize, uint8_t simplemask, bool invert,
+convertdraw (const void *data, size_t nSize, uint8_t simplemask,
              double scale_x, double scale_y, long background, bool trim,
              void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
@@ -541,14 +536,14 @@ convertdraw (const void *data, size_t nSize, uint8_t simplemask, bool invert,
     }
   }
 
-  return do_render (data, nSize, simplemask, invert, scale_x, scale_y,
+  return do_render (data, nSize, simplemask, scale_x, scale_y,
                     0, background, trim, std_sighandler, main_j);
 }
 
 
 void *
 convertartworks (const void *data, size_t nSize, uint8_t simplemask,
-                 bool invert, double scale_x, double scale_y,
+                 double scale_x, double scale_y,
                  int renderlevel, long background, bool trim,
                  void (*std_sighandler) (int), jmp_buf main_j)
 { /* returns a sprite area */
@@ -606,7 +601,7 @@ convertartworks (const void *data, size_t nSize, uint8_t simplemask,
     renderlevel = 100;
 
   _swix (AWRender_ClaimVectors, 0);
-  return do_render (data, nSize, simplemask, invert, scale_x, scale_y,
+  return do_render (data, nSize, simplemask, scale_x, scale_y,
                     renderlevel + 1, background, trim,
                     std_sighandler, main_j);
 }

@@ -62,7 +62,6 @@ help (void)
           "                         formats: plain (1.2), %%age (120%%), ratio (6:5)\n"
           "  -b, --background=BGND  specify a background colour (format = &BBGGRR)\n"
           "  -t, --trim             remove masked-out edge rows and columns\n"
-          "  -n, --inverse-alpha    invert the alpha channel\n"
           "  -m, --no-mask          don't generate a mask\n"
           "  -M, --no-blend,        don't create an alpha channel or background blend\n"
           "      --no-alpha\n"
@@ -103,7 +102,7 @@ main (int argc, const char *const argv[])
   long y;
   void *drawfile, *image;
   uint8_t wimpstate, simplemask = 0;
-  bool inverse = false, trim = false;
+  bool trim = false;
   double scale_x = 1, scale_y = 1;
   int renderlevel = 110;
   long background = 0xFFFFFF;
@@ -202,9 +201,6 @@ main (int argc, const char *const argv[])
             case 'w':
               simplemask |= simplemask_WIDE;
               break;
-            case 'n':
-              inverse = true;
-              break;
             case 'r':
               p = arg;
               goto get_render;
@@ -252,9 +248,6 @@ main (int argc, const char *const argv[])
                   break;
                 case 'w':
                   simplemask |= simplemask_WIDE;
-                  break;
-                case 'n':
-                  inverse = true;
                   break;
                 case 'r':
                   if (p[1])
@@ -352,7 +345,6 @@ main (int argc, const char *const argv[])
                 "Masked    : %s\n"
                 "Wide      : %s\n"
                 "Trim      : %s\n"
-                "Inverse   : %s\n"
                 "Verbosity : %i\n"
                 "Scale     : %g,%g\n"
                 "Background: %08lX\n",
@@ -360,7 +352,7 @@ main (int argc, const char *const argv[])
                 simplemask & simplemask_NO_BLEND ? "no" : "yes",
                 simplemask & simplemask_NO_MASK ? "no" : "yes",
                 simplemask & simplemask_WIDE ? "yes" : "no",
-                trim ? "yes" : "no", inverse ? "yes" : "no",
+                trim ? "yes" : "no",
                 verbose, scale_x, scale_y, background);
 
   y = readtype (from);
@@ -388,14 +380,14 @@ main (int argc, const char *const argv[])
   switch (y)
     {
     case 0xAFF:         /* Draw file */
-      image = convertdraw (drawfile, size, simplemask, inverse,
+      image = convertdraw (drawfile, size, simplemask,
                            scale_x, scale_y, background, trim,
                            sighandler, jump);
       if (!image)
         fail (fail_NO_MEM, "couldn't convert %s file", "Draw");
       break;
     case 0xD94:         /* Artworks file */
-      image = convertartworks (drawfile, size, simplemask, inverse,
+      image = convertartworks (drawfile, size, simplemask,
                                scale_x, scale_y, renderlevel, background,
                                trim, sighandler, jump);
       if (!image)

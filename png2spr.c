@@ -33,7 +33,6 @@ static struct
     bool reduce;
     bool separate;
     uint8_t tRNS;
-    bool inverse;
     bool wide;
   } alpha = { true };
 
@@ -78,7 +77,6 @@ help (void)
 "  -p  --pack-mask            pack simple masks to 1bpp (RISC OS 3.6+)\n"
 "  -r, --reduce-alpha         reduce the alpha channel to a simple mask\n"
 "  -s, --separate-alpha       create a separate alpha channel\n"
-"  -n, --inverse-alpha        invert the alpha channel (ie. 0=solid)\n"
 "  -w  --wide-mask            use wide masks for the alpha channel\n"
 "                             (RISC OS Select, 5.21+)\n"
 "  -f, --free-dpi             allow any DPI values (don't clamp to RISC OS)\n"
@@ -727,17 +725,6 @@ read_png(FILE *fp)
             make_trns_wide ((png_bytep) mask_ptr + mask_ptr->image,
                             (png_bytep) spr_ptr + spr_ptr->image,
                             bit_depth, colour_type);
-            if (alpha.inverse)
-              {
-                png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-                y = (((width + 3) & ~3) * height);
-                do
-                  {
-                    y--; p[y] = ~p[y];
-                  }
-                while (y);
-                rename_sprite (spr_area, mask_ptr, "mask_i");
-              }
           }
         else
           {
@@ -815,20 +802,8 @@ read_png(FILE *fp)
                     mask_ptr = create_sprite (spr_area, maskid, width, height,
                                               28, 8, 256);
                     add_grey_palette (spr_area, mask_ptr);
-                    if (alpha.inverse)
-                      {
-                        png_bytep p = (png_bytep) mask_ptr + mask_ptr->image;
-                        y = (((width + 3) & ~3) * height);
-                        do
-                          {
-                            y--; p[y] = ~mask[y];
-                          }
-                        while (y);
-                        rename_sprite(spr_area, mask_ptr, "mask_i");
-                      }
-                    else
-                      memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
-                              (size_t) (((width + 3) & ~3) * height));
+                    memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
+                            (size_t) (((width + 3) & ~3) * height));
                   }
                 free (mask);
                 break;
@@ -873,26 +848,15 @@ read_png(FILE *fp)
                 add_grey_palette (spr_area, mask_ptr);
                 mask_base = (png_bytep) mask_ptr + mask_ptr->image;
                 spr_base -= 1;
-                if (alpha.inverse)
-                  for (y = height; y; --y)
-                    {
-                      for (x = width; x; --x)
-                        {
-                          *mask_base++ = ~*(spr_base += 4);
-                          *spr_base = 0;
-                        }
-                      mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
-                    }
-                else
-                  for (y = height; y; --y)
-                    {
-                      for (x = width; x; --x)
-                        {
-                          *mask_base++ = *(spr_base += 4);
-                          *spr_base = 0;
-                        }
-                      mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
-                    }
+                for (y = height; y; --y)
+                  {
+                    for (x = width; x; --x)
+                      {
+                        *mask_base++ = *(spr_base += 4);
+                        *spr_base = 0;
+                      }
+                    mask_base = (png_bytep) (((uintptr_t) mask_base + 3) & ~3);
+                  }
               }
             else if (alpha.wide)
               {
@@ -912,19 +876,7 @@ read_png(FILE *fp)
               }
             else
               {
-                if (alpha.inverse)
-                  {
-                    spr_base += 3;
-                    y = (((width + 3) & ~3) * height);
-                    do
-                      {
-                        y--; spr_base[y*4] = ~spr_base[y*4];
-                      }
-                    while (y);
-                    rename_sprite (spr_area, spr_ptr, "png_rgba_i");
-                  }
-                else
-                  rename_sprite (spr_area, spr_ptr, "png_rgba");
+                rename_sprite (spr_area, spr_ptr, "png_rgba");
               }
             break;
           case mask_SIMPLE:
@@ -968,7 +920,6 @@ static const optslist args[] = {
   {'f', "free-dpi", NO_PARAM},
   {'g', "gamma", OPTIONAL_PARAM},
   {'g', "image-gamma", OPTIONAL_PARAM},
-  {'n', "inverse-alpha", NO_PARAM},
   {'p', "pack-mask", NO_PARAM},
   {'s', "separate-alpha", NO_PARAM},
   {'w', "wide-mask", NO_PARAM},
@@ -1091,9 +1042,6 @@ main (int argc, char *argv[])
                 goto get_igamma;
               image_gamma = -1;
               break;
-            case 'n':
-              alpha.inverse = true;
-              break;
             case 'w':
               alpha.wide = true;
             }
@@ -1162,9 +1110,6 @@ main (int argc, char *argv[])
                       || image_gamma > 10 /* arbitrary upper limit */ )
                     fail (fail_BAD_ARGUMENT, "bad gamma value %g",
                           image_gamma);
-                  break;
-                case 'n':
-                  alpha.inverse = true;
                   break;
                 case 'w':
                   alpha.wide = true;
