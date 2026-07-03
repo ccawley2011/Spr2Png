@@ -1513,11 +1513,13 @@ main (int argc, const char *const argv[])
         case 'd':
           CHECKARG ("set-dpi");
           /**/ get_dpi:
+          errno = 0;
           dpiy = dpix = strtol (p, (char **) &p, 10);
           if (errno || (*p && *p != ',') || dpix < 1 || dpix > 8191)
             fail (fail_BAD_ARGUMENT, "bad DPI value");
           if (*p)
           {
+            errno = 0;
             dpiy = strtol (++p, (char **) &p, 10);
             if (errno || *p-- || dpiy < 1 || dpiy > 8191)
               fail (fail_BAD_ARGUMENT, "bad DPI value");
