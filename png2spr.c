@@ -51,7 +51,7 @@ static uint32_t row_width;
 #define IS_GREY(x) \
   ((x)== PNG_COLOR_TYPE_GRAY || (x) == PNG_COLOR_TYPE_GRAY_ALPHA)
 
-static void
+static noreturn void
 version (void)
 {
   printf ("%s %s " COPYRIGHT " Darren Salt\n"
@@ -62,7 +62,7 @@ version (void)
 }
 
 
-static void
+static noreturn void
 help (void)
 {
   printf ("Usage: %s [<options>] <src> <dest>\n"

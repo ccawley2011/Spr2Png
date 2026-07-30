@@ -91,7 +91,7 @@ modver (const char *mod)
 }
 
 
-static void
+static noreturn void
 version (void)
 {
   char *pv = modver ("PNG"), *zv = modver ("ZLib");
@@ -106,7 +106,7 @@ version (void)
 
 #else
 
-static void
+static noreturn void
 version (void)
 {
   printf ("%s %s " COPYRIGHT " Darren Salt\n"
@@ -118,7 +118,7 @@ version (void)
 #endif
 
 
-static void
+static noreturn void
 help (void)
 {
   printf ("Usage: %s [<options>] [--] <src> <dest>\n"

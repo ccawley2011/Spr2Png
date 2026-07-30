@@ -40,7 +40,7 @@ extern const char program_version[];
 extern const char *caller_name;
 extern const char *caller_sprite;
 
-void fail (int ret, const char *msg, ...);
+noreturn void fail (int ret, const char *msg, ...);
 const char *argdup (const char *); /*option*/
 
 int readtype (const char *name);

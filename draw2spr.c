@@ -41,7 +41,7 @@ shutdown (void)
 }
 
 
-static void
+static noreturn void
 version (void)
 {
   printf ("%s %s " COPYRIGHT " Darren Salt\n"
@@ -51,7 +51,7 @@ version (void)
 }
 
 
-static void
+static noreturn void
 help (void)
 {
   printf ("Usage: %s [<options>] <src> <dest>\n"

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdnoreturn.h>
 
 #define fail_BAD_ARGUMENT       1
 #define fail_OS_ERROR           2

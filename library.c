@@ -79,7 +79,7 @@ init_task (const char *task, const char *title)
 
 #endif
 
-void
+noreturn void
 fail (int ret, const char *msg, ...)
 {
   va_list args;
