@@ -30,7 +30,7 @@ void frequency_sort(uint8_t *const image, rgb_t *const palette,
       x--;
       count[im[x]]++;
     } while (x);
-    im += width+3 & -4;
+    im += (width+3) & -4;
   } while (--y);
 
   debug_puts("Sorting...");
@@ -69,7 +69,7 @@ void frequency_sort(uint8_t *const image, rgb_t *const palette,
       x--;
       im[x]=map[im[x]];
     } while (x);
-    im += width+3 & -4;
+    im += (width+3) & -4;
   } while (--y);
 
   bkgd->index = map[bkgd->index];

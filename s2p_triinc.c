@@ -16,10 +16,10 @@
 {
   int32_t x, y, trimleft;
   PIXEL *ptr, *img = image;
-  int32_t rwidth = width + ROUNDING & ~ROUNDING;
+  int32_t rwidth = (width + ROUNDING) & ~ROUNDING;
 #ifndef ALPHA
   uint8_t *mptr, *mask = alpha;
-  int32_t mwidth = width + 3 & ~3;
+  int32_t mwidth = (width + 3) & ~3;
 # if SIZE == 4
   union { uint32_t l; rgb_t p; } Trans;
   PIXEL *tmp;
@@ -199,7 +199,7 @@ do_upper_trim:
 
   x += trimleft;
   if (x) {
-    int32_t nwidth = (width -= x) + ROUNDING & ~ROUNDING;
+    int32_t nwidth = ((width -= x) + ROUNDING) & ~ROUNDING;
     PIXEL *dest = image; /* do the deferred upper trim */
 #ifndef ALPHA
     int32_t nmwidth;
@@ -214,7 +214,7 @@ do_upper_trim:
 
 #ifndef ALPHA
     if (alpha) {
-      nmwidth = width + 3 & ~3;
+      nmwidth = (width + 3) & ~3;
       mdest = alpha;
       mptr = mask + trimleft;
       for (y = height; y; --y) {

@@ -231,7 +231,7 @@ result:
       im2[x] = m;
     } while (++x<width);
     im+=width;
-    im2+=width+3 & ~3;
+    im2+=(width+3) & ~3;
 #ifdef WITH_BGND
   }
   /* if we have a background colour, ensure that it's in the palette */

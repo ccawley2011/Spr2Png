@@ -302,8 +302,8 @@ list_used (const uint8_t *im, const uint8_t *imask, int lnbpp)
           b += bpp;
         } while (++x < 0 && b < 8);
     } while (x < 0);
-    im = (const uint8_t *) (3 + (uintptr_t) im & -4);
-    imask = (const uint8_t *) (3 + (uintptr_t) imask & -4);
+    im = (const uint8_t *) ((uintptr_t) (im + 3) & -4);
+    imask = (const uint8_t *) ((uintptr_t) (imask + 3) & -4);
   } while (--y);
 #ifdef DEBUG
 # ifdef __riscos
@@ -483,12 +483,12 @@ expand8to8alpha (const uint8_t *image, const uint8_t *mask)   /* grey */
 
   if (verbose > 1)
     puts ("Expanding image from 8bit to 8bit plus alpha");
-  imret = spr_malloc (height * (width + 3 & ~3) * 2, "8bpp+alpha image");
+  imret = spr_malloc (height * ((width + 3) & ~3) * 2, "8bpp+alpha image");
   im16 = (uint32_t *) imret;
   if (ma8)
     do
     {
-      int32_t x = width + 1 & -2;
+      int32_t x = (width + 1) & -2;
       do
       {
         uint32_t w = *im8++ | *ma8++ << 8;
@@ -503,7 +503,7 @@ expand8to8alpha (const uint8_t *image, const uint8_t *mask)   /* grey */
   else
     do
     {
-      int32_t x = width + 1 & -2;
+      int32_t x = (width + 1) & -2;
       do
       {
         uint32_t w = *im8++;
@@ -527,7 +527,7 @@ expandto8 (const void *image, int lnbpp)
 
   if (verbose > 1)
     printf ("Expanding image from %ibit to %ibit\n", 1 << lnbpp, 8);
-  im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp image");
+  im8 = imret = spr_malloc (height * ((width + 3) & -4), "8bpp image");
   do
   {
     int32_t x = -width;
@@ -542,8 +542,8 @@ expandto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
-    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) ((uintptr_t) (im8 + 3) & -4);
+    imx = (uint8_t *) ((uintptr_t) (imx + 3) & -4);
   } while (--y);
   return imret;
 }
@@ -569,7 +569,7 @@ expandtogrey (uint8_t *image, const uint8_t *used, int lnbpp, const rgb_t * pal)
           : "Palette is unsorted greyscale");
   if (lnbpp < 3)
     image = expandto8 (image, lnbpp);
-  for (y = (width + 3 & ~3) * height - 1; y >= 0; --y)
+  for (y = ((width + 3) & ~3) * height - 1; y >= 0; --y)
     image[y] = pal[image[y]].r;
   return image;
 }
@@ -586,7 +586,7 @@ expandmaskto8 (const void *image, int lnbpp)
 
   if (verbose > 1)
     printf ("Expanding mask from %ibit to 8bit\n", 1 << lnbpp);
-  im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp mask");
+  im8 = imret = spr_malloc (height * ((width + 3) & -4), "8bpp mask");
   do
   {
     int32_t x = -width;
@@ -601,8 +601,8 @@ expandmaskto8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
-    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) ((uintptr_t) (im8 + 3) & -4);
+    imx = (uint8_t *) ((uintptr_t) (imx + 3) & -4);
   } while (--y);
   return imret;
 }
@@ -620,7 +620,7 @@ expandalphato8 (const void *image, int lnbpp)
 
   if (verbose > 1)
     printf ("Expanding alpha from %ibit to 8bit\n", 1 << lnbpp);
-  im8 = imret = spr_malloc (height * (width + 3 & -4), "8bpp alpha");
+  im8 = imret = spr_malloc (height * ((width + 3) & -4), "8bpp alpha");
   do
   {
     int32_t x = -width;
@@ -635,8 +635,8 @@ expandalphato8 (const void *image, int lnbpp)
         b += bpp;
       } while (++x < 0 && b < 8);
     } while (x < 0);
-    im8 = (uint8_t *) (3 + (uintptr_t) im8 & -4);
-    imx = (uint8_t *) (3 + (uintptr_t) imx & -4);
+    im8 = (uint8_t *) ((uintptr_t) (im8 + 3) & -4);
+    imx = (uint8_t *) ((uintptr_t) (imx + 3) & -4);
   } while (--y);
   return imret;
 }
@@ -675,7 +675,7 @@ expandto24 (const void *image, int lnbpp, const rgb_t * palette)
         imx++;
       }
     } while (--x);
-    imx = (uint8_t *) (3 + (b > 0) + (uintptr_t) imx & -4);
+    imx = (uint8_t *) ((uintptr_t) (imx + (b > 0) + 3) & -4);
   } while (--y);
   return imret;
 }
@@ -696,7 +696,7 @@ reduce8alphato8 (uint8_t *image, uint8_t *image8, uint8_t **mask)
   im = imsrc = image;
   y = height;
   msk = *mask;
-  m = (msk == image) ? (width + 3 & ~3) * height : 0;
+  m = (msk == image) ? ((width + 3) & ~3) * height : 0;
   if (m && (msk = spr_malloc (m, "grey mask")) == 0)
     fail (fail_NO_MEM, "out of memory (%s)", "grey mask");
   do
@@ -707,9 +707,9 @@ reduce8alphato8 (uint8_t *image, uint8_t *image8, uint8_t **mask)
       *im++ = *imsrc++;
       *msk++ = *imsrc++;
     } while (--x);
-    im = (uint8_t *) ((uintptr_t) im + 3 & ~3);
-    imsrc = (uint8_t *) ((uintptr_t) imsrc + 3 & ~3);
-    msk = (uint8_t *) ((uintptr_t) msk + 3 & ~3);
+    im = (uint8_t *) ((uintptr_t) (im + 3) & ~3);
+    imsrc = (uint8_t *) ((uintptr_t) (imsrc + 3) & ~3);
+    msk = (uint8_t *) ((uintptr_t) (msk + 3) & ~3);
   } while (--y);
   if (m)
   {
@@ -772,7 +772,7 @@ stdmask (const uint8_t *image, bool greya)
       if (c != 255)
         all255 = false;
     } while ((x -= step) >= 0);
-    i += (width * step) + 3 & -4;
+    i += ((width * step) + 3) & -4;
   } while (--y);
   if (all0)
     return MASK_ALL;
@@ -797,8 +797,8 @@ find_used (const uint8_t *image, const uint8_t *mask)
       if (m[--x])
         wksp.used[i[x]] = 1;
     } while (x);
-    i += width + 3 & -4;
-    m += width + 3 & -4;
+    i += (width + 3) & -4;
+    m += (width + 3) & -4;
   }
   while (--y != 0);
 }
@@ -831,8 +831,8 @@ apply_mask (uint8_t *image, const uint8_t *mask)
         applied = true;
       }
     } while (x);
-    i += width + 3 & ~3;
-    m += width + 3 & ~3;
+    i += (width + 3) & ~3;
+    m += (width + 3) & ~3;
   } while (--y);
   return applied ? colour : 256;        /* return mask colour */
 }
@@ -860,7 +860,7 @@ find_used_24 (const uint32_t *image, const uint8_t *mask, unsigned int b)
       }
     } while (x);
     i += width;
-    m += width + 3 & -4;
+    m += (width + 3) & -4;
   } while (--y);
 
   for (j = 0; j < 65536 / 32; ++j)
@@ -907,7 +907,7 @@ apply_mask_24 (uint32_t *image, const uint8_t *mask,
           goto bgnd_used;
       } while (x);
       i += width;
-      m += width + 3 & -4;
+      m += (width + 3) & -4;
     } while (--y);
     colour = bgnd;
     bgnd_used:/**/;
@@ -957,7 +957,7 @@ apply_mask_24 (uint32_t *image, const uint8_t *mask,
       }
     } while (x);
     i += width;
-    m += width + 3 & -4;
+    m += (width + 3) & -4;
   } while (--y);
   return applied ? colour : 1 << 24;    /* return mask colour */
 }
@@ -977,7 +977,7 @@ find_used_p (const uint8_t *image)
     {
       wksp.used[i[--x]] = 1;
     } while (x);
-    i += width + 3 & -4;
+    i += (width + 3) & -4;
   } while (--y != 0);
 }
 
@@ -1032,7 +1032,7 @@ pack_palette (uint8_t *image, rgb_t * palette, uint32_t mask, bool *masked_p)
       --x;
       i[x] = wksp.used[i[x]];
     } while (x);
-    i += width + 3 & -4;
+    i += (width + 3) & -4;
   } while (--y);
   if (!masked)
     *masked_p = false;
@@ -1057,8 +1057,8 @@ make_rgba (void *image, uint8_t *mask, int lnbpp)
         --x;
         i[x * 2 + 1] = m[x];
       } while (x);
-      i += 2 * width + 3 & -4;
-      m += width + 3 & -4;
+      i += (2 * width + 3) & -4;
+      m += (width + 3) & -4;
     } while (--y);
   }
   else
@@ -1073,7 +1073,7 @@ make_rgba (void *image, uint8_t *mask, int lnbpp)
         i[x].alpha = m[x];
       } while (x);
       i += width;
-      m += width + 3 & -4;
+      m += (width + 3) & -4;
     } while (--y);
   }
 }
@@ -1103,7 +1103,7 @@ packgrey (const uint8_t *image)
       if (bits == 0)
         return 8;
     }
-    im = (const uint8_t *) ((uintptr_t) im + 3 & ~3);
+    im = (const uint8_t *) ((uintptr_t) (im + 3) & ~3);
   }
   return (bits & 1) ? 1 : (bits & 2) ? 2 : 4;
 }
@@ -1970,7 +1970,7 @@ main (int argc, const char *const argv[])
       if (checkmask)
       {
         memset (image, 0,
-                (size_t) (lnbpp < 4 ? height * (width + 3 & -4)
+                (size_t) (lnbpp < 4 ? height * ((width + 3) & -4)
                                     : height * width * 4));
         lnbpp = 0;
         alpha = false;      /* image wiped; no point in keeping it */
@@ -2226,7 +2226,7 @@ main (int argc, const char *const argv[])
           im[x] = w | (w == maskcolour ? 0 : 0xFF000000);
         } while (x);
         im += width;
-        m += width + 3 & -4;
+        m += (width + 3) & -4;
       } while (--y);
       /*maskcolour = 1 << 24; */
       rgba = true;
@@ -2293,7 +2293,7 @@ main (int argc, const char *const argv[])
             if (im[x] <= maskcolour)
               im[x] = (im[x] == maskcolour) ? 0 : im[x] + 1;
           } while (x);
-          im += width + 3 & -4;
+          im += (width + 3) & -4;
         } while (--y);
         maskcolour = 0;
       }
@@ -2570,9 +2570,9 @@ main (int argc, const char *const argv[])
 #endif
       png_write_row (png_ptr, i);
       if (lnbpp == 3 && alpha)
-        i = (void *) ((uint8_t *) i + 2 * (width + 1 & ~1));       /* avoid grey_t alignment */
+        i = (void *) ((uint8_t *) i + 2 * ((width + 1) & ~1));       /* avoid grey_t alignment */
       else if (lnbpp < 4)
-        i = (void *) ((uint8_t *) i + (width + 3 & ~3));
+        i = (void *) ((uint8_t *) i + ((width + 3) & ~3));
       else
         i = (void *) ((uint32_t *) i + width);
     } while (--y);

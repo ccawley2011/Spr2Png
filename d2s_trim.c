@@ -11,7 +11,7 @@ void trim_mask_24 (spritearea_t *const area, sprite_t *const sprite)
   rgb_t *image = (rgb_t*)((uint8_t*)sprite + sprite->image);
   uint8_t *mask;
   int simple = sprite->image != sprite->mask;
-  int mwidth = (width + 31 & ~31) / 8;
+  int mwidth = ((width + 31) & ~31) / 8;
 
   if (verbose)
     puts ("Trimming sprite...");

@@ -144,7 +144,7 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
            rgb_t * destBits, long background, long w, long h, bool nomask)
 {
   long x, y, i, j;
-  long mw = (4 * w + 31 & ~31) / 8;
+  long mw = ((4 * w + 31) & ~31) / 8;
   uint8_t m[4] = { 0, 0, 0, 0 };
   uint8_t t;
 
@@ -261,8 +261,8 @@ do_render (const void *data, size_t nSize, uint8_t simplemask,
 
   areasize = sizeof (sprite_t) + sizeof (spritearea_t) + height *
              ((simplemask & simplemask_NO_BLEND)
-              ? (width * 4 + (width + 31 & ~31) / 2)
-              : (width * 16 + (width + 31 & ~31) / 2));
+              ? (width * 4 + ((width + 31) & ~31) / 2)
+              : (width * 16 + ((width + 31) & ~31) / 2));
   pixels = spr_malloc (areasize, "Output image");
   if (!pixels)
     fail (fail_NO_MEM, "not enough memory to convert %s file", filetype);
@@ -301,7 +301,7 @@ do_render (const void *data, size_t nSize, uint8_t simplemask,
     spritey = height * 4;
     for (passes = 1; passes < 65; passes *= 2) {
       sectiony = ((height + passes - 1) / passes) * 4;
-      areasize = sectiony * (spritex * 4 + (spritex + 31 & ~31) / 8)
+      areasize = sectiony * (spritex * 4 + ((spritex + 31) & ~31) / 8)
                  + sizeof (sprite_t) + sizeof (spritearea_t);
       if (!sectiony)
         break;

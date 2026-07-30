@@ -101,7 +101,7 @@ reducetogrey (uint32_t *image, uint8_t *mask, bool rgba)
         im += 1;
       }
       if ((uintptr_t) imret & 3)
-        imret = (uint8_t *)((uintptr_t) imret + 3 & ~3);
+        imret = (uint8_t *)((uintptr_t) (imret + 3) & ~3);
     }
   if (verbose)
     puts ("Image successfully reduced to greyscale");
@@ -138,7 +138,7 @@ png_color_8 significantbits (uint32_t *image)
       BIT (g);
       BIT (b);
     }
-    if (test.r == 0 && test.g == 0 & test.b == 0)
+    if (test.r == 0 && test.g == 0 && test.b == 0)
       break;
     im++;
   }

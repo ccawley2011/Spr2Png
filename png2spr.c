@@ -599,7 +599,7 @@ read_png(FILE *fp)
     size_t palsize = 0;
     size_t size = 16 + 2 * (44 + 256 * 4 * 2); /* 2 sprites, 2 palettes */
 
-    row_width = png_get_rowbytes(png_ptr, info_ptr) + 3 & ~3;
+    row_width = (png_get_rowbytes(png_ptr, info_ptr) + 3) & ~3;
     size += row_width * height; /* sprite image */
 
     if (IS_GREY (colour_type))
