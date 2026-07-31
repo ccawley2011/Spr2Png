@@ -1,0 +1,51 @@
+name: CMake
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  Build:
+    name: ${{matrix.platform.name}}
+    runs-on: ${{matrix.platform.os}}
+
+    defaults:
+      run:
+        shell: ${{matrix.platform.shell}}
+
+    strategy:
+      matrix:
+        platform:
+        - { name: Windows (mingw32),    os: windows-latest, shell: 'msys2 {0}', msystem: mingw32,    msys-env: mingw-w64-i686 }
+        - { name: Windows (mingw64),    os: windows-latest, shell: 'msys2 {0}', msystem: mingw64,    msys-env: mingw-w64-x86_64 }
+        - { name: Windows (clangarm64), os: windows-11-arm, shell: 'msys2 {0}', msystem: clangarm64, msys-env: mingw-w64-clang-aarch64 }
+        - { name: Linux,                os: ubuntu-latest,  shell: sh }
+        - { name: macOS,                os: macos-latest,   shell: sh }
+
+    steps:
+    - name: Set up MSYS2
+      if: matrix.platform.shell == 'msys2 {0}'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.platform.msystem }}
+        install: >-
+          ${{ matrix.platform.msys-env }}-cc
+          ${{ matrix.platform.msys-env }}-cmake
+          ${{ matrix.platform.msys-env }}-libpng
+
+    - name: Install Linux dependencies
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install --no-install-recommends libpng-dev
+
+    - name: Install macOS dependencies
+      if: runner.os == 'macOS'
+      run: brew install libpng
+
+    - uses: actions/checkout@v7
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build build --config ${{env.BUILD_TYPE}} --parallel
