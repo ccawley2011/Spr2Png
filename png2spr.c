@@ -34,7 +34,7 @@ static struct
     bool separate;
     uint8_t tRNS;
     bool wide;
-  } alpha = { true };
+  } alpha = { true, false, false, 0, false };
 
 static struct
   {

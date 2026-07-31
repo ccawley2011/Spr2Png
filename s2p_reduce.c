@@ -114,7 +114,7 @@ png_color_8 significantbits (uint32_t *image)
   int32_t y;
   rgb_t *im = (rgb_t *) image;
   png_color_8 ret = { 8, 8, 8, 8, 8 };
-  rgb_t test = { 0x7F, 0x7F, 0x7F };
+  rgb_t test = { 0x7F, 0x7F, 0x7F, 0xFF };
 
   if (verbose > 1)
     puts ("Significant bits tests");
