@@ -93,8 +93,8 @@ extern void (*heap_free) (const void *const);
 #define debug_puts puts
 #define debug_printf printf
 #else
-#define debug_puts(x)
-#define debug_printf(x,...)
+#define debug_puts(x) do {} while(0)
+#define debug_printf(x,...) do {} while(0)
 #endif
 
 #endif
