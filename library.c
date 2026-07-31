@@ -275,6 +275,9 @@ argmatch (const optslist *args, const char *arg, const char **param)
     case OPTIONAL_PARAM:
       if (param)
         *param = (*a == '=') ? (a + 1) : 0;
+      break;
+    case NO_PARAM:
+      break;
     }
   return best->id;
 }

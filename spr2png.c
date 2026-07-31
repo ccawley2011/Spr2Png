@@ -2310,7 +2310,10 @@ main (int argc, const char *const argv[])
     case MASK_NONE:             /* has a mask, but it's unused */
       alpha = rgba = false;
       break;
+    case MASK_ALPHA:
+    case MASK_SIMPLE:
       /* Otherwise it's full alpha, or simple; treat as full alpha */
+      break;
     }
   }
   if (testsigbits && lnbpp > 3)
