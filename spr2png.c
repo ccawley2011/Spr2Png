@@ -1192,7 +1192,9 @@ main (int argc, const char *const argv[])
   int num_passes;
   int dpix = 0, dpiy = 0;
   uint8_t
+#ifdef __riscos
     simple_mask = 0,
+#endif
     pixel_size = 0;
   bool
     grey = false,
@@ -1218,7 +1220,9 @@ main (int argc, const char *const argv[])
   char *renderlevel = 0;
 
   const char *from = 0, *to = 0;
+#ifdef __riscos
   char *fromtemp = 0;
+#endif
   uint8_t *used = 0;
 
   {
@@ -1329,7 +1333,9 @@ main (int argc, const char *const argv[])
         p = arg;
         goto get_intent;
       case 'M':
+#ifdef __riscos
         simple_mask |= 1;
+#endif
         break;
       case 'R':
         p = arg;
@@ -1366,7 +1372,9 @@ main (int argc, const char *const argv[])
         interlace = true;
         break;
       case 'm':
+#ifdef __riscos
         simple_mask |= 2;
+#endif
         break;
       case 'p':
         packbits = true;
@@ -1467,7 +1475,9 @@ main (int argc, const char *const argv[])
           }
           break;
         case 'M':
+#ifdef __riscos
           simple_mask |= 1;
+#endif
           break;
         case 'R':
           CHECKARG ("render");
@@ -1589,7 +1599,9 @@ main (int argc, const char *const argv[])
           interlace = true;
           break;
         case 'm':
+#ifdef __riscos
           simple_mask |= 2;
+#endif
           break;
         case 'p':
           packbits = true;
@@ -2213,7 +2225,6 @@ main (int argc, const char *const argv[])
     else if (masked)
     {
       uint32_t *im = image;
-      uint8_t *m = mask;
       uint32_t w;
       debug_puts ("- applying mask colour -> RGBA");
       y = height;
@@ -2226,7 +2237,6 @@ main (int argc, const char *const argv[])
           im[x] = w | (w == maskcolour ? 0 : 0xFF000000);
         } while (x);
         im += width;
-        m += (width + 3) & -4;
       } while (--y);
       /*maskcolour = 1 << 24; */
       rgba = true;
