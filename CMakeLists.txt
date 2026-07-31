@@ -3,6 +3,11 @@ project(Spr2Png LANGUAGES C)
 
 add_compile_options(-O3 -Wall -Wextra -pedantic)
 
+find_library(M_LIBRARY m)
+if (NOT M_LIBRARY)
+	set(M_LIBRARY "")
+endif()
+
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 
@@ -19,7 +24,7 @@ add_executable(spr2png
 	library.h
 	types.h
 )
-target_link_libraries(spr2png PRIVATE ZLIB::ZLIB PNG::PNG)
+target_link_libraries(spr2png PRIVATE ZLIB::ZLIB PNG::PNG ${M_LIBRARY})
 
 add_executable(png2spr
 	png2spr.c
@@ -28,4 +33,4 @@ add_executable(png2spr
 	library.h
 	types.h
 )
-target_link_libraries(png2spr PRIVATE ZLIB::ZLIB PNG::PNG)
+target_link_libraries(png2spr PRIVATE ZLIB::ZLIB PNG::PNG ${M_LIBRARY})
