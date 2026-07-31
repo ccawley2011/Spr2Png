@@ -347,7 +347,7 @@ checkgrey (const sprite_t * spr, const uint8_t *used, int lnbpp)
 
 
 static void
-readpalette (sprite_t * spr, rgb_t * palette, int palsize)
+readpalette (sprite_t * spr, rgb_t * palette, unsigned int palsize)
 {
   unsigned int *p, q;
   unsigned int *s;
@@ -1556,7 +1556,7 @@ main (int argc, const char *const argv[])
                 fail (fail_BAD_ARGUMENT, "null filter type");
               x = 0;
               while (f[x][0] && strncmp (p, f[x] + 1,
-                                         l > f[x][0] ? l : f[x][0]))
+                                         l > (size_t)f[x][0] ? l : (size_t)f[x][0]))
                 x++;
               if (f[x][0])
                 compress.filter |= 8 << x;

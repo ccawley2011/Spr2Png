@@ -40,7 +40,7 @@ static struct
   {
     png_bytep list;
     int len;
-    int colour;
+    uint32_t colour;
   } trns;
 
 static bool free_dpi = false;
@@ -311,7 +311,7 @@ make_trns (png_bytep mask, png_bytep spr, int bit_depth, int colour_type, int ma
                 }
               switch (trns.len)
                 {
-                case 0:  if (cc != trns.colour) w |= b; break;
+                case 0:  if (cc != (int)trns.colour) w |= b; break;
                 default: if (cc >= trns.len || trns.list[cc]) w |= b;
                 }
               if ((b = b << mask_depth) > 255)
@@ -378,7 +378,7 @@ make_trns_wide (png_bytep mask, png_bytep spr, int bit_depth, int colour_type)
 }
 
 
-static int
+static uint8_t
 clamp_dpi (int dpi)
 {
   return (dpi < 32) ? 22 : (dpi < 64) ? 45 : (dpi < 128) ? 90 : 180;

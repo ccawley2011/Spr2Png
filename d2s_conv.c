@@ -514,8 +514,8 @@ convertdraw (const void *data, size_t nSize, uint8_t simplemask,
     fail (fail_BAD_IMAGE, "cannot render an empty %s file!", "Draw");
 
   {
-    int end, i = 10;            /* point past header */
-    const int *wdata = data;
+    size_t end, i = 10;         /* point past header */
+    const uint32_t *wdata = data;
     const char *cdata;
     while (i < nSize / 4 && wdata[i])
       i += wdata[i + 1] / 4;

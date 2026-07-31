@@ -190,7 +190,7 @@ const char *
 argdup (const char *arg)
 {
   char *q = strchr (arg, '=');
-  int l = q ? q - arg : strlen (arg);
+  size_t l = q ? (size_t)(q - arg) : strlen (arg);
   q = malloc (l + 1);
   if (!q)
     return NULL;
