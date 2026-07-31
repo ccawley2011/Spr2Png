@@ -1370,7 +1370,7 @@ main (int argc, const char *const argv[])
         break;
       case 'p':
         packbits = true;
-        /*break;*/
+        /* fall through */
       case 'r':
         reduce = true;
         break;
@@ -1593,7 +1593,7 @@ main (int argc, const char *const argv[])
           break;
         case 'p':
           packbits = true;
-          /*break;*/
+          /* fall through */
         case 'r':
           reduce = true;
           break;
