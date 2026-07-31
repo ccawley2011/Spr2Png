@@ -236,7 +236,7 @@ antialias (const rgb_t * srcBits, const uint8_t * maskBits,
 static void *
 do_render (const void *data, size_t nSize, uint8_t simplemask,
            double scale_x, double scale_y, int type, long background,
-           bool trim, void (*std_sighandler) (int), jmp_buf main_j)
+           bool trim, void (*std_sighandler) (int))
 {
   _kernel_oserror *err = NULL;
   long spritex, spritey;
@@ -537,7 +537,7 @@ convertdraw (const void *data, size_t nSize, uint8_t simplemask,
   }
 
   return do_render (data, nSize, simplemask, scale_x, scale_y,
-                    0, background, trim, std_sighandler, main_j);
+                    0, background, trim, std_sighandler);
 }
 
 
@@ -603,5 +603,5 @@ convertartworks (const void *data, size_t nSize, uint8_t simplemask,
   _swix (AWRender_ClaimVectors, 0);
   return do_render (data, nSize, simplemask, scale_x, scale_y,
                     renderlevel + 1, background, trim,
-                    std_sighandler, main_j);
+                    std_sighandler);
 }

@@ -153,7 +153,7 @@ find_mask_type (png_bytep mask, int indent, int step)
 
 
 static void
-rename_sprite (spritearea_t *const area, sprite_t *const spr, const char *name)
+rename_sprite (sprite_t *const spr, const char *name)
 {
   size_t len = strlen(name);
   if (len > 12)
@@ -177,7 +177,7 @@ create_sprite (spritearea_t *const area, const char *name, uint32_t width, uint3
   area->sprites += 1;
   area->free    += size;
   spr->size      = size;
-  rename_sprite (area, spr, name);
+  rename_sprite (spr, name);
   spr->width     = (pitch >> 2) - 1;
   spr->height    = height - 1;
   spr->leftbit   = 0;
@@ -224,7 +224,7 @@ write_sprite (FILE *fp, spritearea_t *const area)
 
 
 static void
-add_grey_palette (spritearea_t *const area, sprite_t *const spr)
+add_grey_palette (sprite_t *const spr)
 {
   int i, *pal = (int *) spr + 11;
   for (i = 255; i >= 0; --i)
@@ -721,7 +721,7 @@ read_png(FILE *fp)
             sprite_t *mask_ptr;
             mask_ptr = create_sprite (spr_area, maskid, width, height,
                                       28, 8, 256);
-            add_grey_palette (spr_area, mask_ptr);
+            add_grey_palette (mask_ptr);
             make_trns_wide ((png_bytep) mask_ptr + mask_ptr->image,
                             (png_bytep) spr_ptr + spr_ptr->image,
                             bit_depth, colour_type);
@@ -801,7 +801,7 @@ read_png(FILE *fp)
                   {
                     mask_ptr = create_sprite (spr_area, maskid, width, height,
                                               28, 8, 256);
-                    add_grey_palette (spr_area, mask_ptr);
+                    add_grey_palette (mask_ptr);
                     memcpy ((png_bytep) mask_ptr + mask_ptr->image, mask,
                             (size_t) (((width + 3) & ~3) * height));
                   }
@@ -845,7 +845,7 @@ read_png(FILE *fp)
                 /**/separate_simple:
                 mask_ptr = create_sprite (spr_area, maskid, width, height,
                                           28, 8, 256);
-                add_grey_palette (spr_area, mask_ptr);
+                add_grey_palette (mask_ptr);
                 mask_base = (png_bytep) mask_ptr + mask_ptr->image;
                 spr_base -= 1;
                 for (y = height; y; --y)
@@ -876,7 +876,7 @@ read_png(FILE *fp)
               }
             else
               {
-                rename_sprite (spr_area, spr_ptr, "png_rgba");
+                rename_sprite (spr_ptr, "png_rgba");
               }
             break;
           case mask_SIMPLE:
