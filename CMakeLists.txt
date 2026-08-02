@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.1...3.10)
 project(Spr2Png LANGUAGES C)
 
-add_compile_options(-O3 -Wall -Wextra -pedantic)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD_REQUIRED OFF)
+
+add_compile_options(-O3 -Wall -W -pedantic)
 
 find_library(M_LIBRARY m)
 if (NOT M_LIBRARY)

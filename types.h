@@ -5,7 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
+
+#if __STDC_VERSION__ >= 201112L
 #include <stdnoreturn.h>
+#else
+#define noreturn
+#endif
 
 #define fail_BAD_ARGUMENT       1
 #define fail_OS_ERROR           2

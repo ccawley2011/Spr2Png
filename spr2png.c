@@ -2525,15 +2525,16 @@ main (int argc, const char *const argv[])
 /* Weird. This works, but the following commented-out code doesn't.
  * (Norcroft RISC OS cc 5.54)
  */
+#ifdef __CC_NORCROFT
     void (*func) (png_const_structp, png_infop, int) =
       srgb.force ? png_set_sRGB_gAMA_and_cHRM : png_set_sRGB;
     func (png_ptr, info_ptr, srgb.intent - 1);
-/*
+#else
     if (srgb.force)
       png_set_sRGB_gAMA_and_cHRM (png_ptr, info_ptr, srgb.intent - 1);
     else
       png_set_sRGB (png_ptr, info_ptr, srgb.intent - 1);
-*/
+#endif
   }
   else
   {
